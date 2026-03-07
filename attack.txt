@@ -1,0 +1,106 @@
+======================================================================
+ATTACK TRUTH LOG — Violent Segment Timestamps
+======================================================================
+
+
+[Attacked Video] attacked_01_video2.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_189.mp4                      | Start:    219.267s (00:03:39.267) | End:    224.876s (00:03:44.876) | Duration: 5.609s
+  Segment 02 | Source: V_912.mp4                      | Start:    580.122s (00:09:40.122) | End:    584.339s (00:09:44.339) | Duration: 4.217s
+  Segment 03 | Source: V_480.mp4                      | Start:   1027.961s (00:17:07.961) | End:   1032.771s (00:17:12.771) | Duration: 4.810s
+  Segment 04 | Source: V_908.mp4                      | Start:   1176.049s (00:19:36.049) | End:   1180.756s (00:19:40.756) | Duration: 4.707s
+  Segment 05 | Source: V_907.mp4                      | Start:   1723.646s (00:28:43.646) | End:   1729.056s (00:28:49.056) | Duration: 5.410s
+  Segment 06 | Source: V_422.mp4                      | Start:   1784.226s (00:29:44.226) | End:   1789.544s (00:29:49.544) | Duration: 5.318s
+  Segment 07 | Source: V_379.mp4                      | Start:   2370.788s (00:39:30.788) | End:   2375.803s (00:39:35.803) | Duration: 5.015s
+  Segment 08 | Source: V_281.mp4                      | Start:   2734.542s (00:45:34.542) | End:   2739.962s (00:45:39.962) | Duration: 5.420s
+  Segment 09 | Source: V_460.mp4                      | Start:   3058.288s (00:50:58.288) | End:   3063.494s (00:51:03.494) | Duration: 5.206s
+  Segment 10 | Source: V_335.mp4                      | Start:   3441.317s (00:57:21.317) | End:   3446.020s (00:57:26.020) | Duration: 4.703s
+  Segment 11 | Source: V_996.mp4                      | Start:   3748.727s (01:02:28.727) | End:   3753.734s (01:02:33.734) | Duration: 5.007s
+  Segment 12 | Source: V_484.mp4                      | Start:   3982.273s (01:06:22.273) | End:   3987.183s (01:06:27.183) | Duration: 4.910s
+
+[Attacked Video] attacked_02_video4.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_329.mp4                      | Start:    195.400s (00:03:15.400) | End:    200.613s (00:03:20.613) | Duration: 5.213s
+  Segment 02 | Source: V_403.mp4                      | Start:    485.462s (00:08:05.462) | End:    488.884s (00:08:08.884) | Duration: 3.422s
+  Segment 03 | Source: V_443.mp4                      | Start:    699.709s (00:11:39.709) | End:    704.413s (00:11:44.413) | Duration: 4.704s
+  Segment 04 | Source: V_636.mp4                      | Start:   1018.140s (00:16:58.140) | End:   1023.142s (00:17:03.142) | Duration: 5.002s
+
+[Attacked Video] attacked_03_video3.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_182.mp4                      | Start:    181.633s (00:03:01.633) | End:    185.345s (00:03:05.345) | Duration: 3.712s
+  Segment 02 | Source: V_625.mp4                      | Start:    360.587s (00:06:00.587) | End:    364.592s (00:06:04.592) | Duration: 4.005s
+  Segment 03 | Source: V_137.mp4                      | Start:    816.810s (00:13:36.810) | End:    822.727s (00:13:42.727) | Duration: 5.917s
+  Segment 04 | Source: V_116.mp4                      | Start:    898.334s (00:14:58.334) | End:    903.437s (00:15:03.437) | Duration: 5.103s
+  Segment 05 | Source: V_313.mp4                      | Start:   1132.532s (00:18:52.532) | End:   1137.748s (00:18:57.748) | Duration: 5.216s
+  Segment 06 | Source: V_231.mp4                      | Start:   1463.415s (00:24:23.415) | End:   1468.530s (00:24:28.530) | Duration: 5.115s
+  Segment 07 | Source: V_472.mp4                      | Start:   1775.437s (00:29:35.437) | End:   1780.340s (00:29:40.340) | Duration: 4.903s
+  Segment 08 | Source: V_216.mp4                      | Start:   2013.447s (00:33:33.447) | End:   2018.666s (00:33:38.666) | Duration: 5.219s
+  Segment 09 | Source: V_393.mp4                      | Start:   2287.488s (00:38:07.488) | End:   2292.491s (00:38:12.491) | Duration: 5.003s
+
+[Attacked Video] attacked_04_video1.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_923.mp4                      | Start:    524.633s (00:08:44.633) | End:    529.555s (00:08:49.555) | Duration: 4.922s
+  Segment 02 | Source: V_382.mp4                      | Start:   1064.261s (00:17:44.261) | End:   1069.261s (00:17:49.261) | Duration: 5.000s
+
+[Attacked Video] attacked_05_video2.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_309.mp4                      | Start:     71.367s (00:01:11.367) | End:     75.969s (00:01:15.969) | Duration: 4.602s
+  Segment 02 | Source: V_907.mp4                      | Start:    536.720s (00:08:56.720) | End:    542.130s (00:09:02.130) | Duration: 5.410s
+  Segment 03 | Source: V_37.mp4                       | Start:    802.477s (00:13:22.477) | End:    808.210s (00:13:28.210) | Duration: 5.733s
+  Segment 04 | Source: V_132.mp4                      | Start:   1142.352s (00:19:02.352) | End:   1148.265s (00:19:08.265) | Duration: 5.913s
+  Segment 05 | Source: V_30.mp4                       | Start:   1491.859s (00:24:51.859) | End:   1495.376s (00:24:55.376) | Duration: 3.517s
+  Segment 06 | Source: V_372.mp4                      | Start:   1785.931s (00:29:45.931) | End:   1790.946s (00:29:50.946) | Duration: 5.015s
+  Segment 07 | Source: V_157.mp4                      | Start:   2215.891s (00:36:55.891) | End:   2220.394s (00:37:00.394) | Duration: 4.503s
+  Segment 08 | Source: V_305.mp4                      | Start:   2430.956s (00:40:30.956) | End:   2435.259s (00:40:35.259) | Duration: 4.303s
+  Segment 09 | Source: V_461.mp4                      | Start:   2803.322s (00:46:43.322) | End:   2809.022s (00:46:49.022) | Duration: 5.700s
+  Segment 10 | Source: V_74.mp4                       | Start:   3116.673s (00:51:56.673) | End:   3121.781s (00:52:01.781) | Duration: 5.108s
+  Segment 11 | Source: V_919.mp4                      | Start:   3780.309s (01:03:00.309) | End:   3784.520s (01:03:04.520) | Duration: 4.211s
+  Segment 12 | Source: V_90.mp4                       | Start:   3888.594s (01:04:48.594) | End:   3893.597s (01:04:53.597) | Duration: 5.003s
+
+[Attacked Video] attacked_06_video4.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_416.mp4                      | Start:    154.433s (00:02:34.433) | End:    158.733s (00:02:38.733) | Duration: 4.300s
+  Segment 02 | Source: V_482.mp4                      | Start:    503.788s (00:08:23.788) | End:    508.599s (00:08:28.599) | Duration: 4.811s
+  Segment 03 | Source: V_960.mp4                      | Start:    975.381s (00:16:15.381) | End:    979.181s (00:16:19.181) | Duration: 3.800s
+  Segment 04 | Source: V_173.mp4                      | Start:   1260.732s (00:21:00.732) | End:   1266.139s (00:21:06.139) | Duration: 5.407s
+
+[Attacked Video] attacked_07_video3.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_132.mp4                      | Start:     96.467s (00:01:36.467) | End:    102.380s (00:01:42.380) | Duration: 5.913s
+  Segment 02 | Source: V_122.mp4                      | Start:    382.985s (00:06:22.985) | End:    387.987s (00:06:27.987) | Duration: 5.002s
+  Segment 03 | Source: V_919.mp4                      | Start:    793.377s (00:13:13.377) | End:    797.588s (00:13:17.588) | Duration: 4.211s
+  Segment 04 | Source: V_297.mp4                      | Start:    927.289s (00:15:27.289) | End:    931.990s (00:15:31.990) | Duration: 4.701s
+  Segment 05 | Source: V_37.mp4                       | Start:   1280.990s (00:21:20.990) | End:   1286.723s (00:21:26.723) | Duration: 5.733s
+  Segment 06 | Source: V_432.mp4                      | Start:   1490.095s (00:24:50.095) | End:   1494.517s (00:24:54.517) | Duration: 4.422s
+  Segment 07 | Source: V_227.mp4                      | Start:   1651.883s (00:27:31.883) | End:   1657.085s (00:27:37.085) | Duration: 5.202s
+  Segment 08 | Source: V_524.mp4                      | Start:   1924.961s (00:32:04.961) | End:   1929.973s (00:32:09.973) | Duration: 5.012s
+  Segment 09 | Source: V_182.mp4                      | Start:   2395.652s (00:39:55.652) | End:   2399.364s (00:39:59.364) | Duration: 3.712s
+
+[Attacked Video] attacked_08_video1.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_52.mp4                       | Start:    341.867s (00:05:41.867) | End:    348.886s (00:05:48.886) | Duration: 7.019s
+  Segment 02 | Source: V_232.mp4                      | Start:    474.278s (00:07:54.278) | End:    478.887s (00:07:58.887) | Duration: 4.609s
+  Segment 03 | Source: V_208.mp4                      | Start:    972.754s (00:16:12.754) | End:    977.955s (00:16:17.955) | Duration: 5.201s
+
+[Attacked Video] attacked_09_video2.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_807.mp4                      | Start:    337.767s (00:05:37.767) | End:    342.584s (00:05:42.584) | Duration: 4.817s
+  Segment 02 | Source: V_33.mp4                       | Start:    620.043s (00:10:20.043) | End:    625.776s (00:10:25.776) | Duration: 5.733s
+  Segment 03 | Source: V_827.mp4                      | Start:   1052.080s (00:17:32.080) | End:   1056.881s (00:17:36.881) | Duration: 4.801s
+  Segment 04 | Source: V_181.mp4                      | Start:   1089.428s (00:18:09.428) | End:   1093.136s (00:18:13.136) | Duration: 3.708s
+  Segment 05 | Source: V_113.mp4                      | Start:   1572.248s (00:26:12.248) | End:   1577.655s (00:26:17.655) | Duration: 5.407s
+  Segment 06 | Source: V_998.mp4                      | Start:   1806.917s (00:30:06.917) | End:   1811.925s (00:30:11.925) | Duration: 5.008s
+  Segment 07 | Source: V_91.mp4                       | Start:   2263.005s (00:37:43.005) | End:   2268.023s (00:37:48.023) | Duration: 5.018s
+  Segment 08 | Source: V_55.mp4                       | Start:   2436.221s (00:40:36.221) | End:   2441.442s (00:40:41.442) | Duration: 5.221s
+  Segment 09 | Source: V_428.mp4                      | Start:   2922.818s (00:48:42.818) | End:   2926.834s (00:48:46.834) | Duration: 4.016s
+  Segment 10 | Source: V_624.mp4                      | Start:   3267.002s (00:54:27.002) | End:   3271.335s (00:54:31.335) | Duration: 4.333s
+  Segment 11 | Source: V_127.mp4                      | Start:   3507.405s (00:58:27.405) | End:   3513.326s (00:58:33.326) | Duration: 5.921s
+  Segment 12 | Source: V_444.mp4                      | Start:   4060.386s (01:07:40.386) | End:   4064.093s (01:07:44.093) | Duration: 3.707s
+
+[Attacked Video] attacked_10_video4.mp4
+--------------------------------------------------
+  Segment 01 | Source: V_365.mp4                      | Start:    199.700s (00:03:19.700) | End:    204.700s (00:03:24.700) | Duration: 5.000s
+  Segment 02 | Source: V_49.mp4                       | Start:    417.845s (00:06:57.845) | End:    421.865s (00:07:01.865) | Duration: 4.020s
+  Segment 03 | Source: V_458.mp4                      | Start:    683.582s (00:11:23.582) | End:    688.202s (00:11:28.202) | Duration: 4.620s
+  Segment 04 | Source: V_435.mp4                      | Start:   1032.685s (00:17:12.685) | End:   1037.185s (00:17:17.185) | Duration: 4.500s
+  Segment 05 | Source: V_521.mp4                      | Start:   1206.865s (00:20:06.865) | End:   1210.870s (00:20:10.870) | Duration: 4.005s
