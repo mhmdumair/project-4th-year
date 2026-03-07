@@ -1,0 +1,10 @@
+Segment_1_Start: 1723.85
+Segment_1_End:   1852.73
+Segment_2_Start: 2017.89
+Segment_2_End:   2146.79
+Segment_3_Start: 2358.2
+Segment_3_End:   2487.08
+Segment_4_Start: 2849.01
+Segment_4_End:   2977.9
+Segment_5_Start: 3982.93
+Segment_5_End:   4111.79
