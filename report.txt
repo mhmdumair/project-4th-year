@@ -1,0 +1,1542 @@
+
+================================================================================
+           MULTI-MODAL VIOLENT CONTENT DETECTOR  -  EVALUATION REPORT
+================================================================================
+
+  Run timestamp      : 2026-03-08 21:45:55
+  Ground truth file  : attack.json
+  Attacked folder    : attacked/
+  Videos processed   : 10
+  Report file        : d:\University Course Meterials\year4\PROJECT\datasets\YT\report.txt
+
+  Signals            : Visual | Motion | AudioRMS | Silence | SpectralFlux
+  Fusion window      : 2.5s  (events within this gap merged into one)
+  Min signals needed : 1
+  Require multimodal : False
+  Lockout period     : 5.0s  (no triggers in first 5.0s)
+
+  Scoring rule       : A segment counts as HIT if any fused event lands within
+                       [start - 2.5s]  to  [end + 2.5s]
+  Hit positions      : START      = event within 2.5s of segment start
+                       END        = event within 2.5s of segment end
+                       IN-BETWEEN = event inside the segment body
+                       START+END  = segment so short both boundaries overlap
+
+--------------------------------------------------------------------------------
+                            CONFIGURATION PARAMETERS
+--------------------------------------------------------------------------------
+  Parameter                            Value
+  -----------------------------------  --------------------
+  BOUNDARY_TOLERANCE                   2.5
+  TOLERANCE_SEC                        2.5
+  LOCKOUT_PERIOD                       5.0
+  --- Visual ---
+  VISUAL_MAX_FRAMES                    30
+  VISUAL_MIN_WARMUP                    10
+  K_VISUAL_THRESHOLD                   2.5
+  VISUAL_COOLDOWN                      3.0
+  VISUAL_PERSIST_NEEDED                2
+  VISUAL_PERSIST_WINDOW                4
+  --- Motion ---
+  MV_WINDOW                            60
+  MV_MIN_WARMUP                        30
+  K_MV_THRESHOLD                       4.5
+  MV_COOLDOWN                          8.0
+  MV_PERSIST_NEEDED                    3
+  MV_PERSIST_WINDOW                    5
+  GOP_SHORT_RATIO                      0.25
+  --- Audio RMS ---
+  AUDIO_BUFFER_SEC                     15.0
+  AUDIO_MICRO_WINDOW_SEC               0.5
+  K_AUDIO_RMS_THRESHOLD                3.0
+  AUDIO_NOISE_FLOOR                    800.0
+  AUDIO_COOLDOWN                       3.0
+  AUDIO_PERSIST_NEEDED                 2
+  --- Silence ---
+  SILENCE_THRESHOLD_RATIO              0.05
+  SILENCE_MIN_DURATION                 2.0
+  SILENCE_COOLDOWN                     30.0
+  --- Spectral Flux ---
+  FLUX_WINDOW_SEC                      0.05
+  FLUX_BUFFER_SEC                      10.0
+  K_FLUX_THRESHOLD                     3.0
+  FLUX_COOLDOWN                        3.0
+  FLUX_PERSIST_NEEDED                  3
+
+================================================================================
+                           PER-VIDEO DETAILED RESULTS
+================================================================================
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_01_video2.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 9/12 segments detected  (75.0%)
+  False positives : 52  (video FPR: 85.2%)
+  Processing time : 473.1s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [###................................] 4 triggers
+  Motion                 [###################################] 43 triggers
+  AudioRMS               [##########.........................] 13 triggers
+  Silence                [#..................................] 2 triggers
+  SpectralFlux           [...................................] 1 triggers
+                           Total fused events after clustering: 61
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   4 total): 309.132s  2380.392s  3058.311s  3702.776s
+  Motion          (  43 total): 66.856s  101.423s  139.823s  149.190s  187.290s  310.965s  510.465s  590.495s  669.362s  815.228s  829.495s  1021.262s  1032.684s  1041.560s  1071.160s  1199.245s  1283.445s  1480.245s  1663.712s  1774.679s  1790.433s  1818.833s  1874.233s  2073.467s  2375.711s  2517.259s  2583.326s  2711.226s  2792.451s  3066.683s  3349.383s  3441.340s  3577.576s  3585.809s  3643.709s  3652.309s  3661.376s  3674.143s  3683.743s  3862.890s  3876.057s  3983.162s  3999.539s
+  AudioRMS        (  13 total): 220.500s  561.500s  581.500s  942.500s  1028.500s  1182.500s  1484.500s  2654.500s  2784.500s  3185.500s  3451.500s  4089.000s  4150.000s
+  Silence         (   2 total): 594.000s  2376.500s
+  SpectralFlux    (   1 total): 1782.791s
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      66.860s  Motion                                1  LOW    FALSE POSITIVE
+     101.420s  Motion                                1  LOW    FALSE POSITIVE
+     139.820s  Motion                                1  LOW    FALSE POSITIVE
+     149.190s  Motion                                1  LOW    FALSE POSITIVE
+     187.290s  Motion                                1  LOW    FALSE POSITIVE
+     220.500s  AudioRMS                              1  LOW    HIT  seg  1  pos=START
+     310.050s  Motion+Visual                         2  MED    FALSE POSITIVE
+     510.470s  Motion                                1  LOW    FALSE POSITIVE
+     561.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+     581.500s  AudioRMS                              1  LOW    HIT  seg  2  pos=START
+     590.500s  Motion                                1  LOW    FALSE POSITIVE
+     594.000s  Silence                               1  LOW    FALSE POSITIVE
+     669.360s  Motion                                1  LOW    FALSE POSITIVE
+     815.230s  Motion                                1  LOW    FALSE POSITIVE
+     829.500s  Motion                                1  LOW    FALSE POSITIVE
+     942.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1021.260s  Motion                                1  LOW    FALSE POSITIVE
+    1028.500s  AudioRMS                              1  LOW    HIT  seg  3  pos=START
+    1032.680s  Motion                                1  LOW    FALSE POSITIVE
+    1041.560s  Motion                                1  LOW    FALSE POSITIVE
+    1071.160s  Motion                                1  LOW    FALSE POSITIVE
+    1182.500s  AudioRMS                              1  LOW    HIT  seg  4  pos=END
+    1199.250s  Motion                                1  LOW    FALSE POSITIVE
+    1283.450s  Motion                                1  LOW    FALSE POSITIVE
+    1480.250s  Motion                                1  LOW    FALSE POSITIVE
+    1484.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1663.710s  Motion                                1  LOW    FALSE POSITIVE
+    1774.680s  Motion                                1  LOW    FALSE POSITIVE
+    1782.790s  SpectralFlux                          1  LOW    HIT  seg  6  pos=START
+    1790.430s  Motion                                1  LOW    FALSE POSITIVE
+    1818.830s  Motion                                1  LOW    FALSE POSITIVE
+    1874.230s  Motion                                1  LOW    FALSE POSITIVE
+    2073.470s  Motion                                1  LOW    FALSE POSITIVE
+    2376.110s  Motion+Silence                        2  MED    HIT  seg  7  pos=END
+    2380.390s  Visual                                1  LOW    FALSE POSITIVE
+    2517.260s  Motion                                1  LOW    FALSE POSITIVE
+    2583.330s  Motion                                1  LOW    FALSE POSITIVE
+    2654.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2711.230s  Motion                                1  LOW    FALSE POSITIVE
+    2784.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2792.450s  Motion                                1  LOW    FALSE POSITIVE
+    3058.310s  Visual                                1  LOW    HIT  seg  9  pos=START
+    3066.680s  Motion                                1  LOW    FALSE POSITIVE
+    3185.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    3349.380s  Motion                                1  LOW    FALSE POSITIVE
+    3441.340s  Motion                                1  LOW    HIT  seg 10  pos=START
+    3451.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    3577.580s  Motion                                1  LOW    FALSE POSITIVE
+    3585.810s  Motion                                1  LOW    FALSE POSITIVE
+    3643.710s  Motion                                1  LOW    FALSE POSITIVE
+    3652.310s  Motion                                1  LOW    FALSE POSITIVE
+    3661.380s  Motion                                1  LOW    FALSE POSITIVE
+    3674.140s  Motion                                1  LOW    FALSE POSITIVE
+    3683.740s  Motion                                1  LOW    FALSE POSITIVE
+    3702.780s  Visual                                1  LOW    FALSE POSITIVE
+    3862.890s  Motion                                1  LOW    FALSE POSITIVE
+    3876.060s  Motion                                1  LOW    FALSE POSITIVE
+    3983.160s  Motion                                1  LOW    HIT  seg 12  pos=START
+    3999.540s  Motion                                1  LOW    FALSE POSITIVE
+    4089.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    4150.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_189.mp4           219.267    224.876    5.609    220.500     +1.233    START       AudioRMS                        LOW
+    2  V_912.mp4           580.122    584.339    4.217    581.500     +1.378    START       AudioRMS                        LOW
+    3  V_480.mp4          1027.961   1032.771    4.810   1028.500     +0.539    START       AudioRMS                        LOW
+    4  V_908.mp4          1176.049   1180.756    4.707   1182.500     +6.451    END         AudioRMS                        LOW
+    5  V_907.mp4          1723.646   1729.056    5.410        ---        ---    MISSED                                          
+    6  V_422.mp4          1784.226   1789.544    5.318   1782.790     -1.436    START       SpectralFlux                    LOW
+    7  V_379.mp4          2370.788   2375.803    5.015   2376.110     +5.322    END         Motion+Silence                  MED
+    8  V_281.mp4          2734.542   2739.962    5.420        ---        ---    MISSED                                          
+    9  V_460.mp4          3058.288   3063.494    5.206   3058.310     +0.022    START       Visual                          LOW
+   10  V_335.mp4          3441.317   3446.020    4.703   3441.340     +0.023    START       Motion                          LOW
+   11  V_996.mp4          3748.727   3753.734    5.007        ---        ---    MISSED                                          
+   12  V_484.mp4          3982.273   3987.183    4.910   3983.160     +0.887    START       Motion                          LOW
+
+  MISSED SEGMENTS (3):
+  Seg  5  src=V_907.mp4  1723.646s-1729.056s  dur=5.410s
+         Closest fused event : 1774.680s  signals=Motion  conf=LOW
+         Distance from start : 51.034s
+         Distance from mid   : 48.329s
+         Distance from end   : 45.624s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  8  src=V_281.mp4  2734.542s-2739.962s  dur=5.420s
+         Closest fused event : 2711.230s  signals=Motion  conf=LOW
+         Distance from start : 23.312s
+         Distance from mid   : 26.022s
+         Distance from end   : 28.732s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg 11  src=V_996.mp4  3748.727s-3753.734s  dur=5.007s
+         Closest fused event : 3702.780s  signals=Visual  conf=LOW
+         Distance from start : 45.947s
+         Distance from mid   : 48.450s
+         Distance from end   : 50.954s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (52):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      66.860s  Motion                                1  LOW
+     2     101.420s  Motion                                1  LOW
+     3     139.820s  Motion                                1  LOW
+     4     149.190s  Motion                                1  LOW
+     5     187.290s  Motion                                1  LOW
+     6     310.050s  Motion+Visual                         2  MED
+     7     510.470s  Motion                                1  LOW
+     8     561.500s  AudioRMS                              1  LOW
+     9     590.500s  Motion                                1  LOW
+    10     594.000s  Silence                               1  LOW
+    11     669.360s  Motion                                1  LOW
+    12     815.230s  Motion                                1  LOW
+    13     829.500s  Motion                                1  LOW
+    14     942.500s  AudioRMS                              1  LOW
+    15    1021.260s  Motion                                1  LOW
+    16    1032.680s  Motion                                1  LOW
+    17    1041.560s  Motion                                1  LOW
+    18    1071.160s  Motion                                1  LOW
+    19    1199.250s  Motion                                1  LOW
+    20    1283.450s  Motion                                1  LOW
+    21    1480.250s  Motion                                1  LOW
+    22    1484.500s  AudioRMS                              1  LOW
+    23    1663.710s  Motion                                1  LOW
+    24    1774.680s  Motion                                1  LOW
+    25    1790.430s  Motion                                1  LOW
+    26    1818.830s  Motion                                1  LOW
+    27    1874.230s  Motion                                1  LOW
+    28    2073.470s  Motion                                1  LOW
+    29    2380.390s  Visual                                1  LOW
+    30    2517.260s  Motion                                1  LOW
+    31    2583.330s  Motion                                1  LOW
+    32    2654.500s  AudioRMS                              1  LOW
+    33    2711.230s  Motion                                1  LOW
+    34    2784.500s  AudioRMS                              1  LOW
+    35    2792.450s  Motion                                1  LOW
+    36    3066.680s  Motion                                1  LOW
+    37    3185.500s  AudioRMS                              1  LOW
+    38    3349.380s  Motion                                1  LOW
+    39    3451.500s  AudioRMS                              1  LOW
+    40    3577.580s  Motion                                1  LOW
+    41    3585.810s  Motion                                1  LOW
+    42    3643.710s  Motion                                1  LOW
+    43    3652.310s  Motion                                1  LOW
+    44    3661.380s  Motion                                1  LOW
+    45    3674.140s  Motion                                1  LOW
+    46    3683.740s  Motion                                1  LOW
+    47    3702.780s  Visual                                1  LOW
+    48    3862.890s  Motion                                1  LOW
+    49    3876.060s  Motion                                1  LOW
+    50    3999.540s  Motion                                1  LOW
+    51    4089.000s  AudioRMS                              1  LOW
+    52    4150.000s  AudioRMS                              1  LOW
+
+  FP spacing stats:
+    min gap  : 3.500s
+    max gap  : 306.920s
+    mean gap : 80.062s
+    median   : 61.000s
+    std      : 71.976s
+    gaps < 10s: 9  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               4      1       3       25.0%  309.13s  2380.39s  3058.31s  3702.78s
+  Motion              43      3      40        7.0%  66.86s  101.42s  139.82s  149.19s  187.29s  310.97s  510.47s  590.50s  669.36s  815.23s  829.50s  1021.26s  1032.68s  1041.56s  1071.16s  1199.25s  1283.45s  1480.25s  1663.71s  1774.68s  ... (+23 more)
+  AudioRMS            13      4       9       30.8%  220.50s  561.50s  581.50s  942.50s  1028.50s  1182.50s  1484.50s  2654.50s  2784.50s  3185.50s  3451.50s  4089.00s  4150.00s
+  Silence              2      1       1       50.0%  594.00s  2376.50s
+  SpectralFlux         1      1       0      100.0%  1782.79s
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_02_video4.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 2/4 segments detected  (50.0%)
+  False positives : 8  (video FPR: 80.0%)
+  Processing time : 156.4s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [...................................] 0 triggers
+  Motion                 [###################################] 4 triggers
+  AudioRMS               [########...........................] 1 triggers
+  Silence                [###################################] 4 triggers
+  SpectralFlux           [########...........................] 1 triggers
+                           Total fused events after clustering: 10
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   0 total): (none)
+  Motion          (   4 total): 125.456s  321.803s  485.718s  515.140s
+  AudioRMS        (   1 total): 702.000s
+  Silence         (   4 total): 974.500s  1010.000s  1219.500s  1364.000s
+  SpectralFlux    (   1 total): 890.646s
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+     125.460s  Motion                                1  LOW    FALSE POSITIVE
+     321.800s  Motion                                1  LOW    FALSE POSITIVE
+     485.720s  Motion                                1  LOW    HIT  seg  2  pos=START
+     515.140s  Motion                                1  LOW    FALSE POSITIVE
+     702.000s  AudioRMS                              1  LOW    HIT  seg  3  pos=START+END
+     890.650s  SpectralFlux                          1  LOW    FALSE POSITIVE
+     974.500s  Silence                               1  LOW    FALSE POSITIVE
+    1010.000s  Silence                               1  LOW    FALSE POSITIVE
+    1219.500s  Silence                               1  LOW    FALSE POSITIVE
+    1364.000s  Silence                               1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_329.mp4           195.400    200.613    5.213        ---        ---    MISSED                                          
+    2  V_403.mp4           485.462    488.884    3.422    485.720     +0.258    START       Motion                          LOW
+    3  V_443.mp4           699.709    704.413    4.704    702.000     +2.291    START+END   AudioRMS                        LOW
+    4  V_636.mp4          1018.140   1023.142    5.002        ---        ---    MISSED                                          
+
+  MISSED SEGMENTS (2):
+  Seg  1  src=V_329.mp4  195.400s-200.613s  dur=5.213s
+         Closest fused event : 125.460s  signals=Motion  conf=LOW
+         Distance from start : 69.940s
+         Distance from mid   : 72.547s
+         Distance from end   : 75.153s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  4  src=V_636.mp4  1018.140s-1023.142s  dur=5.002s
+         Closest fused event : 1010.000s  signals=Silence  conf=LOW
+         Distance from start : 8.140s
+         Distance from mid   : 10.641s
+         Distance from end   : 13.142s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (8):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1     125.460s  Motion                                1  LOW
+     2     321.800s  Motion                                1  LOW
+     3     515.140s  Motion                                1  LOW
+     4     890.650s  SpectralFlux                          1  LOW
+     5     974.500s  Silence                               1  LOW
+     6    1010.000s  Silence                               1  LOW
+     7    1219.500s  Silence                               1  LOW
+     8    1364.000s  Silence                               1  LOW
+
+  FP spacing stats:
+    min gap  : 35.500s
+    max gap  : 375.510s
+    mean gap : 176.934s
+    median   : 193.340s
+    std      : 100.612s
+    gaps < 10s: 0  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               0      0       0        0.0%  
+  Motion               4      1       3       25.0%  125.46s  321.80s  485.72s  515.14s
+  AudioRMS             1      1       0      100.0%  702.00s
+  Silence              4      0       4        0.0%  974.50s  1010.00s  1219.50s  1364.00s
+  SpectralFlux         1      0       1        0.0%  890.65s
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_03_video3.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 8/9 segments detected  (88.9%)
+  False positives : 40  (video FPR: 83.3%)
+  Processing time : 189.2s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [########...........................] 9 triggers
+  Motion                 [###################################] 37 triggers
+  AudioRMS               [#..................................] 2 triggers
+  Silence                [##.................................] 3 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 48
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   9 total): 185.256s  412.949s  694.382s  965.460s  1752.720s  1780.260s  2015.704s  2038.756s  2317.514s
+  Motion          (  37 total): 13.956s  35.923s  126.056s  159.390s  175.056s  211.568s  220.335s  228.402s  243.535s  302.902s  365.382s  414.249s  443.149s  494.615s  608.682s  695.882s  802.749s  816.833s  930.794s  957.127s  974.927s  1138.571s  1285.038s  1348.271s  1404.571s  1468.720s  1504.920s  1659.720s  1781.997s  1815.930s  1854.830s  1863.863s  1889.730s  1961.930s  2055.589s  2150.756s  2462.514s
+  AudioRMS        (   2 total): 901.500s  2434.500s
+  Silence         (   3 total): 430.000s  1371.500s  2199.000s
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      13.960s  Motion                                1  LOW    FALSE POSITIVE
+      35.920s  Motion                                1  LOW    FALSE POSITIVE
+     126.060s  Motion                                1  LOW    FALSE POSITIVE
+     159.390s  Motion                                1  LOW    FALSE POSITIVE
+     175.060s  Motion                                1  LOW    FALSE POSITIVE
+     185.260s  Visual                                1  LOW    HIT  seg  1  pos=END
+     211.570s  Motion                                1  LOW    FALSE POSITIVE
+     220.330s  Motion                                1  LOW    FALSE POSITIVE
+     228.400s  Motion                                1  LOW    FALSE POSITIVE
+     243.530s  Motion                                1  LOW    FALSE POSITIVE
+     302.900s  Motion                                1  LOW    FALSE POSITIVE
+     365.380s  Motion                                1  LOW    HIT  seg  2  pos=END
+     413.600s  Motion+Visual                         2  MED    FALSE POSITIVE
+     430.000s  Silence                               1  LOW    FALSE POSITIVE
+     443.150s  Motion                                1  LOW    FALSE POSITIVE
+     494.620s  Motion                                1  LOW    FALSE POSITIVE
+     608.680s  Motion                                1  LOW    FALSE POSITIVE
+     695.130s  Motion+Visual                         2  MED    FALSE POSITIVE
+     802.750s  Motion                                1  LOW    FALSE POSITIVE
+     816.830s  Motion                                1  LOW    HIT  seg  3  pos=START
+     901.500s  AudioRMS                              1  LOW    HIT  seg  4  pos=END
+     930.790s  Motion                                1  LOW    FALSE POSITIVE
+     957.130s  Motion                                1  LOW    FALSE POSITIVE
+     965.460s  Visual                                1  LOW    FALSE POSITIVE
+     974.930s  Motion                                1  LOW    FALSE POSITIVE
+    1138.570s  Motion                                1  LOW    HIT  seg  5  pos=END
+    1285.040s  Motion                                1  LOW    FALSE POSITIVE
+    1348.270s  Motion                                1  LOW    FALSE POSITIVE
+    1371.500s  Silence                               1  LOW    FALSE POSITIVE
+    1404.570s  Motion                                1  LOW    FALSE POSITIVE
+    1468.720s  Motion                                1  LOW    HIT  seg  6  pos=END
+    1504.920s  Motion                                1  LOW    FALSE POSITIVE
+    1659.720s  Motion                                1  LOW    FALSE POSITIVE
+    1752.720s  Visual                                1  LOW    FALSE POSITIVE
+    1781.130s  Motion+Visual                         2  MED    HIT  seg  7  pos=END
+    1815.930s  Motion                                1  LOW    FALSE POSITIVE
+    1854.830s  Motion                                1  LOW    FALSE POSITIVE
+    1863.860s  Motion                                1  LOW    FALSE POSITIVE
+    1889.730s  Motion                                1  LOW    FALSE POSITIVE
+    1961.930s  Motion                                1  LOW    FALSE POSITIVE
+    2015.700s  Visual                                1  LOW    HIT  seg  8  pos=START
+    2038.760s  Visual                                1  LOW    FALSE POSITIVE
+    2055.590s  Motion                                1  LOW    FALSE POSITIVE
+    2150.760s  Motion                                1  LOW    FALSE POSITIVE
+    2199.000s  Silence                               1  LOW    FALSE POSITIVE
+    2317.510s  Visual                                1  LOW    FALSE POSITIVE
+    2434.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2462.510s  Motion                                1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_182.mp4           181.633    185.345    3.712    185.260     +3.627    END         Visual                          LOW
+    2  V_625.mp4           360.587    364.592    4.005    365.380     +4.793    END         Motion                          LOW
+    3  V_137.mp4           816.810    822.727    5.917    816.830     +0.020    START       Motion                          LOW
+    4  V_116.mp4           898.334    903.437    5.103    901.500     +3.166    END         AudioRMS                        LOW
+    5  V_313.mp4          1132.532   1137.748    5.216   1138.570     +6.038    END         Motion                          LOW
+    6  V_231.mp4          1463.415   1468.530    5.115   1468.720     +5.305    END         Motion                          LOW
+    7  V_472.mp4          1775.437   1780.340    4.903   1781.130     +5.693    END         Motion+Visual                   MED
+    8  V_216.mp4          2013.447   2018.666    5.219   2015.700     +2.253    START       Visual                          LOW
+    9  V_393.mp4          2287.488   2292.491    5.003        ---        ---    MISSED                                          
+
+  MISSED SEGMENTS (1):
+  Seg  9  src=V_393.mp4  2287.488s-2292.491s  dur=5.003s
+         Closest fused event : 2317.510s  signals=Visual  conf=LOW
+         Distance from start : 30.022s
+         Distance from mid   : 27.521s
+         Distance from end   : 25.019s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (40):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      13.960s  Motion                                1  LOW
+     2      35.920s  Motion                                1  LOW
+     3     126.060s  Motion                                1  LOW
+     4     159.390s  Motion                                1  LOW
+     5     175.060s  Motion                                1  LOW
+     6     211.570s  Motion                                1  LOW
+     7     220.330s  Motion                                1  LOW
+     8     228.400s  Motion                                1  LOW
+     9     243.530s  Motion                                1  LOW
+    10     302.900s  Motion                                1  LOW
+    11     413.600s  Motion+Visual                         2  MED
+    12     430.000s  Silence                               1  LOW
+    13     443.150s  Motion                                1  LOW
+    14     494.620s  Motion                                1  LOW
+    15     608.680s  Motion                                1  LOW
+    16     695.130s  Motion+Visual                         2  MED
+    17     802.750s  Motion                                1  LOW
+    18     930.790s  Motion                                1  LOW
+    19     957.130s  Motion                                1  LOW
+    20     965.460s  Visual                                1  LOW
+    21     974.930s  Motion                                1  LOW
+    22    1285.040s  Motion                                1  LOW
+    23    1348.270s  Motion                                1  LOW
+    24    1371.500s  Silence                               1  LOW
+    25    1404.570s  Motion                                1  LOW
+    26    1504.920s  Motion                                1  LOW
+    27    1659.720s  Motion                                1  LOW
+    28    1752.720s  Visual                                1  LOW
+    29    1815.930s  Motion                                1  LOW
+    30    1854.830s  Motion                                1  LOW
+    31    1863.860s  Motion                                1  LOW
+    32    1889.730s  Motion                                1  LOW
+    33    1961.930s  Motion                                1  LOW
+    34    2038.760s  Visual                                1  LOW
+    35    2055.590s  Motion                                1  LOW
+    36    2150.760s  Motion                                1  LOW
+    37    2199.000s  Silence                               1  LOW
+    38    2317.510s  Visual                                1  LOW
+    39    2434.500s  AudioRMS                              1  LOW
+    40    2462.510s  Motion                                1  LOW
+
+  FP spacing stats:
+    min gap  : 8.070s
+    max gap  : 310.110s
+    mean gap : 62.783s
+    median   : 48.240s
+    std      : 57.326s
+    gaps < 10s: 5  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               9      3       6       33.3%  185.26s  412.95s  694.38s  965.46s  1752.72s  1780.26s  2015.70s  2038.76s  2317.51s
+  Motion              37      5      32       13.5%  13.96s  35.92s  126.06s  159.39s  175.06s  211.57s  220.33s  228.40s  243.53s  302.90s  365.38s  414.25s  443.15s  494.62s  608.68s  695.88s  802.75s  816.83s  930.79s  957.13s  ... (+17 more)
+  AudioRMS             2      1       1       50.0%  901.50s  2434.50s
+  Silence              3      0       3        0.0%  430.00s  1371.50s  2199.00s
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_04_video1.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 2/2 segments detected  (100.0%)
+  False positives : 16  (video FPR: 88.9%)
+  Processing time : 130.1s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [##.................................] 1 triggers
+  Motion                 [###################################] 15 triggers
+  AudioRMS               [####...............................] 2 triggers
+  Silence                [##.................................] 1 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 18
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   1 total): 401.656s
+  Motion          (  15 total): 83.790s  128.090s  141.590s  165.490s  193.223s  524.656s  714.578s  811.445s  1035.012s  1064.284s  1076.284s  1099.151s  1127.651s  1187.118s  1195.351s
+  AudioRMS        (   2 total): 697.500s  1112.000s
+  Silence         (   1 total): 1064.500s
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      83.790s  Motion                                1  LOW    FALSE POSITIVE
+     128.090s  Motion                                1  LOW    FALSE POSITIVE
+     141.590s  Motion                                1  LOW    FALSE POSITIVE
+     165.490s  Motion                                1  LOW    FALSE POSITIVE
+     193.220s  Motion                                1  LOW    FALSE POSITIVE
+     401.660s  Visual                                1  LOW    FALSE POSITIVE
+     524.660s  Motion                                1  LOW    HIT  seg  1  pos=START
+     697.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+     714.580s  Motion                                1  LOW    FALSE POSITIVE
+     811.440s  Motion                                1  LOW    FALSE POSITIVE
+    1035.010s  Motion                                1  LOW    FALSE POSITIVE
+    1064.390s  Motion+Silence                        2  MED    HIT  seg  2  pos=START
+    1076.280s  Motion                                1  LOW    FALSE POSITIVE
+    1099.150s  Motion                                1  LOW    FALSE POSITIVE
+    1112.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1127.650s  Motion                                1  LOW    FALSE POSITIVE
+    1187.120s  Motion                                1  LOW    FALSE POSITIVE
+    1195.350s  Motion                                1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_923.mp4           524.633    529.555    4.922    524.660     +0.027    START       Motion                          LOW
+    2  V_382.mp4          1064.261   1069.261    5.000   1064.390     +0.129    START       Motion+Silence                  MED
+
+  MISSED SEGMENTS: none -- all segments detected
+
+  FALSE POSITIVE EVENTS (16):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      83.790s  Motion                                1  LOW
+     2     128.090s  Motion                                1  LOW
+     3     141.590s  Motion                                1  LOW
+     4     165.490s  Motion                                1  LOW
+     5     193.220s  Motion                                1  LOW
+     6     401.660s  Visual                                1  LOW
+     7     697.500s  AudioRMS                              1  LOW
+     8     714.580s  Motion                                1  LOW
+     9     811.440s  Motion                                1  LOW
+    10    1035.010s  Motion                                1  LOW
+    11    1076.280s  Motion                                1  LOW
+    12    1099.150s  Motion                                1  LOW
+    13    1112.000s  AudioRMS                              1  LOW
+    14    1127.650s  Motion                                1  LOW
+    15    1187.120s  Motion                                1  LOW
+    16    1195.350s  Motion                                1  LOW
+
+  FP spacing stats:
+    min gap  : 8.230s
+    max gap  : 295.840s
+    mean gap : 74.104s
+    median   : 27.730s
+    std      : 88.687s
+    gaps < 10s: 1  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               1      0       1        0.0%  401.66s
+  Motion              15      2      13       13.3%  83.79s  128.09s  141.59s  165.49s  193.22s  524.66s  714.58s  811.44s  1035.01s  1064.28s  1076.28s  1099.15s  1127.65s  1187.12s  1195.35s
+  AudioRMS             2      0       2        0.0%  697.50s  1112.00s
+  Silence              1      1       0      100.0%  1064.50s
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_05_video2.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 9/12 segments detected  (75.0%)
+  False positives : 51  (video FPR: 85.0%)
+  Processing time : 466.4s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [###................................] 5 triggers
+  Motion                 [###################################] 46 triggers
+  AudioRMS               [#######............................] 10 triggers
+  Silence                [#..................................] 2 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 60
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   5 total): 308.125s  2380.350s  3065.645s  3548.771s  3702.137s
+  Motion          (  46 total): 66.856s  75.891s  106.092s  144.492s  191.958s  309.958s  509.458s  590.619s  669.486s  802.666s  821.233s  842.900s  1027.266s  1042.633s  1072.233s  1201.588s  1285.788s  1482.588s  1491.882s  1669.732s  1775.166s  1785.954s  1819.036s  1874.436s  2073.669s  2380.350s  2430.979s  2521.282s  2587.349s  2715.249s  2790.882s  2803.345s  3065.645s  3116.696s  3353.537s  3576.937s  3585.171s  3643.071s  3651.671s  3660.737s  3673.504s  3683.104s  3784.432s  3861.543s  3874.710s  3998.353s
+  AudioRMS        (  10 total): 567.000s  808.500s  949.000s  1035.000s  1059.000s  1226.500s  1265.000s  1487.000s  3024.500s  4086.000s
+  Silence         (   2 total): 594.000s  2221.000s
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      66.860s  Motion                                1  LOW    FALSE POSITIVE
+      75.890s  Motion                                1  LOW    HIT  seg  1  pos=END
+     106.090s  Motion                                1  LOW    FALSE POSITIVE
+     144.490s  Motion                                1  LOW    FALSE POSITIVE
+     191.960s  Motion                                1  LOW    FALSE POSITIVE
+     309.040s  Motion+Visual                         2  MED    FALSE POSITIVE
+     509.460s  Motion                                1  LOW    FALSE POSITIVE
+     567.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+     590.620s  Motion                                1  LOW    FALSE POSITIVE
+     594.000s  Silence                               1  LOW    FALSE POSITIVE
+     669.490s  Motion                                1  LOW    FALSE POSITIVE
+     802.670s  Motion                                1  LOW    HIT  seg  3  pos=START
+     808.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+     821.230s  Motion                                1  LOW    FALSE POSITIVE
+     842.900s  Motion                                1  LOW    FALSE POSITIVE
+     949.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1027.270s  Motion                                1  LOW    FALSE POSITIVE
+    1035.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1042.630s  Motion                                1  LOW    FALSE POSITIVE
+    1059.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1072.230s  Motion                                1  LOW    FALSE POSITIVE
+    1201.590s  Motion                                1  LOW    FALSE POSITIVE
+    1226.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1265.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1285.790s  Motion                                1  LOW    FALSE POSITIVE
+    1482.590s  Motion                                1  LOW    FALSE POSITIVE
+    1487.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1491.880s  Motion                                1  LOW    HIT  seg  5  pos=START
+    1669.730s  Motion                                1  LOW    FALSE POSITIVE
+    1775.170s  Motion                                1  LOW    FALSE POSITIVE
+    1785.950s  Motion                                1  LOW    HIT  seg  6  pos=START
+    1819.040s  Motion                                1  LOW    FALSE POSITIVE
+    1874.440s  Motion                                1  LOW    FALSE POSITIVE
+    2073.670s  Motion                                1  LOW    FALSE POSITIVE
+    2221.000s  Silence                               1  LOW    HIT  seg  7  pos=END
+    2380.350s  Motion+Visual                         2  MED    FALSE POSITIVE
+    2430.980s  Motion                                1  LOW    HIT  seg  8  pos=START
+    2521.280s  Motion                                1  LOW    FALSE POSITIVE
+    2587.350s  Motion                                1  LOW    FALSE POSITIVE
+    2715.250s  Motion                                1  LOW    FALSE POSITIVE
+    2790.880s  Motion                                1  LOW    FALSE POSITIVE
+    2803.340s  Motion                                1  LOW    HIT  seg  9  pos=START
+    3024.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    3065.640s  Motion+Visual                         2  MED    FALSE POSITIVE
+    3116.700s  Motion                                1  LOW    HIT  seg 10  pos=START
+    3353.540s  Motion                                1  LOW    FALSE POSITIVE
+    3548.770s  Visual                                1  LOW    FALSE POSITIVE
+    3576.940s  Motion                                1  LOW    FALSE POSITIVE
+    3585.170s  Motion                                1  LOW    FALSE POSITIVE
+    3643.070s  Motion                                1  LOW    FALSE POSITIVE
+    3651.670s  Motion                                1  LOW    FALSE POSITIVE
+    3660.740s  Motion                                1  LOW    FALSE POSITIVE
+    3673.500s  Motion                                1  LOW    FALSE POSITIVE
+    3683.100s  Motion                                1  LOW    FALSE POSITIVE
+    3702.140s  Visual                                1  LOW    FALSE POSITIVE
+    3784.430s  Motion                                1  LOW    HIT  seg 11  pos=END
+    3861.540s  Motion                                1  LOW    FALSE POSITIVE
+    3874.710s  Motion                                1  LOW    FALSE POSITIVE
+    3998.350s  Motion                                1  LOW    FALSE POSITIVE
+    4086.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_309.mp4            71.367     75.969    4.602     75.890     +4.523    END         Motion                          LOW
+    2  V_907.mp4           536.720    542.130    5.410        ---        ---    MISSED                                          
+    3  V_37.mp4            802.477    808.210    5.733    802.670     +0.193    START       Motion                          LOW
+    4  V_132.mp4          1142.352   1148.265    5.913        ---        ---    MISSED                                          
+    5  V_30.mp4           1491.859   1495.376    3.517   1491.880     +0.021    START       Motion                          LOW
+    6  V_372.mp4          1785.931   1790.946    5.015   1785.950     +0.019    START       Motion                          LOW
+    7  V_157.mp4          2215.891   2220.394    4.503   2221.000     +5.109    END         Silence                         LOW
+    8  V_305.mp4          2430.956   2435.259    4.303   2430.980     +0.024    START       Motion                          LOW
+    9  V_461.mp4          2803.322   2809.022    5.700   2803.340     +0.018    START       Motion                          LOW
+   10  V_74.mp4           3116.673   3121.781    5.108   3116.700     +0.027    START       Motion                          LOW
+   11  V_919.mp4          3780.309   3784.520    4.211   3784.430     +4.121    END         Motion                          LOW
+   12  V_90.mp4           3888.594   3893.597    5.003        ---        ---    MISSED                                          
+
+  MISSED SEGMENTS (3):
+  Seg  2  src=V_907.mp4  536.720s-542.130s  dur=5.410s
+         Closest fused event : 567.000s  signals=AudioRMS  conf=LOW
+         Distance from start : 30.280s
+         Distance from mid   : 27.575s
+         Distance from end   : 24.870s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  4  src=V_132.mp4  1142.352s-1148.265s  dur=5.913s
+         Closest fused event : 1201.590s  signals=Motion  conf=LOW
+         Distance from start : 59.238s
+         Distance from mid   : 56.281s
+         Distance from end   : 53.325s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg 12  src=V_90.mp4  3888.594s-3893.597s  dur=5.003s
+         Closest fused event : 3874.710s  signals=Motion  conf=LOW
+         Distance from start : 13.884s
+         Distance from mid   : 16.386s
+         Distance from end   : 18.887s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (51):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      66.860s  Motion                                1  LOW
+     2     106.090s  Motion                                1  LOW
+     3     144.490s  Motion                                1  LOW
+     4     191.960s  Motion                                1  LOW
+     5     309.040s  Motion+Visual                         2  MED
+     6     509.460s  Motion                                1  LOW
+     7     567.000s  AudioRMS                              1  LOW
+     8     590.620s  Motion                                1  LOW
+     9     594.000s  Silence                               1  LOW
+    10     669.490s  Motion                                1  LOW
+    11     808.500s  AudioRMS                              1  LOW
+    12     821.230s  Motion                                1  LOW
+    13     842.900s  Motion                                1  LOW
+    14     949.000s  AudioRMS                              1  LOW
+    15    1027.270s  Motion                                1  LOW
+    16    1035.000s  AudioRMS                              1  LOW
+    17    1042.630s  Motion                                1  LOW
+    18    1059.000s  AudioRMS                              1  LOW
+    19    1072.230s  Motion                                1  LOW
+    20    1201.590s  Motion                                1  LOW
+    21    1226.500s  AudioRMS                              1  LOW
+    22    1265.000s  AudioRMS                              1  LOW
+    23    1285.790s  Motion                                1  LOW
+    24    1482.590s  Motion                                1  LOW
+    25    1487.000s  AudioRMS                              1  LOW
+    26    1669.730s  Motion                                1  LOW
+    27    1775.170s  Motion                                1  LOW
+    28    1819.040s  Motion                                1  LOW
+    29    1874.440s  Motion                                1  LOW
+    30    2073.670s  Motion                                1  LOW
+    31    2380.350s  Motion+Visual                         2  MED
+    32    2521.280s  Motion                                1  LOW
+    33    2587.350s  Motion                                1  LOW
+    34    2715.250s  Motion                                1  LOW
+    35    2790.880s  Motion                                1  LOW
+    36    3024.500s  AudioRMS                              1  LOW
+    37    3065.640s  Motion+Visual                         2  MED
+    38    3353.540s  Motion                                1  LOW
+    39    3548.770s  Visual                                1  LOW
+    40    3576.940s  Motion                                1  LOW
+    41    3585.170s  Motion                                1  LOW
+    42    3643.070s  Motion                                1  LOW
+    43    3651.670s  Motion                                1  LOW
+    44    3660.740s  Motion                                1  LOW
+    45    3673.500s  Motion                                1  LOW
+    46    3683.100s  Motion                                1  LOW
+    47    3702.140s  Visual                                1  LOW
+    48    3861.540s  Motion                                1  LOW
+    49    3874.710s  Motion                                1  LOW
+    50    3998.350s  Motion                                1  LOW
+    51    4086.000s  AudioRMS                              1  LOW
+
+  FP spacing stats:
+    min gap  : 3.380s
+    max gap  : 306.680s
+    mean gap : 80.383s
+    median   : 51.435s
+    std      : 77.709s
+    gaps < 10s: 8  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               5      0       5        0.0%  308.12s  2380.35s  3065.64s  3548.77s  3702.14s
+  Motion              46      8      38       17.4%  66.86s  75.89s  106.09s  144.49s  191.96s  309.96s  509.46s  590.62s  669.49s  802.67s  821.23s  842.90s  1027.27s  1042.63s  1072.23s  1201.59s  1285.79s  1482.59s  1491.88s  1669.73s  ... (+26 more)
+  AudioRMS            10      0      10        0.0%  567.00s  808.50s  949.00s  1035.00s  1059.00s  1226.50s  1265.00s  1487.00s  3024.50s  4086.00s
+  Silence              2      1       1       50.0%  594.00s  2221.00s
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_06_video4.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 4/4 segments detected  (100.0%)
+  False positives : 8  (video FPR: 66.7%)
+  Processing time : 161.8s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [#####..............................] 1 triggers
+  Motion                 [###################################] 6 triggers
+  AudioRMS               [...................................] 0 triggers
+  Silence                [#############################......] 5 triggers
+  SpectralFlux           [#####..............................] 1 triggers
+                           Total fused events after clustering: 12
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   1 total): 1244.138s
+  Motion          (   6 total): 125.456s  156.256s  320.890s  508.511s  975.404s  1262.322s
+  AudioRMS        (   0 total): (none)
+  Silence         (   5 total): 969.000s  1009.500s  1213.500s  1263.500s  1364.000s
+  SpectralFlux    (   1 total): 1272.173s
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+     125.460s  Motion                                1  LOW    FALSE POSITIVE
+     156.260s  Motion                                1  LOW    HIT  seg  1  pos=START+END
+     320.890s  Motion                                1  LOW    FALSE POSITIVE
+     508.510s  Motion                                1  LOW    HIT  seg  2  pos=END
+     969.000s  Silence                               1  LOW    FALSE POSITIVE
+     975.400s  Motion                                1  LOW    HIT  seg  3  pos=START
+    1009.500s  Silence                               1  LOW    FALSE POSITIVE
+    1213.500s  Silence                               1  LOW    FALSE POSITIVE
+    1244.140s  Visual                                1  LOW    FALSE POSITIVE
+    1262.910s  Motion+Silence                        2  MED    HIT  seg  4  pos=START
+    1272.170s  SpectralFlux                          1  LOW    FALSE POSITIVE
+    1364.000s  Silence                               1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_416.mp4           154.433    158.733    4.300    156.260     +1.827    START+END   Motion                          LOW
+    2  V_482.mp4           503.788    508.599    4.811    508.510     +4.722    END         Motion                          LOW
+    3  V_960.mp4           975.381    979.181    3.800    975.400     +0.019    START       Motion                          LOW
+    4  V_173.mp4          1260.732   1266.139    5.407   1262.910     +2.178    START       Motion+Silence                  MED
+
+  MISSED SEGMENTS: none -- all segments detected
+
+  FALSE POSITIVE EVENTS (8):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1     125.460s  Motion                                1  LOW
+     2     320.890s  Motion                                1  LOW
+     3     969.000s  Silence                               1  LOW
+     4    1009.500s  Silence                               1  LOW
+     5    1213.500s  Silence                               1  LOW
+     6    1244.140s  Visual                                1  LOW
+     7    1272.170s  SpectralFlux                          1  LOW
+     8    1364.000s  Silence                               1  LOW
+
+  FP spacing stats:
+    min gap  : 28.030s
+    max gap  : 648.110s
+    mean gap : 176.934s
+    median   : 91.830s
+    std      : 204.420s
+    gaps < 10s: 0  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               1      0       1        0.0%  1244.14s
+  Motion               6      4       2       66.7%  125.46s  156.26s  320.89s  508.51s  975.40s  1262.32s
+  AudioRMS             0      0       0        0.0%  
+  Silence              5      1       4       20.0%  969.00s  1009.50s  1213.50s  1263.50s  1364.00s
+  SpectralFlux         1      0       1        0.0%  1272.17s
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_07_video3.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 5/9 segments detected  (55.6%)
+  False positives : 44  (video FPR: 89.8%)
+  Processing time : 200.6s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [#######............................] 8 triggers
+  Motion                 [###################################] 36 triggers
+  AudioRMS               [##.................................] 3 triggers
+  Silence                [###................................] 4 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 49
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   8 total): 416.176s  697.610s  966.546s  1654.439s  1759.041s  1791.575s  2039.796s  2313.463s
+  Motion          (  36 total): 13.956s  35.923s  132.036s  165.369s  181.036s  213.769s  222.536s  230.603s  245.736s  305.103s  417.476s  446.376s  497.843s  611.910s  699.110s  797.500s  810.377s  927.111s  958.213s  976.013s  1280.813s  1349.879s  1470.246s  1505.840s  1657.275s  1666.041s  1817.175s  1856.075s  1865.108s  1890.975s  1968.263s  2031.463s  2056.629s  2151.796s  2399.275s  2462.254s
+  AudioRMS        (   3 total): 1288.000s  1934.000s  2406.500s
+  Silence         (   4 total): 433.000s  1371.500s  2163.500s  2198.500s
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      13.960s  Motion                                1  LOW    FALSE POSITIVE
+      35.920s  Motion                                1  LOW    FALSE POSITIVE
+     132.040s  Motion                                1  LOW    FALSE POSITIVE
+     165.370s  Motion                                1  LOW    FALSE POSITIVE
+     181.040s  Motion                                1  LOW    FALSE POSITIVE
+     213.770s  Motion                                1  LOW    FALSE POSITIVE
+     222.540s  Motion                                1  LOW    FALSE POSITIVE
+     230.600s  Motion                                1  LOW    FALSE POSITIVE
+     245.740s  Motion                                1  LOW    FALSE POSITIVE
+     305.100s  Motion                                1  LOW    FALSE POSITIVE
+     416.830s  Motion+Visual                         2  MED    FALSE POSITIVE
+     433.000s  Silence                               1  LOW    FALSE POSITIVE
+     446.380s  Motion                                1  LOW    FALSE POSITIVE
+     497.840s  Motion                                1  LOW    FALSE POSITIVE
+     611.910s  Motion                                1  LOW    FALSE POSITIVE
+     698.360s  Motion+Visual                         2  MED    FALSE POSITIVE
+     797.500s  Motion                                1  LOW    HIT  seg  3  pos=END
+     810.380s  Motion                                1  LOW    FALSE POSITIVE
+     927.110s  Motion                                1  LOW    HIT  seg  4  pos=START
+     958.210s  Motion                                1  LOW    FALSE POSITIVE
+     966.550s  Visual                                1  LOW    FALSE POSITIVE
+     976.010s  Motion                                1  LOW    FALSE POSITIVE
+    1280.810s  Motion                                1  LOW    HIT  seg  5  pos=START
+    1288.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1349.880s  Motion                                1  LOW    FALSE POSITIVE
+    1371.500s  Silence                               1  LOW    FALSE POSITIVE
+    1470.250s  Motion                                1  LOW    FALSE POSITIVE
+    1505.840s  Motion                                1  LOW    FALSE POSITIVE
+    1654.440s  Visual                                1  LOW    HIT  seg  7  pos=IN-BETWEEN
+    1657.270s  Motion                                1  LOW    FALSE POSITIVE
+    1666.040s  Motion                                1  LOW    FALSE POSITIVE
+    1759.040s  Visual                                1  LOW    FALSE POSITIVE
+    1791.570s  Visual                                1  LOW    FALSE POSITIVE
+    1817.170s  Motion                                1  LOW    FALSE POSITIVE
+    1856.070s  Motion                                1  LOW    FALSE POSITIVE
+    1865.110s  Motion                                1  LOW    FALSE POSITIVE
+    1890.970s  Motion                                1  LOW    FALSE POSITIVE
+    1934.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1968.260s  Motion                                1  LOW    FALSE POSITIVE
+    2031.460s  Motion                                1  LOW    FALSE POSITIVE
+    2039.800s  Visual                                1  LOW    FALSE POSITIVE
+    2056.630s  Motion                                1  LOW    FALSE POSITIVE
+    2151.800s  Motion                                1  LOW    FALSE POSITIVE
+    2163.500s  Silence                               1  LOW    FALSE POSITIVE
+    2198.500s  Silence                               1  LOW    FALSE POSITIVE
+    2313.460s  Visual                                1  LOW    FALSE POSITIVE
+    2399.270s  Motion                                1  LOW    HIT  seg 10  pos=END
+    2406.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2462.250s  Motion                                1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_132.mp4            96.467    102.380    5.913        ---        ---    MISSED                                          
+    2  V_122.mp4           382.985    387.987    5.002        ---        ---    MISSED                                          
+    3  V_919.mp4           793.377    797.588    4.211    797.500     +4.123    END         Motion                          LOW
+    4  V_297.mp4           927.289    931.990    4.701    927.110     -0.179    START       Motion                          LOW
+    5  V_37.mp4           1280.990   1286.723    5.733   1280.810     -0.180    START       Motion                          LOW
+    6  V_432.mp4          1490.095   1494.517    4.422        ---        ---    MISSED                                          
+    7  V_227.mp4          1651.883   1657.085    5.202   1654.440     +2.557    IN-BETWEEN  Visual                          LOW
+    8  V_524.mp4          1924.961   1929.973    5.012        ---        ---    MISSED                                          
+   10  V_182.mp4          2395.652   2399.364    3.712   2399.270     +3.618    END         Motion                          LOW
+
+  MISSED SEGMENTS (4):
+  Seg  1  src=V_132.mp4  96.467s-102.380s  dur=5.913s
+         Closest fused event : 132.040s  signals=Motion  conf=LOW
+         Distance from start : 35.573s
+         Distance from mid   : 32.617s
+         Distance from end   : 29.660s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  2  src=V_122.mp4  382.985s-387.987s  dur=5.002s
+         Closest fused event : 416.830s  signals=Motion+Visual  conf=MED
+         Distance from start : 33.845s
+         Distance from mid   : 31.344s
+         Distance from end   : 28.843s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  6  src=V_432.mp4  1490.095s-1494.517s  dur=4.422s
+         Closest fused event : 1505.840s  signals=Motion  conf=LOW
+         Distance from start : 15.745s
+         Distance from mid   : 13.534s
+         Distance from end   : 11.323s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  8  src=V_524.mp4  1924.961s-1929.973s  dur=5.012s
+         Closest fused event : 1934.000s  signals=AudioRMS  conf=LOW
+         Distance from start : 9.039s
+         Distance from mid   : 6.533s
+         Distance from end   : 4.027s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (44):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      13.960s  Motion                                1  LOW
+     2      35.920s  Motion                                1  LOW
+     3     132.040s  Motion                                1  LOW
+     4     165.370s  Motion                                1  LOW
+     5     181.040s  Motion                                1  LOW
+     6     213.770s  Motion                                1  LOW
+     7     222.540s  Motion                                1  LOW
+     8     230.600s  Motion                                1  LOW
+     9     245.740s  Motion                                1  LOW
+    10     305.100s  Motion                                1  LOW
+    11     416.830s  Motion+Visual                         2  MED
+    12     433.000s  Silence                               1  LOW
+    13     446.380s  Motion                                1  LOW
+    14     497.840s  Motion                                1  LOW
+    15     611.910s  Motion                                1  LOW
+    16     698.360s  Motion+Visual                         2  MED
+    17     810.380s  Motion                                1  LOW
+    18     958.210s  Motion                                1  LOW
+    19     966.550s  Visual                                1  LOW
+    20     976.010s  Motion                                1  LOW
+    21    1288.000s  AudioRMS                              1  LOW
+    22    1349.880s  Motion                                1  LOW
+    23    1371.500s  Silence                               1  LOW
+    24    1470.250s  Motion                                1  LOW
+    25    1505.840s  Motion                                1  LOW
+    26    1657.270s  Motion                                1  LOW
+    27    1666.040s  Motion                                1  LOW
+    28    1759.040s  Visual                                1  LOW
+    29    1791.570s  Visual                                1  LOW
+    30    1817.170s  Motion                                1  LOW
+    31    1856.070s  Motion                                1  LOW
+    32    1865.110s  Motion                                1  LOW
+    33    1890.970s  Motion                                1  LOW
+    34    1934.000s  AudioRMS                              1  LOW
+    35    1968.260s  Motion                                1  LOW
+    36    2031.460s  Motion                                1  LOW
+    37    2039.800s  Visual                                1  LOW
+    38    2056.630s  Motion                                1  LOW
+    39    2151.800s  Motion                                1  LOW
+    40    2163.500s  Silence                               1  LOW
+    41    2198.500s  Silence                               1  LOW
+    42    2313.460s  Visual                                1  LOW
+    43    2406.500s  AudioRMS                              1  LOW
+    44    2462.250s  Motion                                1  LOW
+
+  FP spacing stats:
+    min gap  : 8.060s
+    max gap  : 311.990s
+    mean gap : 56.937s
+    median   : 35.000s
+    std      : 56.717s
+    gaps < 10s: 7  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               8      1       7       12.5%  416.18s  697.61s  966.55s  1654.44s  1759.04s  1791.57s  2039.80s  2313.46s
+  Motion              36      4      32       11.1%  13.96s  35.92s  132.04s  165.37s  181.04s  213.77s  222.54s  230.60s  245.74s  305.10s  417.48s  446.38s  497.84s  611.91s  699.11s  797.50s  810.38s  927.11s  958.21s  976.01s  ... (+16 more)
+  AudioRMS             3      0       3        0.0%  1288.00s  1934.00s  2406.50s
+  Silence              4      0       4        0.0%  433.00s  1371.50s  2163.50s  2198.50s
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_08_video1.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 3/3 segments detected  (100.0%)
+  False positives : 16  (video FPR: 84.2%)
+  Processing time : 132.4s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [##.................................] 1 triggers
+  Motion                 [###################################] 16 triggers
+  AudioRMS               [######.............................] 3 triggers
+  Silence                [...................................] 0 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 19
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   1 total): 408.742s
+  Motion          (  16 total): 83.790s  128.090s  141.590s  165.490s  193.223s  350.409s  474.501s  721.376s  818.243s  977.877s  1047.111s  1083.311s  1106.178s  1134.678s  1194.144s  1202.378s
+  AudioRMS        (   3 total): 475.500s  706.000s  1121.500s
+  Silence         (   0 total): (none)
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      83.790s  Motion                                1  LOW    FALSE POSITIVE
+     128.090s  Motion                                1  LOW    FALSE POSITIVE
+     141.590s  Motion                                1  LOW    FALSE POSITIVE
+     165.490s  Motion                                1  LOW    FALSE POSITIVE
+     193.220s  Motion                                1  LOW    FALSE POSITIVE
+     350.410s  Motion                                1  LOW    HIT  seg  1  pos=END
+     408.740s  Visual                                1  LOW    FALSE POSITIVE
+     475.000s  AudioRMS+Motion                       2  MED    HIT  seg  2  pos=START
+     706.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+     721.380s  Motion                                1  LOW    FALSE POSITIVE
+     818.240s  Motion                                1  LOW    FALSE POSITIVE
+     977.880s  Motion                                1  LOW    HIT  seg  3  pos=END
+    1047.110s  Motion                                1  LOW    FALSE POSITIVE
+    1083.310s  Motion                                1  LOW    FALSE POSITIVE
+    1106.180s  Motion                                1  LOW    FALSE POSITIVE
+    1121.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1134.680s  Motion                                1  LOW    FALSE POSITIVE
+    1194.140s  Motion                                1  LOW    FALSE POSITIVE
+    1202.380s  Motion                                1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_52.mp4            341.867    348.886    7.019    350.410     +8.543    END         Motion                          LOW
+    2  V_232.mp4           474.278    478.887    4.609    475.000     +0.722    START       AudioRMS+Motion                 MED
+    3  V_208.mp4           972.754    977.955    5.201    977.880     +5.126    END         Motion                          LOW
+
+  MISSED SEGMENTS: none -- all segments detected
+
+  FALSE POSITIVE EVENTS (16):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      83.790s  Motion                                1  LOW
+     2     128.090s  Motion                                1  LOW
+     3     141.590s  Motion                                1  LOW
+     4     165.490s  Motion                                1  LOW
+     5     193.220s  Motion                                1  LOW
+     6     408.740s  Visual                                1  LOW
+     7     706.000s  AudioRMS                              1  LOW
+     8     721.380s  Motion                                1  LOW
+     9     818.240s  Motion                                1  LOW
+    10    1047.110s  Motion                                1  LOW
+    11    1083.310s  Motion                                1  LOW
+    12    1106.180s  Motion                                1  LOW
+    13    1121.500s  AudioRMS                              1  LOW
+    14    1134.680s  Motion                                1  LOW
+    15    1194.140s  Motion                                1  LOW
+    16    1202.380s  Motion                                1  LOW
+
+  FP spacing stats:
+    min gap  : 8.240s
+    max gap  : 297.260s
+    mean gap : 74.573s
+    median   : 27.730s
+    std      : 90.453s
+    gaps < 10s: 1  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               1      0       1        0.0%  408.74s
+  Motion              16      3      13       18.8%  83.79s  128.09s  141.59s  165.49s  193.22s  350.41s  474.50s  721.38s  818.24s  977.88s  1047.11s  1083.31s  1106.18s  1134.68s  1194.14s  1202.38s
+  AudioRMS             3      1       2       33.3%  475.50s  706.00s  1121.50s
+  Silence              0      0       0        0.0%  
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_09_video2.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 7/12 segments detected  (58.3%)
+  False positives : 50  (video FPR: 87.7%)
+  Processing time : 499.3s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [###................................] 5 triggers
+  Motion                 [###################################] 45 triggers
+  AudioRMS               [#######............................] 10 triggers
+  Silence                [#..................................] 2 triggers
+  SpectralFlux           [...................................] 0 triggers
+                           Total fused events after clustering: 57
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   5 total): 303.456s  620.699s  2380.179s  3064.623s  3706.316s
+  Motion          (  45 total): 66.856s  101.423s  139.823s  149.190s  187.290s  305.290s  509.673s  585.340s  620.066s  670.065s  815.932s  830.199s  1021.965s  1037.332s  1052.769s  1071.870s  1198.992s  1283.192s  1479.992s  1669.011s  1774.444s  1806.940s  1818.281s  1873.681s  2072.914s  2263.161s  2380.179s  2521.998s  2588.065s  2715.965s  2791.598s  3064.623s  3351.725s  3507.828s  3581.116s  3589.349s  3647.249s  3655.849s  3664.916s  3677.682s  3687.282s  3861.349s  3874.516s  3992.982s  4060.409s
+  AudioRMS        (  10 total): 621.500s  943.000s  1029.000s  1050.000s  1484.500s  1577.000s  2269.000s  2272.500s  2660.000s  3869.000s
+  Silence         (   2 total): 408.500s  588.000s
+  SpectralFlux    (   0 total): (none)
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+      66.860s  Motion                                1  LOW    FALSE POSITIVE
+     101.420s  Motion                                1  LOW    FALSE POSITIVE
+     139.820s  Motion                                1  LOW    FALSE POSITIVE
+     149.190s  Motion                                1  LOW    FALSE POSITIVE
+     187.290s  Motion                                1  LOW    FALSE POSITIVE
+     304.370s  Motion+Visual                         2  MED    FALSE POSITIVE
+     408.500s  Silence                               1  LOW    FALSE POSITIVE
+     509.670s  Motion                                1  LOW    FALSE POSITIVE
+     585.340s  Motion                                1  LOW    FALSE POSITIVE
+     588.000s  Silence                               1  LOW    FALSE POSITIVE
+     620.750s  AudioRMS+Motion+Visual                3  HIGH   HIT  seg  2  pos=START
+     670.070s  Motion                                1  LOW    FALSE POSITIVE
+     815.930s  Motion                                1  LOW    FALSE POSITIVE
+     830.200s  Motion                                1  LOW    FALSE POSITIVE
+     943.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1021.970s  Motion                                1  LOW    FALSE POSITIVE
+    1029.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1037.330s  Motion                                1  LOW    FALSE POSITIVE
+    1050.000s  AudioRMS                              1  LOW    HIT  seg  3  pos=START
+    1052.770s  Motion                                1  LOW    FALSE POSITIVE
+    1071.870s  Motion                                1  LOW    FALSE POSITIVE
+    1198.990s  Motion                                1  LOW    FALSE POSITIVE
+    1283.190s  Motion                                1  LOW    FALSE POSITIVE
+    1479.990s  Motion                                1  LOW    FALSE POSITIVE
+    1484.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    1577.000s  AudioRMS                              1  LOW    HIT  seg  5  pos=END
+    1669.010s  Motion                                1  LOW    FALSE POSITIVE
+    1774.440s  Motion                                1  LOW    FALSE POSITIVE
+    1806.940s  Motion                                1  LOW    HIT  seg  6  pos=START
+    1818.280s  Motion                                1  LOW    FALSE POSITIVE
+    1873.680s  Motion                                1  LOW    FALSE POSITIVE
+    2072.910s  Motion                                1  LOW    FALSE POSITIVE
+    2263.160s  Motion                                1  LOW    HIT  seg  7  pos=START
+    2269.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2272.500s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2380.180s  Motion+Visual                         2  MED    FALSE POSITIVE
+    2522.000s  Motion                                1  LOW    FALSE POSITIVE
+    2588.060s  Motion                                1  LOW    FALSE POSITIVE
+    2660.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    2715.960s  Motion                                1  LOW    FALSE POSITIVE
+    2791.600s  Motion                                1  LOW    FALSE POSITIVE
+    3064.620s  Motion+Visual                         2  MED    FALSE POSITIVE
+    3351.720s  Motion                                1  LOW    FALSE POSITIVE
+    3507.830s  Motion                                1  LOW    HIT  seg 11  pos=START
+    3581.120s  Motion                                1  LOW    FALSE POSITIVE
+    3589.350s  Motion                                1  LOW    FALSE POSITIVE
+    3647.250s  Motion                                1  LOW    FALSE POSITIVE
+    3655.850s  Motion                                1  LOW    FALSE POSITIVE
+    3664.920s  Motion                                1  LOW    FALSE POSITIVE
+    3677.680s  Motion                                1  LOW    FALSE POSITIVE
+    3687.280s  Motion                                1  LOW    FALSE POSITIVE
+    3706.320s  Visual                                1  LOW    FALSE POSITIVE
+    3861.350s  Motion                                1  LOW    FALSE POSITIVE
+    3869.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+    3874.520s  Motion                                1  LOW    FALSE POSITIVE
+    3992.980s  Motion                                1  LOW    FALSE POSITIVE
+    4060.410s  Motion                                1  LOW    HIT  seg 12  pos=START
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_807.mp4           337.767    342.584    4.817        ---        ---    MISSED                                          
+    2  V_33.mp4            620.043    625.776    5.733    620.750     +0.707    START       AudioRMS+Motion+Visual          HIGH
+    3  V_827.mp4          1052.080   1056.881    4.801   1050.000     -2.080    START       AudioRMS                        LOW
+    4  V_181.mp4          1089.428   1093.136    3.708        ---        ---    MISSED                                          
+    5  V_113.mp4          1572.248   1577.655    5.407   1577.000     +4.752    END         AudioRMS                        LOW
+    6  V_998.mp4          1806.917   1811.925    5.008   1806.940     +0.023    START       Motion                          LOW
+    7  V_91.mp4           2263.005   2268.023    5.018   2263.160     +0.155    START       Motion                          LOW
+    8  V_55.mp4           2436.221   2441.442    5.221        ---        ---    MISSED                                          
+    9  V_428.mp4          2922.818   2926.834    4.016        ---        ---    MISSED                                          
+   10  V_624.mp4          3267.002   3271.335    4.333        ---        ---    MISSED                                          
+   11  V_127.mp4          3507.405   3513.326    5.921   3507.830     +0.425    START       Motion                          LOW
+   12  V_444.mp4          4060.386   4064.093    3.707   4060.410     +0.024    START       Motion                          LOW
+
+  MISSED SEGMENTS (5):
+  Seg  1  src=V_807.mp4  337.767s-342.584s  dur=4.817s
+         Closest fused event : 304.370s  signals=Motion+Visual  conf=MED
+         Distance from start : 33.397s
+         Distance from mid   : 35.805s
+         Distance from end   : 38.214s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  4  src=V_181.mp4  1089.428s-1093.136s  dur=3.708s
+         Closest fused event : 1071.870s  signals=Motion  conf=LOW
+         Distance from start : 17.558s
+         Distance from mid   : 19.412s
+         Distance from end   : 21.266s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  8  src=V_55.mp4  2436.221s-2441.442s  dur=5.221s
+         Closest fused event : 2380.180s  signals=Motion+Visual  conf=MED
+         Distance from start : 56.041s
+         Distance from mid   : 58.652s
+         Distance from end   : 61.262s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg  9  src=V_428.mp4  2922.818s-2926.834s  dur=4.016s
+         Closest fused event : 2791.600s  signals=Motion  conf=LOW
+         Distance from start : 131.218s
+         Distance from mid   : 133.226s
+         Distance from end   : 135.234s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+  Seg 10  src=V_624.mp4  3267.002s-3271.335s  dur=4.333s
+         Closest fused event : 3351.720s  signals=Motion  conf=LOW
+         Distance from start : 84.718s
+         Distance from mid   : 82.552s
+         Distance from end   : 80.385s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (50):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1      66.860s  Motion                                1  LOW
+     2     101.420s  Motion                                1  LOW
+     3     139.820s  Motion                                1  LOW
+     4     149.190s  Motion                                1  LOW
+     5     187.290s  Motion                                1  LOW
+     6     304.370s  Motion+Visual                         2  MED
+     7     408.500s  Silence                               1  LOW
+     8     509.670s  Motion                                1  LOW
+     9     585.340s  Motion                                1  LOW
+    10     588.000s  Silence                               1  LOW
+    11     670.070s  Motion                                1  LOW
+    12     815.930s  Motion                                1  LOW
+    13     830.200s  Motion                                1  LOW
+    14     943.000s  AudioRMS                              1  LOW
+    15    1021.970s  Motion                                1  LOW
+    16    1029.000s  AudioRMS                              1  LOW
+    17    1037.330s  Motion                                1  LOW
+    18    1052.770s  Motion                                1  LOW
+    19    1071.870s  Motion                                1  LOW
+    20    1198.990s  Motion                                1  LOW
+    21    1283.190s  Motion                                1  LOW
+    22    1479.990s  Motion                                1  LOW
+    23    1484.500s  AudioRMS                              1  LOW
+    24    1669.010s  Motion                                1  LOW
+    25    1774.440s  Motion                                1  LOW
+    26    1818.280s  Motion                                1  LOW
+    27    1873.680s  Motion                                1  LOW
+    28    2072.910s  Motion                                1  LOW
+    29    2269.000s  AudioRMS                              1  LOW
+    30    2272.500s  AudioRMS                              1  LOW
+    31    2380.180s  Motion+Visual                         2  MED
+    32    2522.000s  Motion                                1  LOW
+    33    2588.060s  Motion                                1  LOW
+    34    2660.000s  AudioRMS                              1  LOW
+    35    2715.960s  Motion                                1  LOW
+    36    2791.600s  Motion                                1  LOW
+    37    3064.620s  Motion+Visual                         2  MED
+    38    3351.720s  Motion                                1  LOW
+    39    3581.120s  Motion                                1  LOW
+    40    3589.350s  Motion                                1  LOW
+    41    3647.250s  Motion                                1  LOW
+    42    3655.850s  Motion                                1  LOW
+    43    3664.920s  Motion                                1  LOW
+    44    3677.680s  Motion                                1  LOW
+    45    3687.280s  Motion                                1  LOW
+    46    3706.320s  Visual                                1  LOW
+    47    3861.350s  Motion                                1  LOW
+    48    3869.000s  AudioRMS                              1  LOW
+    49    3874.520s  Motion                                1  LOW
+    50    3992.980s  Motion                                1  LOW
+
+  FP spacing stats:
+    min gap  : 2.660s
+    max gap  : 287.100s
+    mean gap : 80.125s
+    median   : 66.060s
+    std      : 74.284s
+    gaps < 10s: 12  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               5      1       4       20.0%  303.46s  620.70s  2380.18s  3064.62s  3706.32s
+  Motion              45      5      40       11.1%  66.86s  101.42s  139.82s  149.19s  187.29s  305.29s  509.67s  585.34s  620.07s  670.07s  815.93s  830.20s  1021.97s  1037.33s  1052.77s  1071.87s  1198.99s  1283.19s  1479.99s  1669.01s  ... (+25 more)
+  AudioRMS            10      3       7       30.0%  621.50s  943.00s  1029.00s  1050.00s  1484.50s  1577.00s  2269.00s  2272.50s  2660.00s  3869.00s
+  Silence              2      0       2        0.0%  408.50s  588.00s
+  SpectralFlux         0      0       0        0.0%  
+
+
+--------------------------------------------------------------------------------
+  VIDEO: attacked_10_video4.mp4
+--------------------------------------------------------------------------------
+
+  Result          : 4/5 segments detected  (80.0%)
+  False positives : 9  (video FPR: 69.2%)
+  Processing time : 154.1s
+
+  RAW TRIGGER COUNTS PER SIGNAL:
+  Visual                 [...................................] 0 triggers
+  Motion                 [###################################] 6 triggers
+  AudioRMS               [#################..................] 3 triggers
+  Silence                [#######################............] 4 triggers
+  SpectralFlux           [#####..............................] 1 triggers
+                           Total fused events after clustering: 13
+
+  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:
+  Visual          (   0 total): (none)
+  Motion          (   6 total): 125.456s  321.590s  417.868s  515.588s  689.958s  1212.593s
+  AudioRMS        (   3 total): 200.000s  421.000s  1210.500s
+  Silence         (   4 total): 974.000s  1010.000s  1224.000s  1368.000s
+  SpectralFlux    (   1 total): 593.581s
+
+  ALL FUSED EVENTS (chronological):
+        TIME  SIGNALS                               N  CONF   OUTCOME
+  ──────────  ───────────────────────────────────  ──  ─────  ─────────────────────────
+     125.460s  Motion                                1  LOW    FALSE POSITIVE
+     200.000s  AudioRMS                              1  LOW    HIT  seg  1  pos=START
+     321.590s  Motion                                1  LOW    FALSE POSITIVE
+     417.870s  Motion                                1  LOW    HIT  seg  2  pos=START
+     421.000s  AudioRMS                              1  LOW    FALSE POSITIVE
+     515.590s  Motion                                1  LOW    FALSE POSITIVE
+     593.580s  SpectralFlux                          1  LOW    FALSE POSITIVE
+     689.960s  Motion                                1  LOW    HIT  seg  3  pos=END
+     974.000s  Silence                               1  LOW    FALSE POSITIVE
+    1010.000s  Silence                               1  LOW    FALSE POSITIVE
+    1211.550s  AudioRMS+Motion                       2  MED    HIT  seg  5  pos=END
+    1224.000s  Silence                               1  LOW    FALSE POSITIVE
+    1368.000s  Silence                               1  LOW    FALSE POSITIVE
+
+  SEGMENT DETECTION TABLE:
+    #  SOURCE                START        END      DUR      HIT @     OFFSET  POS           SIGNALS                         CONF
+  ───  ────────────────  ─────────  ─────────  ───────  ─────────  ─────────  ────────────  ──────────────────────────────  ────
+    1  V_365.mp4           199.700    204.700    5.000    200.000     +0.300    START       AudioRMS                        LOW
+    2  V_49.mp4            417.845    421.865    4.020    417.870     +0.025    START       Motion                          LOW
+    3  V_458.mp4           683.582    688.202    4.620    689.960     +6.378    END         Motion                          LOW
+    4  V_435.mp4          1032.685   1037.185    4.500        ---        ---    MISSED                                          
+    5  V_521.mp4          1206.865   1210.870    4.005   1211.550     +4.685    END         AudioRMS+Motion                 MED
+
+  MISSED SEGMENTS (1):
+  Seg  4  src=V_435.mp4  1032.685s-1037.185s  dur=4.500s
+         Closest fused event : 1010.000s  signals=Silence  conf=LOW
+         Distance from start : 22.685s
+         Distance from mid   : 24.935s
+         Distance from end   : 27.185s
+         (Boundary tolerance : 2.5s  -> FAR MISS)
+
+  FALSE POSITIVE EVENTS (9):
+     #        TIME  SIGNALS                               N  CONF
+  ────  ──────────  ───────────────────────────────────  ──  ────
+     1     125.460s  Motion                                1  LOW
+     2     321.590s  Motion                                1  LOW
+     3     421.000s  AudioRMS                              1  LOW
+     4     515.590s  Motion                                1  LOW
+     5     593.580s  SpectralFlux                          1  LOW
+     6     974.000s  Silence                               1  LOW
+     7    1010.000s  Silence                               1  LOW
+     8    1224.000s  Silence                               1  LOW
+     9    1368.000s  Silence                               1  LOW
+
+  FP spacing stats:
+    min gap  : 36.000s
+    max gap  : 380.420s
+    mean gap : 155.317s
+    median   : 121.705s
+    std      : 101.820s
+    gaps < 10s: 0  (possible burst FP region)
+
+  PER-SIGNAL CONTRIBUTION (this video):
+  Signal             Raw   Hits      FP   Precision  All raw timestamps
+  ───────────────  ─────  ─────  ──────  ──────────  ──────────────────────────────
+  Visual               0      0       0        0.0%  
+  Motion               6      3       3       50.0%  125.46s  321.59s  417.87s  515.59s  689.96s  1212.59s
+  AudioRMS             3      2       1       66.7%  200.00s  421.00s  1210.50s
+  Silence              4      0       4        0.0%  974.00s  1010.00s  1224.00s  1368.00s
+  SpectralFlux         1      0       1        0.0%  593.58s
+
+
+================================================================================
+                                OVERALL SUMMARY
+================================================================================
+
+  VIDEO                                   SEGS  HITS    RATE     FP   VID FPR     TIME  STATUS
+  ──────────────────────────────────────  ────  ────  ──────  ─────  ────────  ───────  ────────
+  attacked_01_video2.mp4                    12     9   75.0%     52     85.2%   473.1s  PASS
+  attacked_02_video4.mp4                     4     2   50.0%      8     80.0%   156.4s  PASS
+  attacked_03_video3.mp4                     9     8   88.9%     40     83.3%   189.2s  PASS
+  attacked_04_video1.mp4                     2     2  100.0%     16     88.9%   130.1s  PASS
+  attacked_05_video2.mp4                    12     9   75.0%     51     85.0%   466.4s  PASS
+  attacked_06_video4.mp4                     4     4  100.0%      8     66.7%   161.8s  PASS
+  attacked_07_video3.mp4                     9     5   55.6%     44     89.8%   200.6s  PASS
+  attacked_08_video1.mp4                     3     3  100.0%     16     84.2%   132.4s  PASS
+  attacked_09_video2.mp4                    12     7   58.3%     50     87.7%   499.3s  PASS
+  attacked_10_video4.mp4                     5     4   80.0%      9     69.2%   154.1s  PASS
+  ──────────────────────────────────────  ────  ────  ──────  ─────  ────────  ───────  ────────
+  TOTAL                                     72    53   73.6%    294     84.7%  2563.5s
+
+  HIT POSITION BREAKDOWN:
+  START                  [##############################] 31  (58.5% of hits)
+  END                    [##################............] 19  (35.8% of hits)
+  START+END              [#.............................] 2  (3.8% of hits)
+  IN-BETWEEN             [..............................] 1  (1.9% of hits)
+
+  TRIGGER OFFSET FROM SEGMENT START (all confirmed hits):
+  Count  : 53
+  Min    : -2.080s
+  Max    : +8.543s
+  Mean   : +2.086s
+  Median : +0.887s
+  Std    : 2.458s
+  (negative = trigger fired BEFORE segment start; positive = AFTER)
+  Early triggers (before start) : 4  (7.5%)
+  Late  triggers (after  start) : 49  (92.5%)
+
+  DETECTION RATE BY SEGMENT DURATION BUCKET:
+  Bucket     Hits   Total     Rate  Notes
+  ────────  ─────  ──────  ───────  ─────────────────────────
+  <3s           0       0     0.0%  hardest (clip ends before most signals build)
+  3-5s         28      34    82.4%  
+  5-7s         24      37    64.9%  
+  7-10s         1       1   100.0%  
+  >10s          0       0     0.0%  
+
+  PER-SIGNAL ACCURACY (all videos combined):
+  Signal              Raw   Hits      FP   Precision    Recall      F1
+  ───────────────  ──────  ─────  ──────  ──────────  ────────  ──────
+  AudioRMS             47     12      35       25.5%     16.7%   20.2%
+  Motion              254     38     216       15.0%     52.8%   23.3%
+  Silence              27      4      23       14.8%      5.6%    8.1%
+  SpectralFlux          4      1       3       25.0%      1.4%    2.6%
+  Visual               34      6      28       17.6%      8.3%   11.3%
+
+  SIGNAL CO-OCCURRENCE ON TRUE HITS:
+  (how many confirmed hits had BOTH signals firing within fusion window)
+                     AudioRMS      Motion     Silence  SpectralFl      Visual
+  AudioRMS                 12           3           0           0           1
+  Motion                    3          38           3           0           2
+  Silence                   0           3           4           0           0
+  SpectralFlux              0           0           0           1           0
+  Visual                    1           2           0           0           6
+
+  SIGNAL CO-OCCURRENCE ON FALSE POSITIVES:
+                     AudioRMS      Motion     Silence  SpectralFl      Visual
+  AudioRMS                 35           0           0           0           0
+  Motion                    0         216           0           0          11
+  Silence                   0           0          23           0           0
+  SpectralFlux              0           0           0           3           0
+  Visual                    0          11           0           0          28
+
+  PER-VIDEO RAW TRIGGER COUNTS PER SIGNAL:
+  VIDEO                                       Visual      Motion    AudioRMS     Silence  SpectralFl  FUSED
+  ──────────────────────────────────────  ──────────  ──────────  ──────────  ──────────  ──────────  ─────
+  attacked_01_video2.mp4                           4          43          13           2           1     61
+  attacked_02_video4.mp4                           0           4           1           4           1     10
+  attacked_03_video3.mp4                           9          37           2           3           0     48
+  attacked_04_video1.mp4                           1          15           2           1           0     18
+  attacked_05_video2.mp4                           5          46          10           2           0     60
+  attacked_06_video4.mp4                           1           6           0           5           1     12
+  attacked_07_video3.mp4                           8          36           3           4           0     49
+  attacked_08_video1.mp4                           1          16           3           0           0     19
+  attacked_09_video2.mp4                           5          45          10           2           0     57
+  attacked_10_video4.mp4                           0           6           3           4           1     13
+  ──────────────────────────────────────  ──────────  ──────────  ──────────  ──────────  ──────────  ─────
+  TOTAL                                           34         254          47          27           4    347
+
+================================================================================
+  OVERALL DETECTION RATE  :   53 / 72  (73.61%)
+  TOTAL FALSE POSITIVES   : 294
+  FALSE POSITIVE RATE     : 84.73%  (FP / all claimed events)
+  VIDEOS PROCESSED        : 10
+  TOTAL PROCESSING TIME   : 2563.5s
+  VIDEOS PASSING (>=50%)  : 10/10
+================================================================================
+

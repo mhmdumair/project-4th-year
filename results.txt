@@ -102,3 +102,125 @@ PS D:\University Course Meterials\year4\PROJECT\datasets\YT>
 ═════════════════════════════════════════════════════════════════
 
 PS D:\University Course Meterials\year4\PROJECT\datasets\YT> 
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  RUN  2026-03-08 20:02:39
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+══════════════════════════════════════════════════════════════════════
+       MULTI-MODAL VIOLENT CONTENT DETECTOR  —  FULL EVALUATION 
+══════════════════════════════════════════════════════════════════════
+  Ground truth : attack.json  (10 videos)
+  Attacked dir : attacked/
+  Signals      : Visual | Motion | AudioRMS | Silence | SpectFlux | Metadata
+  Audio logic  : sustained two-pass — bg FROZEN during candidate evaluation
+  Scoring      : hit = trigger within [start±2.5s … end±2.5s]
+
+══════════════════════════════════════════════════════════════════════
+                  VIDEO 1/10: attacked_01_video2.mp4 
+══════════════════════════════════════════════════════════════════════
+  [1/6] Visual I-frame spikes...
+
+        → 0 triggers
+  [2/6] Motion vector proxy...
+
+        → 30 triggers
+  [3/6] Audio RMS + Silence  [sustained two-pass, bg frozen]...
+
+        → 1 RMS  |  8 silence
+  [4/6] Spectral Flux  [sustained two-pass, bg frozen]...
+
+        → 0 triggers
+  [5/6] Container metadata (packet size anomaly)...
+
+        → 6 triggers
+
+  All signals done in 446.3s
+
+──────────────────────────────────────────────────────────────────────
+  VIDEO: attacked_01_video2.mp4   [1/12 detected]
+──────────────────────────────────────────────────────────────────────
+  Raw triggers per signal:
+    Visual             0  
+    Motion            30  ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪
+    AudioRMS           1  ▪
+    Silence            8  ▪▪▪▪▪▪▪▪
+    SpectFlux          0  
+    Metadata           6  ▪▪▪▪▪▪
+  Fused events (after clustering): 7
+
+    #  SOURCE             START       END    DUR     HIT @  POS           SIGNALS                       CONF
+  ───  ──────────────  ────────  ────────  ─────  ────────  ────────────  ────────────────────────────  ────
+    1  V_189.mp4        219.267   224.876   5.61         —  ✗ MISSED                                        
+    2  V_912.mp4        580.122   584.339   4.22    580.84  ✓ START       AudioRMS+Motion               MED 
+    3  V_480.mp4       1027.961  1032.771   4.81         —  ✗ MISSED                                        
+    4  V_908.mp4       1176.049  1180.756   4.71         —  ✗ MISSED                                        
+    5  V_907.mp4       1723.646  1729.056   5.41         —  ✗ MISSED                                        
+    6  V_422.mp4       1784.226  1789.544   5.32         —  ✗ MISSED                                        
+    7  V_379.mp4       2370.788  2375.803   5.01         —  ✗ MISSED                                        
+    8  V_281.mp4       2734.542  2739.962   5.42         —  ✗ MISSED                                        
+    9  V_460.mp4       3058.288  3063.494   5.21         —  ✗ MISSED                                        
+   10  V_335.mp4       3441.317  3446.020   4.70         —  ✗ MISSED                                        
+   11  V_996.mp4       3748.727  3753.734   5.01         —  ✗ MISSED                                        
+   12  V_484.mp4       3982.273  3987.183   4.91         —  ✗ MISSED                                        
+
+  False Positives (6):
+    @   1290.00s  [Metadata]  LOW 
+    @   1367.00s  [Metadata]  LOW 
+    @   1663.36s  [Metadata+Motion]  MED 
+    @   1928.00s  [Metadata]  LOW 
+    @   2328.10s  [Metadata+Motion]  MED 
+    @   3349.00s  [Metadata]  LOW 
+
+  Detection rate: 1/12 (8.3%)  |  FP: 6
+
+══════════════════════════════════════════════════════════════════════
+                  VIDEO 2/10: attacked_02_video4.mp4 
+══════════════════════════════════════════════════════════════════════
+  [1/6] Visual I-frame spikes...
+
+        → 0 triggers
+  [2/6] Motion vector proxy...
+
+        → 3 triggers
+  [3/6] Audio RMS + Silence  [sustained two-pass, bg frozen]...
+
+        → 1 RMS  |  8 silence
+  [4/6] Spectral Flux  [sustained two-pass, bg frozen]...
+
+        → 0 triggers
+  [5/6] Container metadata (packet size anomaly)...
+
+        → 0 triggers
+
+  All signals done in 146.4s
+
+──────────────────────────────────────────────────────────────────────
+  VIDEO: attacked_02_video4.mp4   [1/4 detected]
+──────────────────────────────────────────────────────────────────────
+  Raw triggers per signal:
+    Visual             0  
+    Motion             3  ▪▪▪
+    AudioRMS           1  ▪
+    Silence            8  ▪▪▪▪▪▪▪▪
+    SpectFlux          0  
+    Metadata           0  
+  Fused events (after clustering): 1
+
+    #  SOURCE             START       END    DUR     HIT @  POS           SIGNALS                       CONF
+  ───  ──────────────  ────────  ────────  ─────  ────────  ────────────  ────────────────────────────  ────
+    1  V_329.mp4        195.400   200.613   5.21         —  ✗ MISSED                                        
+    2  V_403.mp4        485.462   488.884   3.42         —  ✗ MISSED                                        
+    3  V_443.mp4        699.709   704.413   4.70    701.50  ✓ START       AudioRMS                      LOW 
+    4  V_636.mp4       1018.140  1023.142   5.00         —  ✗ MISSED                                        
+
+  False Positives: 0  ✓
+
+  Detection rate: 1/4 (25.0%)  |  FP: 0
+
+══════════════════════════════════════════════════════════════════════
+                  VIDEO 3/10: attacked_03_video3.mp4 
+══════════════════════════════════════════════════════════════════════
+  [1/6] Visual I-frame spikes...
+
+        → 1 triggers
+  [2/6] Motion vector proxy...

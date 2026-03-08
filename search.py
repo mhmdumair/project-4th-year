@@ -5,6 +5,7 @@ from scipy.io import wavfile
 import os
 import sys
 import time
+import datetime
 from collections import deque
 
 # ==============================================================================
@@ -13,6 +14,7 @@ from collections import deque
 
 ATTACKED_DIR            = "attacked"
 GROUND_TRUTH_JSON       = "attack.json"
+REPORT_FILE             = "report.txt"
 
 FFMPEG_DIR  = "ffmpeg-master-latest-win64-gpl"
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -52,9 +54,9 @@ AUDIO_COOLDOWN          = 3.0
 AUDIO_PERSIST_NEEDED    = 2
 
 # --- Silence ---
-SILENCE_THRESHOLD_RATIO = 0.15
-SILENCE_MIN_DURATION    = 0.4
-SILENCE_COOLDOWN        = 3.0
+SILENCE_THRESHOLD_RATIO = 0.05   # was 0.15 — tighter: audio must drop to 5% of bg mean (near-total silence only)
+SILENCE_MIN_DURATION    = 2.0    # was 0.4  — silence must hold for 2s (filters breath pauses, word gaps)
+SILENCE_COOLDOWN        = 30.0   # was 3.0  — one trigger per 30s max (violent clips are sparse)
 
 # --- Spectral Flux ---
 FLUX_WINDOW_SEC         = 0.05
@@ -420,7 +422,6 @@ def fuse_all_signals(signal_dict):
 # ==============================================================================
 
 def classify_hit_position(ts, seg):
-    """Classify where the trigger landed relative to the hidden segment."""
     near_start = abs(ts - seg["start"]) <= BOUNDARY_TOLERANCE
     near_end   = abs(ts - seg["end"])   <= BOUNDARY_TOLERANCE
     inside     = seg["start"] < ts < seg["end"]
@@ -430,21 +431,15 @@ def classify_hit_position(ts, seg):
     elif near_end and not near_start:
         return "END"
     elif near_start and near_end:
-        return "START+END"   # very short clip edge case
+        return "START+END"
     elif inside:
         return "IN-BETWEEN"
     return None
 
 
 def validate_video(video_name, segments, merged_events):
-    """
-    Match detected events against ground-truth segments.
-    Returns per-segment results + false positives.
-    """
     seg_results = []
     fp_events   = []
-
-    # Deep-copy segments with hit tracking
     segs = [dict(s, hit=None) for s in segments]
 
     for ts, label, n_sig in merged_events:
@@ -472,7 +467,7 @@ def validate_video(video_name, segments, merged_events):
 
 
 # ==============================================================================
-# PRINT VIDEO REPORT
+# PRINT VIDEO REPORT  (console — unchanged)
 # ==============================================================================
 
 SIGNAL_COLORS = {
@@ -495,35 +490,23 @@ def print_video_report(video_name, seg_results, fp_events, signal_dict, merged_e
 
     section(f"VIDEO: {video_name}   [{hits}/{total} segments detected]")
 
-    # Signal raw counts
     print(f"  Raw triggers per signal:")
     for sig, ts_list in signal_dict.items():
         bar = "▪" * min(len(ts_list), 40)
         print(f"    {sig:<15} {len(ts_list):>4} triggers  {bar}")
     print(f"  Fused events (after clustering): {len(merged_events)}")
 
-    # Per-segment table
     print(f"\n  {'#':>3}  {'SOURCE':<16}  {'START':>8}  {'END':>8}  {'DUR':>5}  {'HIT @':>8}  {'POS':<12}  {'SIGNALS':<35}  {'CONF'}")
     print(f"  {'─'*3}  {'─'*16}  {'─'*8}  {'─'*8}  {'─'*5}  {'─'*8}  {'─'*12}  {'─'*35}  {'─'*4}")
 
     for s in seg_results:
         src  = s["source"][:15]
         if s["hit"]:
-            h       = s["hit"]
-            pos     = h["position"]
-            hit_s   = f"{h['ts']:>8.2f}"
-            sig_s   = h["label"][:35]
-            conf    = confidence_str(h["n_sig"])
-            tick    = "✓"
+            h    = s["hit"]
+            print(f"  {s['index']:>3}  {src:<16}  {s['start']:>8.3f}  {s['end']:>8.3f}  {s['duration']:>5.2f}  {h['ts']:>8.2f}  ✓ {h['position']:<10}  {h['label'][:35]:<35}  {confidence_str(h['n_sig'])}")
         else:
-            pos     = "MISSED"
-            hit_s   = "   —   "
-            sig_s   = ""
-            conf    = "    "
-            tick    = "✗"
-        print(f"  {s['index']:>3}  {src:<16}  {s['start']:>8.3f}  {s['end']:>8.3f}  {s['duration']:>5.2f}  {hit_s}  {tick} {pos:<10}  {sig_s:<35}  {conf}")
+            print(f"  {s['index']:>3}  {src:<16}  {s['start']:>8.3f}  {s['end']:>8.3f}  {s['duration']:>5.2f}  {'—':>8}  ✗ {'MISSED':<10}  {'':35}  {'':4}")
 
-    # False positives
     if fp_events:
         print(f"\n  False Positives ({len(fp_events)}):")
         for fp in fp_events:
@@ -536,20 +519,18 @@ def print_video_report(video_name, seg_results, fp_events, signal_dict, merged_e
 
 
 # ==============================================================================
-# OVERALL SUMMARY
+# OVERALL SUMMARY  (console — unchanged)
 # ==============================================================================
 
 def print_overall_summary(all_video_stats):
     banner("COMPLETE EVALUATION SUMMARY")
 
-    total_segs  = sum(v["total"] for v in all_video_stats)
-    total_hits  = sum(v["hits"]  for v in all_video_stats)
-    total_fp    = sum(v["fp"]    for v in all_video_stats)
-    total_vids  = len(all_video_stats)
-
+    total_segs   = sum(v["total"] for v in all_video_stats)
+    total_hits   = sum(v["hits"]  for v in all_video_stats)
+    total_fp     = sum(v["fp"]    for v in all_video_stats)
+    total_vids   = len(all_video_stats)
     overall_rate = total_hits / total_segs * 100 if total_segs else 0
 
-    # Per-video table
     print(f"\n  {'VIDEO':<35}  {'SEGS':>4}  {'HITS':>4}  {'RATE':>6}  {'FP':>4}  {'STATUS'}")
     print(f"  {'─'*35}  {'─'*4}  {'─'*4}  {'─'*6}  {'─'*4}  {'─'*10}")
     for v in all_video_stats:
@@ -559,7 +540,6 @@ def print_overall_summary(all_video_stats):
     print(f"  {'─'*35}  {'─'*4}  {'─'*4}  {'─'*6}  {'─'*4}  {'─'*10}")
     print(f"  {'TOTAL / AVERAGE':<35}  {total_segs:>4}  {total_hits:>4}  {overall_rate:>5.1f}%  {total_fp:>4}")
 
-    # Hit position breakdown
     print(f"\n  Hit Position Breakdown:")
     pos_counts = {}
     for v in all_video_stats:
@@ -569,7 +549,6 @@ def print_overall_summary(all_video_stats):
         bar = "█" * cnt
         print(f"    {pos:<14}: {cnt:>4}  {bar}")
 
-    # Per-signal accuracy
     print(f"\n  Per-Signal Contribution (how many hits each signal helped claim):")
     sig_hits = {}
     sig_fp   = {}
@@ -589,7 +568,6 @@ def print_overall_summary(all_video_stats):
         prec = h / total_fire * 100 if total_fire > 0 else 0.0
         print(f"  {sig:<15}  {h:>5}  {fp:>10}  {prec:>8.1f}%")
 
-    # Raw trigger totals per signal
     print(f"\n  Raw Trigger Counts (all videos combined):")
     all_raw = {}
     for v in all_video_stats:
@@ -599,7 +577,6 @@ def print_overall_summary(all_video_stats):
         bar = "▪" * min(cnt // 5 + 1, 40)
         print(f"    {sig:<15}: {cnt:>5} total  {bar}")
 
-    # Final scorecard
     print(f"\n{'═'*65}")
     print(f"  OVERALL DETECTION RATE   : {total_hits:>4} / {total_segs}  ({overall_rate:.2f}%)")
     print(f"  TOTAL FALSE POSITIVES    : {total_fp}")
@@ -607,6 +584,441 @@ def print_overall_summary(all_video_stats):
     fpr = total_fp / (total_fp + total_hits) * 100 if (total_fp + total_hits) > 0 else 0
     print(f"  FALSE POSITIVE RATE      : {fpr:.2f}%  (FP / all claimed events)")
     print(f"{'═'*65}\n")
+
+
+# ==============================================================================
+# REPORT WRITER — writes everything to report.txt
+# ==============================================================================
+
+W = 80  # report page width
+
+def rl(f, text=""):
+    """Write one line to the report file."""
+    f.write(text + "\n")
+
+def rheader(f, title, char="="):
+    f.write("\n" + char * W + "\n")
+    pad = max(0, (W - len(title)) // 2)
+    f.write(" " * pad + title + "\n")
+    f.write(char * W + "\n")
+
+def rsection(f, title, char="-"):
+    f.write("\n" + char * W + "\n")
+    f.write("  " + title + "\n")
+    f.write(char * W + "\n")
+
+def rbar(f, label, value, max_val, width=40, unit=""):
+    filled = int(width * min(value / max_val, 1.0)) if max_val > 0 else 0
+    bar    = "#" * filled + "." * (width - filled)
+    f.write(f"  {label:<22} [{bar}] {value}{unit}\n")
+
+
+def write_full_report(report_path, all_video_data, run_ts):
+    """
+    Appends a full evaluation report to report_path.
+    all_video_data: list of rich dicts collected during process_video().
+    """
+    with open(report_path, "a", encoding="utf-8") as f:
+
+        # ── RUN HEADER ────────────────────────────────────────────────────────
+        rheader(f, f"MULTI-MODAL VIOLENT CONTENT DETECTOR  -  EVALUATION REPORT")
+        rl(f)
+        rl(f, f"  Run timestamp      : {run_ts}")
+        rl(f, f"  Ground truth file  : {GROUND_TRUTH_JSON}")
+        rl(f, f"  Attacked folder    : {ATTACKED_DIR}/")
+        rl(f, f"  Videos processed   : {len(all_video_data)}")
+        rl(f, f"  Report file        : {report_path}")
+        rl(f)
+        rl(f, f"  Signals            : Visual | Motion | AudioRMS | Silence | SpectralFlux")
+        rl(f, f"  Fusion window      : {TOLERANCE_SEC}s  (events within this gap merged into one)")
+        rl(f, f"  Min signals needed : {MIN_SIGNALS_TO_CONFIRM}")
+        rl(f, f"  Require multimodal : {REQUIRE_MULTIMODAL}")
+        rl(f, f"  Lockout period     : {LOCKOUT_PERIOD}s  (no triggers in first {LOCKOUT_PERIOD}s)")
+        rl(f)
+        rl(f, f"  Scoring rule       : A segment counts as HIT if any fused event lands within")
+        rl(f, f"                       [start - {BOUNDARY_TOLERANCE}s]  to  [end + {BOUNDARY_TOLERANCE}s]")
+        rl(f, f"  Hit positions      : START      = event within {BOUNDARY_TOLERANCE}s of segment start")
+        rl(f, f"                       END        = event within {BOUNDARY_TOLERANCE}s of segment end")
+        rl(f, f"                       IN-BETWEEN = event inside the segment body")
+        rl(f, f"                       START+END  = segment so short both boundaries overlap")
+
+        # ── CONFIGURATION ─────────────────────────────────────────────────────
+        rheader(f, "CONFIGURATION PARAMETERS", char="-")
+        rl(f, f"  {'Parameter':<35}  Value")
+        rl(f, f"  {'-'*35}  {'-'*20}")
+        params = [
+            ("BOUNDARY_TOLERANCE",      BOUNDARY_TOLERANCE),
+            ("TOLERANCE_SEC",           TOLERANCE_SEC),
+            ("LOCKOUT_PERIOD",          LOCKOUT_PERIOD),
+            ("--- Visual ---",          ""),
+            ("VISUAL_MAX_FRAMES",       VISUAL_MAX_FRAMES),
+            ("VISUAL_MIN_WARMUP",       VISUAL_MIN_WARMUP),
+            ("K_VISUAL_THRESHOLD",      K_VISUAL_THRESHOLD),
+            ("VISUAL_COOLDOWN",         VISUAL_COOLDOWN),
+            ("VISUAL_PERSIST_NEEDED",   VISUAL_PERSIST_NEEDED),
+            ("VISUAL_PERSIST_WINDOW",   VISUAL_PERSIST_WINDOW),
+            ("--- Motion ---",          ""),
+            ("MV_WINDOW",               MV_WINDOW),
+            ("MV_MIN_WARMUP",           MV_MIN_WARMUP),
+            ("K_MV_THRESHOLD",          K_MV_THRESHOLD),
+            ("MV_COOLDOWN",             MV_COOLDOWN),
+            ("MV_PERSIST_NEEDED",       MV_PERSIST_NEEDED),
+            ("MV_PERSIST_WINDOW",       MV_PERSIST_WINDOW),
+            ("GOP_SHORT_RATIO",         GOP_SHORT_RATIO),
+            ("--- Audio RMS ---",       ""),
+            ("AUDIO_BUFFER_SEC",        AUDIO_BUFFER_SEC),
+            ("AUDIO_MICRO_WINDOW_SEC",  AUDIO_MICRO_WINDOW_SEC),
+            ("K_AUDIO_RMS_THRESHOLD",   K_AUDIO_RMS_THRESHOLD),
+            ("AUDIO_NOISE_FLOOR",       AUDIO_NOISE_FLOOR),
+            ("AUDIO_COOLDOWN",          AUDIO_COOLDOWN),
+            ("AUDIO_PERSIST_NEEDED",    AUDIO_PERSIST_NEEDED),
+            ("--- Silence ---",         ""),
+            ("SILENCE_THRESHOLD_RATIO", SILENCE_THRESHOLD_RATIO),
+            ("SILENCE_MIN_DURATION",    SILENCE_MIN_DURATION),
+            ("SILENCE_COOLDOWN",        SILENCE_COOLDOWN),
+            ("--- Spectral Flux ---",   ""),
+            ("FLUX_WINDOW_SEC",         FLUX_WINDOW_SEC),
+            ("FLUX_BUFFER_SEC",         FLUX_BUFFER_SEC),
+            ("K_FLUX_THRESHOLD",        K_FLUX_THRESHOLD),
+            ("FLUX_COOLDOWN",           FLUX_COOLDOWN),
+            ("FLUX_PERSIST_NEEDED",     FLUX_PERSIST_NEEDED),
+        ]
+        for k, v in params:
+            if v == "":
+                rl(f, f"  {k}")
+            else:
+                rl(f, f"  {k:<35}  {v}")
+
+        # ── PER-VIDEO DETAILED SECTIONS ────────────────────────────────────────
+        rheader(f, "PER-VIDEO DETAILED RESULTS")
+
+        for vd in all_video_data:
+            vname     = vd["name"]
+            seg_res   = vd["seg_results"]
+            fp_events = vd["fp_events"]
+            sig_dict  = vd["signal_dict"]
+            merged    = vd["merged_events"]
+            elapsed   = vd["elapsed"]
+
+            hits  = sum(1 for s in seg_res if s["hit"])
+            total = len(seg_res)
+            rate  = hits / total * 100 if total else 0
+            fp_n  = len(fp_events)
+            fpr_v = fp_n / (fp_n + hits) * 100 if (fp_n + hits) > 0 else 0.0
+
+            rsection(f, f"VIDEO: {vname}")
+            rl(f)
+            rl(f, f"  Result          : {hits}/{total} segments detected  ({rate:.1f}%)")
+            rl(f, f"  False positives : {fp_n}  (video FPR: {fpr_v:.1f}%)")
+            rl(f, f"  Processing time : {elapsed:.1f}s")
+            rl(f)
+
+            # -- Raw trigger counts per signal with bar chart
+            rl(f, "  RAW TRIGGER COUNTS PER SIGNAL:")
+            max_raw = max((len(v) for v in sig_dict.values()), default=1)
+            for sig, ts_list in sig_dict.items():
+                rbar(f, sig, len(ts_list), max(max_raw, 1), width=35, unit=" triggers")
+            rl(f, f"  {'':22}   Total fused events after clustering: {len(merged)}")
+            rl(f)
+
+            # -- All raw trigger timestamps per signal
+            rl(f, "  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:")
+            for sig, ts_list in sig_dict.items():
+                times_str = "  ".join(f"{t:.3f}s" for t in sorted(ts_list)) if ts_list else "(none)"
+                rl(f, f"  {sig:<15} ({len(ts_list):>4} total): {times_str}")
+            rl(f)
+
+            # -- All fused events with outcome
+            rl(f, "  ALL FUSED EVENTS (chronological):")
+            rl(f, f"  {'TIME':>10}  {'SIGNALS':<35}  {'N':>2}  {'CONF':<5}  OUTCOME")
+            rl(f, f"  {'─'*10}  {'─'*35}  {'─'*2}  {'─'*5}  {'─'*25}")
+            # Build hit lookup: trigger time -> which segment it claimed
+            hit_lookup = {}
+            for s in seg_res:
+                if s["hit"]:
+                    hit_lookup[round(s["hit"]["ts"], 2)] = (s["index"], s["hit"]["position"])
+            for ts, label, n_sig in merged:
+                conf = "HIGH" if n_sig >= 3 else ("MED" if n_sig == 2 else "LOW")
+                key  = round(ts, 2)
+                if key in hit_lookup:
+                    idx, pos = hit_lookup[key]
+                    outcome  = f"HIT  seg {idx:>2}  pos={pos}"
+                else:
+                    outcome = "FALSE POSITIVE"
+                rl(f, f"  {ts:>10.3f}s  {label:<35}  {n_sig:>2}  {conf:<5}  {outcome}")
+            rl(f)
+
+            # -- Segment detection table (full detail)
+            rl(f, "  SEGMENT DETECTION TABLE:")
+            rl(f,
+               f"  {'#':>3}  {'SOURCE':<16}  {'START':>9}  {'END':>9}  {'DUR':>7}  "
+               f"{'HIT @':>9}  {'OFFSET':>9}  {'POS':<12}  {'SIGNALS':<30}  CONF")
+            rl(f,
+               f"  {'─'*3}  {'─'*16}  {'─'*9}  {'─'*9}  {'─'*7}  "
+               f"{'─'*9}  {'─'*9}  {'─'*12}  {'─'*30}  {'─'*4}")
+            for s in seg_res:
+                src = s["source"][:15]
+                if s["hit"]:
+                    h      = s["hit"]
+                    offset = h["ts"] - s["start"]
+                    conf   = "HIGH" if h["n_sig"] >= 3 else ("MED" if h["n_sig"] == 2 else "LOW")
+                    rl(f,
+                       f"  {s['index']:>3}  {src:<16}  {s['start']:>9.3f}  {s['end']:>9.3f}  "
+                       f"{s['duration']:>7.3f}  {h['ts']:>9.3f}  {offset:>+9.3f}  "
+                       f"  {h['position']:<10}  {h['label'][:30]:<30}  {conf}")
+                else:
+                    rl(f,
+                       f"  {s['index']:>3}  {src:<16}  {s['start']:>9.3f}  {s['end']:>9.3f}  "
+                       f"{s['duration']:>7.3f}  {'---':>9}  {'---':>9}  "
+                       f"  {'MISSED':<10}  {'':30}  {'':4}")
+            rl(f)
+
+            # -- Missed segment analysis
+            missed = [s for s in seg_res if not s["hit"]]
+            if missed:
+                rl(f, f"  MISSED SEGMENTS ({len(missed)}):")
+                for s in missed:
+                    mid     = (s["start"] + s["end"]) / 2.0
+                    if merged:
+                        closest    = min(merged, key=lambda e: abs(e[0] - mid))
+                        dist_start = abs(closest[0] - s["start"])
+                        dist_mid   = abs(closest[0] - mid)
+                        dist_end   = abs(closest[0] - s["end"])
+                        rl(f, f"  Seg {s['index']:>2}  src={s['source']}  "
+                               f"{s['start']:.3f}s-{s['end']:.3f}s  dur={s['duration']:.3f}s")
+                        rl(f, f"         Closest fused event : {closest[0]:.3f}s  "
+                               f"signals={closest[1]}  conf={'HIGH' if closest[2]>=3 else 'MED' if closest[2]==2 else 'LOW'}")
+                        rl(f, f"         Distance from start : {dist_start:.3f}s")
+                        rl(f, f"         Distance from mid   : {dist_mid:.3f}s")
+                        rl(f, f"         Distance from end   : {dist_end:.3f}s")
+                        rl(f, f"         (Boundary tolerance : {BOUNDARY_TOLERANCE}s  -> "
+                               f"{'JUST MISSED' if dist_start < BOUNDARY_TOLERANCE * 2 else 'FAR MISS'})")
+                    else:
+                        rl(f, f"  Seg {s['index']:>2}  src={s['source']}  "
+                               f"{s['start']:.3f}s-{s['end']:.3f}s  dur={s['duration']:.3f}s  "
+                               f"(no fused events in video at all)")
+                rl(f)
+            else:
+                rl(f, "  MISSED SEGMENTS: none -- all segments detected")
+                rl(f)
+
+            # -- False positive detail
+            if fp_events:
+                rl(f, f"  FALSE POSITIVE EVENTS ({fp_n}):")
+                rl(f, f"  {'#':>4}  {'TIME':>10}  {'SIGNALS':<35}  {'N':>2}  CONF")
+                rl(f, f"  {'─'*4}  {'─'*10}  {'─'*35}  {'─'*2}  {'─'*4}")
+                for i, fp in enumerate(fp_events, 1):
+                    conf = "HIGH" if fp["n_sig"] >= 3 else ("MED" if fp["n_sig"] == 2 else "LOW")
+                    rl(f, f"  {i:>4}  {fp['ts']:>10.3f}s  {fp['label']:<35}  {fp['n_sig']:>2}  {conf}")
+                # FP spacing statistics
+                if len(fp_events) > 1:
+                    gaps = [fp_events[i+1]["ts"] - fp_events[i]["ts"]
+                            for i in range(len(fp_events) - 1)]
+                    rl(f)
+                    rl(f, f"  FP spacing stats:")
+                    rl(f, f"    min gap  : {min(gaps):.3f}s")
+                    rl(f, f"    max gap  : {max(gaps):.3f}s")
+                    rl(f, f"    mean gap : {np.mean(gaps):.3f}s")
+                    rl(f, f"    median   : {np.median(gaps):.3f}s")
+                    rl(f, f"    std      : {np.std(gaps):.3f}s")
+                    # Count FPs that are very close together (< 10s) vs spread out
+                    close = sum(1 for g in gaps if g < 10.0)
+                    rl(f, f"    gaps < 10s: {close}  (possible burst FP region)")
+            else:
+                rl(f, "  FALSE POSITIVE EVENTS: none")
+            rl(f)
+
+            # -- Per-signal contribution breakdown for this video
+            rl(f, "  PER-SIGNAL CONTRIBUTION (this video):")
+            rl(f, f"  {'Signal':<15}  {'Raw':>5}  {'Hits':>5}  {'FP':>6}  {'Precision':>10}  All raw timestamps")
+            rl(f, f"  {'─'*15}  {'─'*5}  {'─'*5}  {'─'*6}  {'─'*10}  {'─'*30}")
+            for sig, ts_list in sig_dict.items():
+                raw  = len(ts_list)
+                h    = sum(1 for s in seg_res
+                           if s["hit"] and sig in s["hit"]["label"].split("+"))
+                fp   = sum(1 for e  in fp_events if sig in e["label"].split("+"))
+                prec = h / (h + fp) * 100 if (h + fp) > 0 else 0.0
+                times_str = "  ".join(f"{t:.2f}s" for t in sorted(ts_list)[:20])
+                if len(ts_list) > 20:
+                    times_str += f"  ... (+{len(ts_list)-20} more)"
+                rl(f, f"  {sig:<15}  {raw:>5}  {h:>5}  {fp:>6}  {prec:>9.1f}%  {times_str}")
+            rl(f)
+
+        # ── OVERALL SUMMARY ────────────────────────────────────────────────────
+        rheader(f, "OVERALL SUMMARY")
+
+        total_segs = sum(len(vd["seg_results"]) for vd in all_video_data)
+        total_hits = sum(sum(1 for s in vd["seg_results"] if s["hit"]) for vd in all_video_data)
+        total_fp   = sum(len(vd["fp_events"]) for vd in all_video_data)
+        overall    = total_hits / total_segs * 100 if total_segs else 0
+        fpr        = total_fp / (total_fp + total_hits) * 100 if (total_fp + total_hits) > 0 else 0
+        total_time = sum(vd["elapsed"] for vd in all_video_data)
+
+        # Per-video summary table
+        rl(f)
+        rl(f, f"  {'VIDEO':<38}  {'SEGS':>4}  {'HITS':>4}  {'RATE':>6}  {'FP':>5}  {'VID FPR':>8}  {'TIME':>7}  STATUS")
+        rl(f, f"  {'─'*38}  {'─'*4}  {'─'*4}  {'─'*6}  {'─'*5}  {'─'*8}  {'─'*7}  {'─'*8}")
+        for vd in all_video_data:
+            sr   = vd["seg_results"]
+            fpe  = vd["fp_events"]
+            h    = sum(1 for s in sr if s["hit"])
+            t    = len(sr)
+            r    = h / t * 100 if t else 0
+            fp   = len(fpe)
+            vfpr = fp / (fp + h) * 100 if (fp + h) > 0 else 0.0
+            st   = "PASS" if r >= 50 else "FAIL"
+            rl(f,
+               f"  {vd['name']:<38}  {t:>4}  {h:>4}  {r:>5.1f}%  {fp:>5}  {vfpr:>7.1f}%  "
+               f"{vd['elapsed']:>6.1f}s  {st}")
+        rl(f, f"  {'─'*38}  {'─'*4}  {'─'*4}  {'─'*6}  {'─'*5}  {'─'*8}  {'─'*7}  {'─'*8}")
+        rl(f,
+           f"  {'TOTAL':<38}  {total_segs:>4}  {total_hits:>4}  {overall:>5.1f}%  "
+           f"{total_fp:>5}  {fpr:>7.1f}%  {total_time:>6.1f}s")
+        rl(f)
+
+        # Hit position breakdown
+        rl(f, "  HIT POSITION BREAKDOWN:")
+        pos_counts = {}
+        for vd in all_video_data:
+            for s in vd["seg_results"]:
+                if s["hit"]:
+                    p = s["hit"]["position"]
+                    pos_counts[p] = pos_counts.get(p, 0) + 1
+        max_pos = max(pos_counts.values(), default=1)
+        for pos, cnt in sorted(pos_counts.items(), key=lambda x: -x[1]):
+            pct = cnt / total_hits * 100 if total_hits else 0
+            rbar(f, pos, cnt, max_pos, width=30, unit=f"  ({pct:.1f}% of hits)")
+        rl(f)
+
+        # Trigger offset statistics
+        offsets = [s["hit"]["ts"] - s["start"]
+                   for vd in all_video_data
+                   for s in vd["seg_results"] if s["hit"]]
+        if offsets:
+            rl(f, "  TRIGGER OFFSET FROM SEGMENT START (all confirmed hits):")
+            rl(f, f"  Count  : {len(offsets)}")
+            rl(f, f"  Min    : {min(offsets):+.3f}s")
+            rl(f, f"  Max    : {max(offsets):+.3f}s")
+            rl(f, f"  Mean   : {np.mean(offsets):+.3f}s")
+            rl(f, f"  Median : {np.median(offsets):+.3f}s")
+            rl(f, f"  Std    : {np.std(offsets):.3f}s")
+            rl(f, f"  (negative = trigger fired BEFORE segment start; positive = AFTER)")
+            neg = sum(1 for o in offsets if o < 0)
+            pos = sum(1 for o in offsets if o > 0)
+            rl(f, f"  Early triggers (before start) : {neg}  ({neg/len(offsets)*100:.1f}%)")
+            rl(f, f"  Late  triggers (after  start) : {pos}  ({pos/len(offsets)*100:.1f}%)")
+            rl(f)
+
+        # Segment duration vs detection rate
+        rl(f, "  DETECTION RATE BY SEGMENT DURATION BUCKET:")
+        buckets = [("<3s", 0, 3), ("3-5s", 3, 5), ("5-7s", 5, 7), ("7-10s", 7, 10), (">10s", 10, 9999)]
+        rl(f, f"  {'Bucket':<8}  {'Hits':>5}  {'Total':>6}  {'Rate':>7}  Notes")
+        rl(f, f"  {'─'*8}  {'─'*5}  {'─'*6}  {'─'*7}  {'─'*25}")
+        for bname, blo, bhi in buckets:
+            bh = sum(1 for vd in all_video_data
+                     for s in vd["seg_results"]
+                     if blo <= s["duration"] < bhi and s["hit"])
+            bt = sum(1 for vd in all_video_data
+                     for s in vd["seg_results"]
+                     if blo <= s["duration"] < bhi)
+            br = bh / bt * 100 if bt > 0 else 0.0
+            note = "hardest (clip ends before most signals build)" if bname == "<3s" else ""
+            rl(f, f"  {bname:<8}  {bh:>5}  {bt:>6}  {br:>6.1f}%  {note}")
+        rl(f)
+
+        # Per-signal accuracy across ALL videos
+        rl(f, "  PER-SIGNAL ACCURACY (all videos combined):")
+        sig_hits_all, sig_fp_all, sig_raw_all = {}, {}, {}
+        for vd in all_video_data:
+            for sig, ts_list in vd["signal_dict"].items():
+                sig_raw_all[sig] = sig_raw_all.get(sig, 0) + len(ts_list)
+            for s in vd["seg_results"]:
+                if s["hit"]:
+                    for sig in s["hit"]["label"].split("+"):
+                        sig_hits_all[sig] = sig_hits_all.get(sig, 0) + 1
+            for e in vd["fp_events"]:
+                for sig in e["label"].split("+"):
+                    sig_fp_all[sig] = sig_fp_all.get(sig, 0) + 1
+
+        all_sigs = sorted(set(
+            list(sig_hits_all.keys()) + list(sig_fp_all.keys()) + list(sig_raw_all.keys())
+        ))
+        rl(f, f"  {'Signal':<15}  {'Raw':>6}  {'Hits':>5}  {'FP':>6}  {'Precision':>10}  {'Recall':>8}  {'F1':>6}")
+        rl(f, f"  {'─'*15}  {'─'*6}  {'─'*5}  {'─'*6}  {'─'*10}  {'─'*8}  {'─'*6}")
+        for sig in all_sigs:
+            raw  = sig_raw_all.get(sig, 0)
+            h    = sig_hits_all.get(sig, 0)
+            fp   = sig_fp_all.get(sig, 0)
+            prec = h / (h + fp) * 100 if (h + fp) > 0 else 0.0
+            rec  = h / total_segs * 100 if total_segs > 0 else 0.0
+            f1   = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
+            rl(f, f"  {sig:<15}  {raw:>6}  {h:>5}  {fp:>6}  {prec:>9.1f}%  {rec:>7.1f}%  {f1:>5.1f}%")
+        rl(f)
+
+        # Signal co-occurrence on true hits
+        rl(f, "  SIGNAL CO-OCCURRENCE ON TRUE HITS:")
+        rl(f, "  (how many confirmed hits had BOTH signals firing within fusion window)")
+        cooc = {a: {b: 0 for b in all_sigs} for a in all_sigs}
+        for vd in all_video_data:
+            for s in vd["seg_results"]:
+                if s["hit"]:
+                    sigs = s["hit"]["label"].split("+")
+                    for a in sigs:
+                        for b in sigs:
+                            if a in cooc and b in cooc[a]:
+                                cooc[a][b] += 1
+        hdr = " " * 17 + "  ".join(f"{s[:10]:>10}" for s in all_sigs)
+        rl(f, f"  {hdr}")
+        for a in all_sigs:
+            row = "  ".join(f"{cooc[a].get(b, 0):>10}" for b in all_sigs)
+            rl(f, f"  {a:<15}  {row}")
+        rl(f)
+
+        # Which signal pairs most often confirm together on FPs
+        rl(f, "  SIGNAL CO-OCCURRENCE ON FALSE POSITIVES:")
+        fp_cooc = {a: {b: 0 for b in all_sigs} for a in all_sigs}
+        for vd in all_video_data:
+            for e in vd["fp_events"]:
+                sigs = e["label"].split("+")
+                for a in sigs:
+                    for b in sigs:
+                        if a in fp_cooc and b in fp_cooc[a]:
+                            fp_cooc[a][b] += 1
+        rl(f, f"  {hdr}")
+        for a in all_sigs:
+            row = "  ".join(f"{fp_cooc[a].get(b, 0):>10}" for b in all_sigs)
+            rl(f, f"  {a:<15}  {row}")
+        rl(f)
+
+        # Per-video signal raw trigger counts table
+        rl(f, "  PER-VIDEO RAW TRIGGER COUNTS PER SIGNAL:")
+        sig_names = list(all_video_data[0]["signal_dict"].keys()) if all_video_data else []
+        rl(f, f"  {'VIDEO':<38}  " + "  ".join(f"{s[:10]:>10}" for s in sig_names) + "  FUSED")
+        rl(f, f"  {'─'*38}  " + "  ".join("─"*10 for _ in sig_names) + "  ─────")
+        for vd in all_video_data:
+            counts = [len(vd["signal_dict"].get(s, [])) for s in sig_names]
+            rl(f,
+               f"  {vd['name']:<38}  " +
+               "  ".join(f"{c:>10}" for c in counts) +
+               f"  {len(vd['merged_events']):>5}")
+        rl(f, f"  {'─'*38}  " + "  ".join("─"*10 for _ in sig_names) + "  ─────")
+        totals = [sum(len(vd["signal_dict"].get(s, [])) for vd in all_video_data) for s in sig_names]
+        rl(f,
+           f"  {'TOTAL':<38}  " +
+           "  ".join(f"{c:>10}" for c in totals) +
+           f"  {sum(len(vd['merged_events']) for vd in all_video_data):>5}")
+        rl(f)
+
+        # ── FINAL SCORECARD ───────────────────────────────────────────────────
+        rl(f, "=" * W)
+        rl(f, f"  OVERALL DETECTION RATE  : {total_hits:>4} / {total_segs}  ({overall:.2f}%)")
+        rl(f, f"  TOTAL FALSE POSITIVES   : {total_fp}")
+        rl(f, f"  FALSE POSITIVE RATE     : {fpr:.2f}%  (FP / all claimed events)")
+        rl(f, f"  VIDEOS PROCESSED        : {len(all_video_data)}")
+        rl(f, f"  TOTAL PROCESSING TIME   : {total_time:.1f}s")
+        rl(f, f"  VIDEOS PASSING (>=50%)  : {sum(1 for vd in all_video_data if sum(1 for s in vd['seg_results'] if s['hit'])/len(vd['seg_results'])*100 >= 50)}/{len(all_video_data)}")
+        rl(f, "=" * W)
+        rl(f)
 
 
 # ==============================================================================
@@ -628,19 +1040,19 @@ def process_video(video_path, ground_truth_entry):
 
     print(f"  [1/5] Visual I-frame spikes...")
     v_ts  = get_visual_triggers(video_path)
-    print(f"        → {len(v_ts)} triggers")
+    print(f"        -> {len(v_ts)} triggers")
 
     print(f"  [2/5] Motion vector proxy...")
     mv_ts = get_motion_vector_triggers(video_path)
-    print(f"        → {len(mv_ts)} triggers")
+    print(f"        -> {len(mv_ts)} triggers")
 
     print(f"  [3/5] Audio RMS + Silence detection...")
     rms_ts, sil_ts = get_audio_rms_triggers(video_path)
-    print(f"        → {len(rms_ts)} RMS spike triggers,  {len(sil_ts)} silence triggers")
+    print(f"        -> {len(rms_ts)} RMS spike triggers,  {len(sil_ts)} silence triggers")
 
     print(f"  [4/5] Spectral Flux...")
     flux_ts = get_spectral_flux_triggers(video_path)
-    print(f"        → {len(flux_ts)} triggers")
+    print(f"        -> {len(flux_ts)} triggers")
 
     elapsed = time.time() - t0
     print(f"\n  Detection complete in {elapsed:.1f}s")
@@ -658,22 +1070,22 @@ def process_video(video_path, ground_truth_entry):
 
     print_video_report(video_name, seg_results, fp_events, signal_dict, merged)
 
-    # Build per-signal stats for overall summary
+    # Build per-signal stats for overall summary (console)
     sig_hits = {}
     sig_fp   = {}
-
     for seg in seg_results:
         if seg["hit"]:
             for sig in seg["hit"]["label"].split("+"):
                 sig_hits[sig] = sig_hits.get(sig, 0) + 1
-
     for fp in fp_events:
         for sig in fp["label"].split("+"):
             sig_fp[sig] = sig_fp.get(sig, 0) + 1
 
     positions = [s["hit"]["position"] for s in seg_results if s["hit"]]
 
+    # Return everything for the report writer
     return {
+        # for console summary (original fields)
         "name":         video_name,
         "total":        len(seg_results),
         "hits":         sum(1 for s in seg_results if s["hit"] is not None),
@@ -682,6 +1094,12 @@ def process_video(video_path, ground_truth_entry):
         "sig_hits":     sig_hits,
         "sig_fp":       sig_fp,
         "raw_triggers": {sig: len(ts) for sig, ts in signal_dict.items()},
+        # for report writer (rich fields)
+        "seg_results":   seg_results,
+        "fp_events":     fp_events,
+        "signal_dict":   signal_dict,
+        "merged_events": merged,
+        "elapsed":       elapsed,
     }
 
 
@@ -700,12 +1118,15 @@ if __name__ == "__main__":
 
     gt_map = {entry["target_video"]: entry for entry in ground_truth}
 
-    banner("MULTI-MODAL VIOLENT CONTENT DETECTOR  —  FULL EVALUATION")
+    run_ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    banner("MULTI-MODAL VIOLENT CONTENT DETECTOR  -  FULL EVALUATION")
     print(f"  Ground truth: {GROUND_TRUTH_JSON}  ({len(ground_truth)} videos)")
     print(f"  Attacked folder: {ATTACKED_DIR}/")
     print(f"  Signals: Visual | Motion | AudioRMS | Silence | SpectralFlux")
     print(f"  Scoring: hit = any trigger within [start-{BOUNDARY_TOLERANCE}s ... end+{BOUNDARY_TOLERANCE}s]")
     print(f"  Position labels: START | END | IN-BETWEEN | START+END")
+    print(f"  Report will be written to: {REPORT_FILE}")
 
     attacked_videos = sorted([
         os.path.join(SCRIPT_DIR, ATTACKED_DIR, e["target_video"])
@@ -717,13 +1138,11 @@ if __name__ == "__main__":
 
     for vid_idx, video_path in enumerate(attacked_videos):
         video_name = os.path.basename(video_path)
-
         banner(f"VIDEO {vid_idx+1}/{total_vids}: {video_name}")
 
         if not os.path.exists(video_path):
             print(f"  [!] File not found, skipping: {video_path}")
             continue
-
         if video_name not in gt_map:
             print(f"  [!] No ground truth entry for {video_name}, skipping.")
             continue
@@ -731,4 +1150,10 @@ if __name__ == "__main__":
         stats = process_video(video_path, gt_map[video_name])
         all_video_stats.append(stats)
 
+    # Console summary (original — unchanged)
     print_overall_summary(all_video_stats)
+
+    # Write detailed report.txt
+    report_path = os.path.join(SCRIPT_DIR, REPORT_FILE)
+    write_full_report(report_path, all_video_stats, run_ts)
+    print(f"[+] Detailed report written to: {report_path}")
