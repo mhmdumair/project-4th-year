@@ -47,3 +47,58 @@
 ═════════════════════════════════════════════════════════════════
 
 PS D:\University Course Meterials\year4\PROJECT\datasets\YT> 
+
+
+
+
+
+
+═════════════════════════════════════════════════════════════════
+                   COMPLETE EVALUATION SUMMARY
+═════════════════════════════════════════════════════════════════
+
+  VIDEO                                SEGS  HITS    RATE    FP  STATUS
+  ───────────────────────────────────  ────  ────  ──────  ────  ──────────
+  attacked_01_video2.mp4                 12    10   83.3%   117  ✓ PASS
+  attacked_02_video4.mp4                  4     2   50.0%    48  ✓ PASS
+  attacked_03_video3.mp4                  9     9  100.0%   240  ✓ PASS
+  attacked_04_video1.mp4                  2     2  100.0%    43  ✓ PASS
+  attacked_05_video2.mp4                 12     9   75.0%   119  ✓ PASS
+  attacked_06_video4.mp4                  4     4  100.0%    39  ✓ PASS
+  attacked_07_video3.mp4                  9     6   66.7%   237  ✓ PASS
+  attacked_08_video1.mp4                  3     3  100.0%    41  ✓ PASS
+  attacked_09_video2.mp4                 12     9   75.0%   114  ✓ PASS
+  attacked_10_video4.mp4                  5     4   80.0%    47  ✓ PASS
+  ───────────────────────────────────  ────  ────  ──────  ────  ──────────      
+  TOTAL / AVERAGE                        72    58   80.6%  1045
+
+  Hit Position Breakdown:
+    START         :   37  █████████████████████████████████████
+    END           :   17  █████████████████
+    START+END     :    2  ██
+    IN-BETWEEN    :    2  ██
+
+  Per-Signal Contribution (how many hits each signal helped claim):
+  Signal            Hits  FP contrib  Precision
+  ───────────────  ─────  ──────────  ─────────
+  AudioRMS            11          36      23.4%
+  Motion              33         221      13.0%
+  Silence             19         827       2.2%
+  SpectralFlux         1           3      25.0%
+  Visual               5          29      14.7%
+
+  Raw Trigger Counts (all videos combined):
+    Silence        :   846 total  ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪       
+    Motion         :   254 total  ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪       
+    AudioRMS       :    47 total  ▪▪▪▪▪▪▪▪▪▪
+    Visual         :    34 total  ▪▪▪▪▪▪▪
+    SpectralFlux   :     4 total  ▪
+
+═════════════════════════════════════════════════════════════════
+  OVERALL DETECTION RATE   :   58 / 72  (80.56%)
+  TOTAL FALSE POSITIVES    : 1045
+  VIDEOS PROCESSED         : 10
+  FALSE POSITIVE RATE      : 94.74%  (FP / all claimed events)
+═════════════════════════════════════════════════════════════════
+
+PS D:\University Course Meterials\year4\PROJECT\datasets\YT> 
