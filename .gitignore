@@ -1,4 +1,58 @@
+# =================================================================
+#  ENVIRONMENT & OS
+# =================================================================
+.venv/
+venv/
+ENV/
+.DS_Store
+Thumbs.db
+.env
+
+# =================================================================
+#  DATASETS  (both model/dataset/ and monitor/dataset/)
+# =================================================================
+**/dataset/
 long-videos/
 violent-videos/
 attacked/
+
+# =================================================================
+#  LARGE BINARIES & TOOLS
+# =================================================================
 ffmpeg-master-latest-win64-gpl/
+*.exe
+*.zip
+*.tar.gz
+
+# =================================================================
+#  MODEL WEIGHTS
+# =================================================================
+*.pth
+*.pt
+*.onnx
+
+# =================================================================
+#  CHECKPOINTS — ignore the heavy stuff, KEEP the index files
+# =================================================================
+checkpoints/fold*_last.pth
+checkpoints/fold*_best.pth
+checkpoints/best_model.pth
+
+# DO NOT ignore these — they lock your data split and fold progress
+# checkpoints/data_split.json   ← intentionally tracked
+# checkpoints/fold_state.json   ← intentionally tracked
+# checkpoints/test_results.json ← intentionally tracked
+
+# =================================================================
+#  PYTHON ARTIFACTS
+# =================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# =================================================================
+#  LOGS & TEMPORARY RESULTS
+# =================================================================
+training_log.json
+model/training_log.json
