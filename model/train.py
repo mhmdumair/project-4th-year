@@ -13,7 +13,7 @@ Usage:
   python train.py
 """
 
-import os, cv2, json, time, random, shutil, gc
+import os, cv2, json, time, random, shutil, gc, sys
 import torch
 import torch.nn as nn
 import timm
@@ -43,8 +43,8 @@ SPLIT_FILE      = os.path.join(CHECKPOINT_DIR, "data_split.json")
 FOLD_STATE_FILE = os.path.join(CHECKPOINT_DIR, "fold_state.json")
 
 # Data
-NUM_TEST        = 5        # per class → 60 total held-out test videos
-NUM_FOLDS       = 2         # K-fold value
+NUM_TEST        = 30        # per class → 60 total held-out test videos
+NUM_FOLDS       = 3         # K-fold value
 
 # Model
 N_FRAMES        = 16
@@ -55,7 +55,10 @@ DROPOUT         = 0.5
 
 # Training
 BATCH_SIZE      = 4         # low to avoid OOM on CPU
-EPOCHS          = 2
+EPOCHS          = 30        # total epochs per fold (across all sessions)
+EPOCHS_PER_SESSION = 5      # how many epochs to run THIS session then stop cleanly
+                            # re-run train.py to continue from where you left off
+                            # set to 0 or None to disable (run until EPOCHS or early stop)
 LR              = 1e-4
 WEIGHT_DECAY    = 1e-4
 THRESHOLD       = 0.5
@@ -70,6 +73,12 @@ ACCUMULATION_STEPS = 1      # 1 = disabled (normal training)
 # Overfitting controls
 LABEL_SMOOTHING = 0.1       # softens hard 0/1 labels → reduces overconfidence
 MIXUP_ALPHA     = 0.2       # mixup blending strength (0 = disabled)
+
+# Session control
+# Run only this many epochs per session, then exit cleanly.
+# Re-run train.py to continue from where it left off.
+# Set to None to run until early stopping or EPOCHS is reached.
+EPOCHS_PER_SESSION = 5
 
 # Early stopping
 WARMUP_EPOCHS   = 5         # don't check patience before this epoch
@@ -338,49 +347,47 @@ def load_ckpt(path, model, optimizer, scheduler):
 #  ONE EPOCH
 # ══════════════════════════════════════════════════════════════
 def run_epoch(model, loader, criterion,
-              optimizer=None, train=True, label=""):
+              optimizer=None, train=True, bar=None):
+    """
+    Runs one epoch. If a tqdm bar is passed in, updates it in-place
+    (no new lines). Returns (loss, accuracy).
+    """
     model.train() if train else model.eval()
     total_loss, correct, total = 0.0, 0, 0
-    tag  = "Train" if train else "Val  "
-    pbar = tqdm(loader, desc=f"    {tag} {label}", ncols=80, unit="batch",
-                bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} "
-                           "[{elapsed}<{remaining}, {rate_fmt}]")
+    n_batches = len(loader)
 
     acc_steps = ACCUMULATION_STEPS if train else 1
     if train:
-        optimizer.zero_grad()          # zero once before the loop
+        optimizer.zero_grad()
 
     with torch.set_grad_enabled(train):
-        for batch_idx, (frames, labels) in enumerate(pbar):
+        for batch_idx, (frames, labels) in enumerate(loader):
             frames, labels = frames.to(DEVICE), labels.to(DEVICE)
 
             if train and MIXUP_ALPHA > 0:
                 frames, labels = mixup_batch(frames, labels)
 
             logits = model(frames)
-            # Divide loss by accumulation steps so gradients scale correctly
             loss   = criterion(logits, labels) / acc_steps
 
             if train:
                 loss.backward()
-                # Only update weights every acc_steps batches
-                if (batch_idx + 1) % acc_steps == 0 or                         (batch_idx + 1) == len(loader):
+                if (batch_idx + 1) % acc_steps == 0 or                         (batch_idx + 1) == n_batches:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     optimizer.step()
                     optimizer.zero_grad()
 
-            # Undo the division for logging (show real loss value)
             total_loss += loss.item() * acc_steps
             hard_labels = (labels > 0.5).float()
             preds    = (torch.sigmoid(logits) > THRESHOLD).float()
             correct += (preds == hard_labels).sum().item()
             total   += labels.size(0)
-            current_avg_loss = total_loss / max(pbar.n, 1)
-            current_acc = (correct / total * 100) if total > 0 else 0
-            pbar.set_postfix(loss=f"{current_avg_loss:.4f}",
-            acc=f"{current_acc:.1f}%")
 
-    return total_loss / len(loader), correct / total
+            # Update the shared bar if provided
+            if bar is not None:
+                bar.update(1)
+
+    return total_loss / n_batches, correct / total
 
 
 # ══════════════════════════════════════════════════════════════
@@ -412,8 +419,8 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
         lr=LR, weight_decay=WEIGHT_DECAY
     )
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode="max", factor=0.5,
-    patience=LR_PATIENCE
+        optimizer, mode="max", factor=0.5,
+        patience=LR_PATIENCE
     )
 
     # Resume if this fold was interrupted
@@ -430,21 +437,36 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
 
     history = []
 
+    # ── One persistent progress bar for this fold ────────────────────────
+    # Total steps = (train batches + val batches) × remaining epochs
+    n_tr  = len(train_loader)
+    n_vl  = len(val_loader)
+    remaining_epochs = EPOCHS - start_epoch
+    total_steps      = (n_tr + n_vl) * remaining_epochs
+
+    fold_bar = tqdm(
+        total=total_steps,
+        desc=f"  Fold {fold+1}/{NUM_FOLDS}",
+        ncols=80,
+        unit="batch",
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
+        position=fold,       # each fold bar on its own line
+        leave=True,          # bar stays visible after fold completes
+    )
+
     for epoch in range(start_epoch, EPOCHS):
-        ep_label = f"[F{fold+1} {epoch+1:02d}/{EPOCHS}]"
         t0 = time.time()
-        info(f"RAM: {ram_usage()}  — Fold {fold+1}  Epoch {epoch+1}/{EPOCHS}")
 
         # Phase 2: unfreeze full CNN at epoch 10
         if epoch == 10:
-            section(f"  Fold {fold+1} — Phase 2: unfreezing full CNN (lr → 1e-5)")
+            fold_bar.write(f"  Fold {fold+1} — Phase 2: full CNN unfrozen (lr -> 1e-5)")
             model.unfreeze_all()
             for g in optimizer.param_groups: g["lr"] = 1e-5
 
         tr_loss, tr_acc = run_epoch(model, train_loader, criterion,
-                                    optimizer, train=True,  label=ep_label)
+                                    optimizer, train=True,  bar=fold_bar)
         vl_loss, vl_acc = run_epoch(model, val_loader,   criterion,
-                                    train=False, label=ep_label)
+                                    train=False, bar=fold_bar)
 
         # Scheduler steps on val accuracy (mode=max)
         scheduler.step(vl_acc)
@@ -457,13 +479,28 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
             best_val_acc = vl_acc
             no_improve   = 0
             save_ckpt({"model": model.state_dict()}, fold_best_path(fold))
-            ok(f"  Fold {fold+1} best saved "
-               f"(val acc = {vl_acc*100:.1f}%  epoch {epoch+1})")
+            fold_bar.write(
+                f"  [ OK ] Fold {fold+1} best saved "
+                f"(val acc={vl_acc*100:.1f}%  epoch {epoch+1})"
+            )
         else:
             no_improve += 1
 
-        epoch_row(epoch+1, EPOCHS, tr_loss, tr_acc, vl_loss, vl_acc,
-                  elapsed, "best" if is_best else "", cur_lr, no_improve)
+        # Build summary line and write via bar (stays above the bar)
+        flag = " <BEST>" if is_best else (
+            f" (no improve {no_improve}/{ES_PATIENCE})" if no_improve > 0 else ""
+        )
+        fold_bar.write(
+            f"  F{fold+1} Ep {epoch+1:02d}/{EPOCHS} | "
+            f"Tr loss={tr_loss:.4f} acc={tr_acc*100:5.1f}% | "
+            f"Val loss={vl_loss:.4f} acc={vl_acc*100:5.1f}% | "
+            f"lr={cur_lr:.1e} [{elapsed}]{flag}"
+        )
+        # Update bar description to show current epoch live
+        fold_bar.set_description(
+            f"  Fold {fold+1}/{NUM_FOLDS} "
+            f"[Ep {epoch+1}/{EPOCHS} | Val {vl_acc*100:.1f}%]"
+        )
 
         # Always save last checkpoint (enables resume)
         save_ckpt({
@@ -482,12 +519,34 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
             "lr": cur_lr, "time": elapsed
         })
 
+        # ── RAM safety check ────────────────────────────────
+        if HAS_PSUTIL and psutil.virtual_memory().percent > 90:
+            fold_bar.write(
+                f"  [WARN] RAM critically high: {ram_usage()} — "
+                f"forcing gc.collect(). Consider BATCH_SIZE=2, ACCUMULATION_STEPS=2"
+            )
+            gc.collect()
+
+        # ── Session epoch limit ──────────────────────────────
+        # Counts epochs run in THIS session only (not total across all sessions)
+        session_epochs_done = epoch + 1 - start_epoch
+        if EPOCHS_PER_SESSION and session_epochs_done >= EPOCHS_PER_SESSION:
+            fold_bar.write(
+                f"  Session limit: {EPOCHS_PER_SESSION} epochs done "
+                f"(total {epoch+1}/{EPOCHS}). "
+                f"Re-run train.py to continue from epoch {epoch+2}."
+            )
+            fold_bar.close()
+            return best_val_acc, "session_limit"   # signal to main loop
+
         # ── Early stopping (only after warmup) ──────────────
         if epoch + 1 > WARMUP_EPOCHS and no_improve >= ES_PATIENCE:
-            section(f"  Early stopping — fold {fold+1} "
-                    f"(no improve for {ES_PATIENCE} epochs)")
-            info(f"  Best val acc: {best_val_acc*100:.1f}%  "
-                 f"at epoch {epoch+1 - no_improve}")
+            fold_bar.write(
+                f"  Early stopping — fold {fold+1} "
+                f"(no improve {ES_PATIENCE} epochs). "
+                f"Best val acc: {best_val_acc*100:.1f}%"
+            )
+            fold_bar.close()
             break
 
     # Mark fold complete
@@ -506,8 +565,11 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
     log.extend(history)
     with open(LOG_FILE, "w") as f: json.dump(log, f, indent=2)
 
-    ok(f"Fold {fold+1} complete — best val acc: {best_val_acc*100:.1f}%")
-    return best_val_acc
+    fold_bar.write(
+        f"  Fold {fold+1} complete — best val acc: {best_val_acc*100:.1f}%"
+    )
+    fold_bar.close()
+    return best_val_acc, "complete"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -619,12 +681,14 @@ if __name__ == "__main__":
     banner("VIOLENCE DETECTOR — TRAINING")
     info(f"Device        : {DEVICE}  (pin_memory={PIN_MEMORY})")
     info(f"K-Fold        : K={NUM_FOLDS}")
-    info(f"Epochs/fold   : {EPOCHS}  (warmup={WARMUP_EPOCHS}, "
-         f"patience={ES_PATIENCE})")
+    info(f"Epochs/fold   : {EPOCHS} total  |  This session: {EPOCHS_PER_SESSION or EPOCHS} epochs then stop")
+    info(f"Early stopping: warmup={WARMUP_EPOCHS}, patience={ES_PATIENCE}")
     info(f"Batch size    : {BATCH_SIZE}  |  Frames/clip: {N_FRAMES}  |  Grad accum steps: {ACCUMULATION_STEPS}")
     info(f"Overfitting   : label_smooth={LABEL_SMOOTHING}  "
          f"mixup_alpha={MIXUP_ALPHA}  dropout={DROPOUT}")
     info(f"Checkpoints   : {CHECKPOINT_DIR}/")
+    sess = f"{EPOCHS_PER_SESSION} epochs then pause" if EPOCHS_PER_SESSION else "run to completion"
+    info(f"Session mode  : {sess}  (change EPOCHS_PER_SESSION in CONFIG)")
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
     # ── STEP 1: carve out test set ───────────────────────────
@@ -679,8 +743,10 @@ if __name__ == "__main__":
         vl_paths  = paths_arr[vl_idx].tolist()
         vl_labels = labels_arr[vl_idx].tolist()
 
-        best_acc = train_fold(fold, tr_paths, tr_labels,
-                              vl_paths, vl_labels, fold_state, base_tf)
+        best_acc, fold_outcome = train_fold(
+            fold, tr_paths, tr_labels,
+            vl_paths, vl_labels, fold_state, base_tf
+        )
         fold_accs[fold] = best_acc
 
         # Free all fold memory before starting the next fold
@@ -688,6 +754,14 @@ if __name__ == "__main__":
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         info(f"RAM after fold {fold+1} cleanup: {ram_usage()}")
+
+        # Session limit hit inside this fold — stop here, don't start next fold
+        if fold_outcome == "session_limit":
+            banner("SESSION PAUSED")
+            info(f"Completed {EPOCHS_PER_SESSION} epochs this session.")
+            info(f"Fold {fold+1} is still IN PROGRESS (not marked complete).")
+            info(f"Re-run train.py to continue exactly from where this stopped.")
+            break
 
     # ── STEP 6: pick best fold ───────────────────────────────
     section("K-FOLD RESULTS SUMMARY")
@@ -708,3 +782,23 @@ if __name__ == "__main__":
     banner("TRAINING COMPLETE")
     ok(f"Use  checkpoints/best_model.pth  in predict.py")
     ok(f"Run:  python predict.py --video path/to/video.mp4")
+
+# ──────────────────────────────────────────────────────────────────────────
+#  QUICK TEST MODE
+#  Before running the full 30-hour K-fold, verify the pipeline works
+#  end-to-end by temporarily overriding config values:
+#
+#    EPOCHS    = 2      # just 2 epochs per fold
+#    NUM_FOLDS = 1      # only 1 fold
+#    NUM_TEST  = 5      # smaller test set carve-out
+#
+#  Steps:
+#    1. Edit the CONFIG section above — change those 3 values
+#    2. Delete checkpoints/ folder so it starts fresh
+#    3. Run:  python train.py
+#    4. Verify it completes without OOM or crash
+#    5. Restore original values (EPOCHS=30, NUM_FOLDS=3, NUM_TEST=30)
+#    6. Delete checkpoints/ again and run for real
+#
+#  The whole quick test should finish in ~10-20 minutes on CPU.
+# ──────────────────────────────────────────────────────────────────────────
