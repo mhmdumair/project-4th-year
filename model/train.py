@@ -13,7 +13,7 @@ Usage:
   python train.py
 """
 
-import os, cv2, json, time, random, shutil, gc, sys
+import os, cv2, json, time, random, shutil, gc, sys, multiprocessing
 import torch
 import torch.nn as nn
 import timm
@@ -21,7 +21,6 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from sklearn.model_selection import StratifiedKFold
-from tqdm import tqdm
 from datetime import timedelta
 import numpy as np
 try:
@@ -43,8 +42,9 @@ SPLIT_FILE      = os.path.join(CHECKPOINT_DIR, "data_split.json")
 FOLD_STATE_FILE = os.path.join(CHECKPOINT_DIR, "fold_state.json")
 
 # Data
-NUM_TEST        = 30        # per class → 60 total held-out test videos
-NUM_FOLDS       = 3         # K-fold value
+NUM_TEST        = 50        # per class → 100 total held-out test videos
+NUM_FOLDS       = 1         # 1 = single training run (recommended)
+                            # 3 = full K-fold (3x longer, use to verify results)
 
 # Model
 N_FRAMES        = 16
@@ -56,9 +56,9 @@ DROPOUT         = 0.5
 # Training
 BATCH_SIZE      = 4         # low to avoid OOM on CPU
 EPOCHS          = 30        # total epochs per fold (across all sessions)
-EPOCHS_PER_SESSION = 5      # how many epochs to run THIS session then stop cleanly
-                            # re-run train.py to continue from where you left off
-                            # set to 0 or None to disable (run until EPOCHS or early stop)
+EPOCHS_PER_SESSION = 30     # set to EPOCHS value to run full fold in one session
+                            # early stopping will cut it short automatically
+                            # set lower (e.g. 5) if you need to pause between sessions
 LR              = 1e-4
 WEIGHT_DECAY    = 1e-4
 THRESHOLD       = 0.5
@@ -73,12 +73,6 @@ ACCUMULATION_STEPS = 1      # 1 = disabled (normal training)
 # Overfitting controls
 LABEL_SMOOTHING = 0.1       # softens hard 0/1 labels → reduces overconfidence
 MIXUP_ALPHA     = 0.2       # mixup blending strength (0 = disabled)
-
-# Session control
-# Run only this many epochs per session, then exit cleanly.
-# Re-run train.py to continue from where it left off.
-# Set to None to run until early stopping or EPOCHS is reached.
-EPOCHS_PER_SESSION = 5
 
 # Early stopping
 WARMUP_EPOCHS   = 5         # don't check patience before this epoch
@@ -103,6 +97,7 @@ def step(n, m):  print(f"\n  ── STEP {n}: {m}")
 
 def fmt_time(s): return str(timedelta(seconds=int(s)))
 
+
 def ram_usage():
     """Returns current RAM usage, e.g. 3.2 / 7.6 GB  (42%)"""
     if not HAS_PSUTIL:
@@ -112,35 +107,82 @@ def ram_usage():
     total = vm.total / 1024**3
     return f"{used:.1f} / {total:.1f} GB  ({vm.percent:.0f}%)"
 
-def epoch_row(ep, total, tr_loss, tr_acc, vl_loss, vl_acc,
-              elapsed, tag, lr, no_imp):
-    flag = ("  ◀ BEST" if tag == "best"
-            else f"  (no improve {no_imp}/{ES_PATIENCE})" if no_imp > 0
-            else "")
-    print(f"  Ep {ep:02d}/{total} │"
-          f" Train loss={tr_loss:.4f} acc={tr_acc*100:5.1f}% │"
-          f" Val loss={vl_loss:.4f} acc={vl_acc*100:5.1f}% │"
-          f" lr={lr:.1e} [{elapsed}]{flag}")
+# ══════════════════════════════════════════════════════════════
+#  CONFIG VALIDATION
+# ══════════════════════════════════════════════════════════════
+def validate_config():
+    """Catches common config mistakes before wasting training time."""
+    assert BATCH_SIZE >= 1,         "BATCH_SIZE must be >= 1"
+    assert ACCUMULATION_STEPS >= 1, "ACCUMULATION_STEPS must be >= 1"
+    assert N_FRAMES <= 32,          "N_FRAMES > 32 will likely cause OOM"
+    assert EPOCHS >= 1,             "EPOCHS must be >= 1"
+    assert NUM_TEST >= 5,           "NUM_TEST too small for reliable evaluation"
+    assert 0.0 <= LABEL_SMOOTHING < 0.5, "LABEL_SMOOTHING should be between 0 and 0.5"
+
+    if DEVICE.type == "cpu" and BATCH_SIZE > 8:
+        warn(f"BATCH_SIZE={BATCH_SIZE} on CPU is very slow — recommend 4 or lower")
+    if NUM_WORKERS > 0 and DEVICE.type == "cpu":
+        warn(f"NUM_WORKERS={NUM_WORKERS} on CPU can cause OOM — recommend 0")
+    if EPOCHS_PER_SESSION and EPOCHS_PER_SESSION < WARMUP_EPOCHS:
+        warn(f"EPOCHS_PER_SESSION={EPOCHS_PER_SESSION} is less than "
+             f"WARMUP_EPOCHS={WARMUP_EPOCHS} — early stopping will never trigger")
+
+    ok("Config validated.")
 
 
 # ══════════════════════════════════════════════════════════════
 #  TEST SET PREPARATION
 # ══════════════════════════════════════════════════════════════
 def prepare_test_set():
+    """
+    Carves out a balanced test set that includes BOTH old and new videos.
+
+    Old naming:  V_1.mp4  / NV_1.mp4
+    New naming:  V_new_1.mp4 / NV_new_1.mp4
+
+    Strategy: fill half the test quota from new videos, half from old.
+    This ensures the test set represents both data sources.
+    If not enough new videos exist, fills remainder from old ones.
+    """
     step(1, f"Carving out held-out test set ({NUM_TEST} per class = {NUM_TEST*2} total)")
+
     for cls in ["Violence", "NonViolence"]:
         src = os.path.join(DATASET_DIR, cls)
         dst = os.path.join(TEST_DIR, cls)
         os.makedirs(dst, exist_ok=True)
+
         already = [f for f in os.listdir(dst) if f.lower().endswith((".mp4",".avi"))]
         if len(already) >= NUM_TEST:
             ok(f"{cls}: {len(already)} test videos already set aside — skipping.")
             continue
-        videos = [f for f in os.listdir(src) if f.lower().endswith((".mp4",".avi"))]
-        chosen = random.sample(videos, min(NUM_TEST, len(videos)))
+
+        need = NUM_TEST - len(already)
+
+        # Split available videos by naming pattern
+        all_vids = [f for f in os.listdir(src) if f.lower().endswith((".mp4",".avi"))]
+        new_vids  = [f for f in all_vids if "_new_" in f.lower()]
+        old_vids  = [f for f in all_vids if "_new_" not in f.lower()]
+
+        # Aim for 50/50 split between old and new in the test set
+        want_new = min(len(new_vids), need // 2)
+        want_old = min(len(old_vids), need - want_new)
+        # If not enough of one type, fill with the other
+        if want_new + want_old < need:
+            extra = need - want_new - want_old
+            if len(new_vids) - want_new >= extra:
+                want_new += extra
+            else:
+                want_old += extra
+
+        chosen_new = random.sample(new_vids, want_new) if want_new > 0 else []
+        chosen_old = random.sample(old_vids, want_old) if want_old > 0 else []
+        chosen     = chosen_new + chosen_old
+
         for f in chosen:
             shutil.move(os.path.join(src, f), os.path.join(dst, f))
-        ok(f"{cls}: moved {len(chosen)} videos → {dst}")
+
+        ok(f"{cls}: moved {len(chosen)} videos → {dst}  "
+           f"({len(chosen_new)} new + {len(chosen_old)} old)")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -203,6 +245,37 @@ def save_fold_state(state):
 
 
 # ══════════════════════════════════════════════════════════════
+#  VIDEO VALIDATION
+# ══════════════════════════════════════════════════════════════
+def validate_videos(paths, labels):
+    """
+    Pre-filters corrupted or too-short videos before training starts.
+    One upfront cost instead of scattered errors during training.
+    """
+    valid_paths, valid_labels = [], []
+    skipped = 0
+    for path, label in zip(paths, labels):
+        try:
+            cap = cv2.VideoCapture(path)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap.release()
+            if frame_count >= 1:
+                valid_paths.append(path)
+                valid_labels.append(label)
+            else:
+                warn(f"Skipping empty video: {os.path.basename(path)}")
+                skipped += 1
+        except Exception as e:
+            warn(f"Skipping corrupted video: {os.path.basename(path)} ({e})")
+            skipped += 1
+    if skipped:
+        warn(f"Excluded {skipped} invalid videos from training.")
+    else:
+        ok(f"All {len(valid_paths)} videos validated.")
+    return valid_paths, valid_labels
+
+
+# ══════════════════════════════════════════════════════════════
 #  DATASET
 # ══════════════════════════════════════════════════════════════
 class ViolenceDataset(Dataset):
@@ -224,7 +297,15 @@ class ViolenceDataset(Dataset):
         try:
             cap   = cv2.VideoCapture(path)
             total = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 1)
-            want  = set(torch.linspace(0, total-1, N_FRAMES).long().tolist())
+            if self.augment and total > N_FRAMES:
+                # Temporal jitter — slight random offset so model sees
+                # different frame positions each epoch (not same 16 frames)
+                jitter = random.randint(-2, 2)
+                indices = torch.linspace(0, total-1, N_FRAMES).long() + jitter
+                indices = torch.clamp(indices, 0, total - 1)
+                want = set(indices.tolist())
+            else:
+                want  = set(torch.linspace(0, total-1, N_FRAMES).long().tolist())
             out, i = [], 0
             while True:
                 ret, frame = cap.read()
@@ -346,16 +427,17 @@ def load_ckpt(path, model, optimizer, scheduler):
 # ══════════════════════════════════════════════════════════════
 #  ONE EPOCH
 # ══════════════════════════════════════════════════════════════
+# Mixed precision scaler — active on GPU only, no-op on CPU
+_AMP_SCALER = torch.cuda.amp.GradScaler() if DEVICE.type == "cuda" else None
+
+
 def run_epoch(model, loader, criterion,
-              optimizer=None, train=True, bar=None):
-    """
-    Runs one epoch. If a tqdm bar is passed in, updates it in-place
-    (no new lines). Returns (loss, accuracy).
-    """
+              optimizer=None, train=True,
+              fold=0, epoch=0, total_epochs=0, phase="Train"):
+    """Single epoch with inline \r progress. No new lines created."""
     model.train() if train else model.eval()
     total_loss, correct, total = 0.0, 0, 0
     n_batches = len(loader)
-
     acc_steps = ACCUMULATION_STEPS if train else 1
     if train:
         optimizer.zero_grad()
@@ -367,15 +449,26 @@ def run_epoch(model, loader, criterion,
             if train and MIXUP_ALPHA > 0:
                 frames, labels = mixup_batch(frames, labels)
 
-            logits = model(frames)
-            loss   = criterion(logits, labels) / acc_steps
+            use_amp = _AMP_SCALER is not None
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                logits = model(frames)
+                loss   = criterion(logits, labels) / acc_steps
 
             if train:
-                loss.backward()
-                if (batch_idx + 1) % acc_steps == 0 or                         (batch_idx + 1) == n_batches:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    optimizer.step()
-                    optimizer.zero_grad()
+                if use_amp:
+                    _AMP_SCALER.scale(loss).backward()
+                    if (batch_idx + 1) % acc_steps == 0 or                             (batch_idx + 1) == n_batches:
+                        _AMP_SCALER.unscale_(optimizer)
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                        _AMP_SCALER.step(optimizer)
+                        _AMP_SCALER.update()
+                        optimizer.zero_grad()
+                else:
+                    loss.backward()
+                    if (batch_idx + 1) % acc_steps == 0 or                             (batch_idx + 1) == n_batches:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                        optimizer.step()
+                        optimizer.zero_grad()
 
             total_loss += loss.item() * acc_steps
             hard_labels = (labels > 0.5).float()
@@ -383,9 +476,30 @@ def run_epoch(model, loader, criterion,
             correct += (preds == hard_labels).sum().item()
             total   += labels.size(0)
 
-            # Update the shared bar if provided
-            if bar is not None:
-                bar.update(1)
+            # ── Inline progress: overwrites same line with \r ──────
+            done     = batch_idx + 1
+            pct      = done / n_batches
+            loss_now = total_loss / done
+            acc_now  = correct / total * 100
+
+            # Get terminal width — truncate line to fit, preventing wrap
+            try:
+                term_w = os.get_terminal_size().columns
+            except OSError:
+                term_w = 80
+
+            # Build fixed-width prefix and suffix first
+            prefix = f"  F{fold+1} Ep{epoch+1:02d}/{total_epochs} {phase} "
+            suffix = f" {done}/{n_batches} loss={loss_now:.4f} acc={acc_now:.1f}%"
+            # Bar fills whatever space is left, minimum 8 chars
+            bar_w  = max(8, term_w - len(prefix) - len(suffix) - 4)
+            filled = int(pct * bar_w)
+            bar_str = "█" * filled + "░" * (bar_w - filled)
+            line    = f"{prefix}[{bar_str}]{suffix}"
+            # Pad to terminal width so previous longer lines are fully erased
+            line    = line[:term_w].ljust(term_w)
+            sys.stdout.write("\r" + line)
+            sys.stdout.flush()
 
     return total_loss / n_batches, correct / total
 
@@ -437,40 +551,37 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
 
     history = []
 
-    # ── One persistent progress bar for this fold ────────────────────────
-    # Total steps = (train batches + val batches) × remaining epochs
-    n_tr  = len(train_loader)
-    n_vl  = len(val_loader)
-    remaining_epochs = EPOCHS - start_epoch
-    total_steps      = (n_tr + n_vl) * remaining_epochs
-
-    fold_bar = tqdm(
-        total=total_steps,
-        desc=f"  Fold {fold+1}/{NUM_FOLDS}",
-        ncols=80,
-        unit="batch",
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
-        position=fold,       # each fold bar on its own line
-        leave=True,          # bar stays visible after fold completes
-    )
-
+    # ── Epoch loop ───────────────────────────────────────────────────────
     for epoch in range(start_epoch, EPOCHS):
         t0 = time.time()
 
         # Phase 2: unfreeze full CNN at epoch 10
         if epoch == 10:
-            fold_bar.write(f"  Fold {fold+1} — Phase 2: full CNN unfrozen (lr -> 1e-5)")
+            print(f"\n  Fold {fold+1} — Phase 2: full CNN unfrozen (lr -> 1e-5)")
             model.unfreeze_all()
             for g in optimizer.param_groups: g["lr"] = 1e-5
 
-        tr_loss, tr_acc = run_epoch(model, train_loader, criterion,
-                                    optimizer, train=True,  bar=fold_bar)
-        vl_loss, vl_acc = run_epoch(model, val_loader,   criterion,
-                                    train=False, bar=fold_bar)
+        tr_loss, tr_acc = run_epoch(
+            model, train_loader, criterion,
+            optimizer, train=True,
+            fold=fold, epoch=epoch, total_epochs=EPOCHS, phase="Tr"
+        )
+        # Val runs on the same line — no \n between train and val
+        vl_loss, vl_acc = run_epoch(
+            model, val_loader, criterion,
+            train=False,
+            fold=fold, epoch=epoch, total_epochs=EPOCHS, phase="Val"
+        )
+        # After val: clear the line fully, then print permanent summary
+        try:
+            term_w = os.get_terminal_size().columns
+        except OSError:
+            term_w = 120
+        sys.stdout.write("\r" + " " * term_w + "\r")
+        sys.stdout.flush()
 
-        # Scheduler steps on val accuracy (mode=max)
+        # ── Print clean epoch summary (permanent line) ───────────────
         scheduler.step(vl_acc)
-
         elapsed = fmt_time(time.time() - t0)
         cur_lr  = optimizer.param_groups[0]["lr"]
         is_best = vl_acc > best_val_acc
@@ -479,30 +590,21 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
             best_val_acc = vl_acc
             no_improve   = 0
             save_ckpt({"model": model.state_dict()}, fold_best_path(fold))
-            fold_bar.write(
-                f"  [ OK ] Fold {fold+1} best saved "
-                f"(val acc={vl_acc*100:.1f}%  epoch {epoch+1})"
-            )
+
         else:
             no_improve += 1
 
-        # Build summary line and write via bar (stays above the bar)
-        flag = " <BEST>" if is_best else (
+        flag = " <-- BEST" if is_best else (
             f" (no improve {no_improve}/{ES_PATIENCE})" if no_improve > 0 else ""
         )
-        fold_bar.write(
-            f"  F{fold+1} Ep {epoch+1:02d}/{EPOCHS} | "
+        print(
+            f"  F{fold+1} Ep{epoch+1:02d}/{EPOCHS} | "
             f"Tr loss={tr_loss:.4f} acc={tr_acc*100:5.1f}% | "
             f"Val loss={vl_loss:.4f} acc={vl_acc*100:5.1f}% | "
             f"lr={cur_lr:.1e} [{elapsed}]{flag}"
         )
-        # Update bar description to show current epoch live
-        fold_bar.set_description(
-            f"  Fold {fold+1}/{NUM_FOLDS} "
-            f"[Ep {epoch+1}/{EPOCHS} | Val {vl_acc*100:.1f}%]"
-        )
 
-        # Always save last checkpoint (enables resume)
+        # ── Save checkpoint ──────────────────────────────────────────
         save_ckpt({
             "epoch":        epoch + 1,
             "model":        model.state_dict(),
@@ -519,37 +621,42 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
             "lr": cur_lr, "time": elapsed
         })
 
-        # ── RAM safety check ────────────────────────────────
+        # ── RAM safety check ─────────────────────────────────────────
         if HAS_PSUTIL and psutil.virtual_memory().percent > 90:
-            fold_bar.write(
+            print(
                 f"  [WARN] RAM critically high: {ram_usage()} — "
                 f"forcing gc.collect(). Consider BATCH_SIZE=2, ACCUMULATION_STEPS=2"
             )
             gc.collect()
 
-        # ── Session epoch limit ──────────────────────────────
-        # Counts epochs run in THIS session only (not total across all sessions)
+        # ── Session epoch limit ──────────────────────────────────────
         session_epochs_done = epoch + 1 - start_epoch
         if EPOCHS_PER_SESSION and session_epochs_done >= EPOCHS_PER_SESSION:
-            fold_bar.write(
-                f"  Session limit: {EPOCHS_PER_SESSION} epochs done "
+            print(
+                f"\n  Session limit: {EPOCHS_PER_SESSION} epochs done "
                 f"(total {epoch+1}/{EPOCHS}). "
                 f"Re-run train.py to continue from epoch {epoch+2}."
             )
-            fold_bar.close()
-            return best_val_acc, "session_limit"   # signal to main loop
+            # Save history log before pausing
+            try:
+                with open(LOG_FILE) as f: log = json.load(f)
+            except FileNotFoundError:
+                log = []
+            log.extend(history)
+            with open(LOG_FILE, "w") as f: json.dump(log, f, indent=2)
+            return best_val_acc, "session_limit"
 
-        # ── Early stopping (only after warmup) ──────────────
+        # ── Early stopping (only after warmup) ───────────────────────
         if epoch + 1 > WARMUP_EPOCHS and no_improve >= ES_PATIENCE:
-            fold_bar.write(
-                f"  Early stopping — fold {fold+1} "
+            print(
+                f"\n  Early stopping fold {fold+1} "
                 f"(no improve {ES_PATIENCE} epochs). "
                 f"Best val acc: {best_val_acc*100:.1f}%"
             )
-            fold_bar.close()
             break
 
-    # Mark fold complete
+    # ── Fold complete ─────────────────────────────────────────────────────
+    # Cleanup happens in finally block below
     fold_state["fold_status"][str(fold)]  = "complete"
     fold_state["fold_results"][str(fold)] = {
         "best_val_acc": round(best_val_acc, 4),
@@ -557,7 +664,6 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
     }
     save_fold_state(fold_state)
 
-    # Append history to log
     try:
         with open(LOG_FILE) as f: log = json.load(f)
     except FileNotFoundError:
@@ -565,11 +671,20 @@ def train_fold(fold, tr_paths, tr_labels, vl_paths, vl_labels,
     log.extend(history)
     with open(LOG_FILE, "w") as f: json.dump(log, f, indent=2)
 
-    fold_bar.write(
-        f"  Fold {fold+1} complete — best val acc: {best_val_acc*100:.1f}%"
-    )
-    fold_bar.close()
+    print(f"\n  Fold {fold+1} complete — best val acc: {best_val_acc*100:.1f}%")
     return best_val_acc, "complete"
+
+
+def _cleanup_fold(train_loader, val_loader, model, optimizer, scheduler):
+    """Guaranteed memory cleanup after each fold — runs even on exceptions."""
+    try:
+        del train_loader, val_loader, model, optimizer, scheduler
+    except Exception:
+        pass
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
 
 
 # ══════════════════════════════════════════════════════════════
@@ -605,7 +720,8 @@ def evaluate_test_set(best_fold, base_tf):
                         num_workers=NUM_WORKERS, pin_memory=PIN_MEMORY)
     criterion = SmoothBCELoss()
     t_loss, t_acc = run_epoch(model, loader, criterion,
-                              train=False, label="[test]")
+                              train=False,
+                              fold=0, epoch=0, total_epochs=1, phase="Test")
 
     section(f"Test  →  Loss: {t_loss:.4f}   Accuracy: {t_acc*100:.1f}%")
 
@@ -679,6 +795,7 @@ def evaluate_test_set(best_fold, base_tf):
 if __name__ == "__main__":
 
     banner("VIOLENCE DETECTOR — TRAINING")
+    validate_config()
     info(f"Device        : {DEVICE}  (pin_memory={PIN_MEMORY})")
     info(f"K-Fold        : K={NUM_FOLDS}")
     info(f"Epochs/fold   : {EPOCHS} total  |  This session: {EPOCHS_PER_SESSION or EPOCHS} epochs then stop")
@@ -697,6 +814,10 @@ if __name__ == "__main__":
     # ── STEP 2: load / lock data split ──────────────────────
     step(2, "Loading / locking data split")
     all_paths, all_labels = get_or_create_split()
+
+    # ── Validate all videos upfront ──────────────────────────
+    info("Validating dataset videos ...")
+    all_paths, all_labels = validate_videos(all_paths, all_labels)
 
     # ── STEP 3: load fold state ──────────────────────────────
     step(3, "Checking fold progress")
@@ -719,11 +840,23 @@ if __name__ == "__main__":
 
     labels_arr = np.array(all_labels)
     paths_arr  = np.array(all_paths)
-    skf        = StratifiedKFold(n_splits=NUM_FOLDS, shuffle=True,
-                                 random_state=42)
+
+    # Generate fold splits
+    # NUM_FOLDS=1 uses a simple 85/15 train/val split (StratifiedKFold needs >=2)
+    # NUM_FOLDS>=2 uses full K-fold cross validation
+    if NUM_FOLDS == 1:
+        from sklearn.model_selection import train_test_split as _tts
+        tr_idx, vl_idx = _tts(
+            np.arange(len(paths_arr)), test_size=0.15,
+            stratify=labels_arr, random_state=42
+        )
+        fold_splits = [(tr_idx, vl_idx)]
+    else:
+        skf = StratifiedKFold(n_splits=NUM_FOLDS, shuffle=True, random_state=42)
+        fold_splits = list(skf.split(paths_arr, labels_arr))
 
     fold_accs = {}
-    for fold, (tr_idx, vl_idx) in enumerate(skf.split(paths_arr, labels_arr)):
+    for fold, (tr_idx, vl_idx) in enumerate(fold_splits):
 
         # Skip already-completed folds
         if str(fold) in fold_state["fold_status"] and \
@@ -760,7 +893,8 @@ if __name__ == "__main__":
             banner("SESSION PAUSED")
             info(f"Completed {EPOCHS_PER_SESSION} epochs this session.")
             info(f"Fold {fold+1} is still IN PROGRESS (not marked complete).")
-            info(f"Re-run train.py to continue exactly from where this stopped.")
+            info(f"Re-run train.py to continue from epoch where it stopped.")
+            info(f"Best val acc so far: {fold_accs[fold]*100:.1f}%")
             break
 
     # ── STEP 6: pick best fold ───────────────────────────────
@@ -777,7 +911,13 @@ if __name__ == "__main__":
     info(f"  (If folds are consistent, your model is genuinely good)")
 
     # ── STEP 7: final test evaluation ───────────────────────
-    evaluate_test_set(best_fold, base_tf)
+    # Runs regardless of how training ended (early stop, session limit, or full run)
+    # Uses the best weights saved so far — even if training isn't 100% complete
+    if os.path.exists(fold_best_path(best_fold)):
+        evaluate_test_set(best_fold, base_tf)
+    else:
+        warn("No best model saved yet — test evaluation skipped.")
+        warn("This means no epoch completed successfully. Check for errors above.")
 
     banner("TRAINING COMPLETE")
     ok(f"Use  checkpoints/best_model.pth  in predict.py")

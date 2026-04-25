@@ -1,0 +1,11 @@
+{
+  "fold_status": {
+    "0": "complete"
+  },
+  "fold_results": {
+    "0": {
+      "best_val_acc": 0.9478,
+      "best_model": "checkpoints/fold0_best.pth"
+    }
+  }
+}
