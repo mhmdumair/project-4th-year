@@ -1,124 +1,1092 @@
 [
   {
-    "target_video": "attacked_01_video2.mp4",
+    "target_video": "attacked_1.mp4",
+    "carrier_source": "long10_.mp4",
+    "carrier_duration": 1391.851,
+    "attacked_duration": 1511.954,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 4,
     "segments": [
-      {"index": 1, "source": "V_189.mp4", "start": 219.267, "end": 224.876, "duration": 5.609},
-      {"index": 2, "source": "V_912.mp4", "start": 580.122, "end": 584.339, "duration": 4.217},
-      {"index": 3, "source": "V_480.mp4", "start": 1027.961, "end": 1032.771, "duration": 4.810},
-      {"index": 4, "source": "V_908.mp4", "start": 1176.049, "end": 1180.756, "duration": 4.707},
-      {"index": 5, "source": "V_907.mp4", "start": 1723.646, "end": 1729.056, "duration": 5.410},
-      {"index": 6, "source": "V_422.mp4", "start": 1784.226, "end": 1789.544, "duration": 5.318},
-      {"index": 7, "source": "V_379.mp4", "start": 2370.788, "end": 2375.803, "duration": 5.015},
-      {"index": 8, "source": "V_281.mp4", "start": 2734.542, "end": 2739.962, "duration": 5.420},
-      {"index": 9, "source": "V_460.mp4", "start": 3058.288, "end": 3063.494, "duration": 5.206},
-      {"index": 10, "source": "V_335.mp4", "start": 3441.317, "end": 3446.02, "duration": 4.703},
-      {"index": 11, "source": "V_996.mp4", "start": 3748.727, "end": 3753.734, "duration": 5.007},
-      {"index": 12, "source": "V_484.mp4", "start": 3982.273, "end": 3987.183, "duration": 4.91}
+      {
+        "index": 1,
+        "source": "HS_1.mp4",
+        "original_insert_point": 271.487,
+        "start": 271.487,
+        "end": 301.487,
+        "duration": 30,
+        "start_frame": 8145,
+        "end_frame": 9045
+      },
+      {
+        "index": 2,
+        "source": "HS_10.mp4",
+        "original_insert_point": 548.141,
+        "start": 578.141,
+        "end": 608.141,
+        "duration": 30,
+        "start_frame": 17344,
+        "end_frame": 18244
+      },
+      {
+        "index": 3,
+        "source": "HS_100.mp4",
+        "original_insert_point": 907.244,
+        "start": 967.244,
+        "end": 997.244,
+        "duration": 30,
+        "start_frame": 29017,
+        "end_frame": 29917
+      },
+      {
+        "index": 4,
+        "source": "HS_101.mp4",
+        "original_insert_point": 1198.227,
+        "start": 1288.227,
+        "end": 1318.227,
+        "duration": 30,
+        "start_frame": 38647,
+        "end_frame": 39547
+      }
     ]
   },
   {
-    "target_video": "attacked_02_video4.mp4",
+    "target_video": "attacked_2.mp4",
+    "carrier_source": "long11_.mp4",
+    "carrier_duration": 1835.259,
+    "attacked_duration": 1985.324,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 5,
     "segments": [
-      {"index": 1, "source": "V_329.mp4", "start": 195.4, "end": 200.613, "duration": 5.213},
-      {"index": 2, "source": "V_403.mp4", "start": 485.462, "end": 488.884, "duration": 3.422},
-      {"index": 3, "source": "V_443.mp4", "start": 699.709, "end": 704.413, "duration": 4.704},
-      {"index": 4, "source": "V_636.mp4", "start": 1018.14, "end": 1023.142, "duration": 5.002}
+      {
+        "index": 1,
+        "source": "HS_102.mp4",
+        "original_insert_point": 276.736,
+        "start": 276.736,
+        "end": 306.736,
+        "duration": 30,
+        "start_frame": 8302,
+        "end_frame": 9202
+      },
+      {
+        "index": 2,
+        "source": "HS_103.mp4",
+        "original_insert_point": 617.956,
+        "start": 647.956,
+        "end": 677.956,
+        "duration": 30,
+        "start_frame": 19439,
+        "end_frame": 20339
+      },
+      {
+        "index": 3,
+        "source": "HS_104.mp4",
+        "original_insert_point": 917.129,
+        "start": 977.129,
+        "end": 1007.129,
+        "duration": 30,
+        "start_frame": 29314,
+        "end_frame": 30214
+      },
+      {
+        "index": 4,
+        "source": "HS_105.mp4",
+        "original_insert_point": 1234.505,
+        "start": 1324.505,
+        "end": 1354.505,
+        "duration": 30,
+        "start_frame": 39735,
+        "end_frame": 40635
+      },
+      {
+        "index": 5,
+        "source": "HS_106.mp4",
+        "original_insert_point": 1465.123,
+        "start": 1585.123,
+        "end": 1615.123,
+        "duration": 30,
+        "start_frame": 47554,
+        "end_frame": 48454
+      }
     ]
   },
   {
-    "target_video": "attacked_03_video3.mp4",
+    "target_video": "attacked_3.mp4",
+    "carrier_source": "long12_.mp4",
+    "carrier_duration": 568.75,
+    "attacked_duration": 598.775,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 1,
     "segments": [
-      {"index": 1, "source": "V_182.mp4", "start": 181.633, "end": 185.345, "duration": 3.712},
-      {"index": 2, "source": "V_625.mp4", "start": 360.587, "end": 364.592, "duration": 4.005},
-      {"index": 3, "source": "V_137.mp4", "start": 816.81, "end": 822.727, "duration": 5.917},
-      {"index": 4, "source": "V_116.mp4", "start": 898.334, "end": 903.437, "duration": 5.103},
-      {"index": 5, "source": "V_313.mp4", "start": 1132.532, "end": 1137.748, "duration": 5.216},
-      {"index": 6, "source": "V_231.mp4", "start": 1463.415, "end": 1468.53, "duration": 5.115},
-      {"index": 7, "source": "V_472.mp4", "start": 1775.437, "end": 1780.34, "duration": 4.903},
-      {"index": 8, "source": "V_216.mp4", "start": 2013.447, "end": 2018.666, "duration": 5.219},
-      {"index": 9, "source": "V_393.mp4", "start": 2287.488, "end": 2292.491, "duration": 5.003}
+      {
+        "index": 1,
+        "source": "HS_107.mp4",
+        "original_insert_point": 253.098,
+        "start": 253.098,
+        "end": 283.098,
+        "duration": 30,
+        "start_frame": 7593,
+        "end_frame": 8493
+      }
     ]
   },
   {
-    "target_video": "attacked_04_video1.mp4",
+    "target_video": "attacked_4.mp4",
+    "carrier_source": "long13_.mp4",
+    "carrier_duration": 1566.65,
+    "attacked_duration": 1716.714,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 5,
     "segments": [
-      {"index": 1, "source": "V_923.mp4", "start": 524.633, "end": 529.555, "duration": 4.922},
-      {"index": 2, "source": "V_382.mp4", "start": 1064.261, "end": 1069.261, "duration": 5.0}
+      {
+        "index": 1,
+        "source": "HS_108.mp4",
+        "original_insert_point": 337.322,
+        "start": 337.322,
+        "end": 367.322,
+        "duration": 30,
+        "start_frame": 10120,
+        "end_frame": 11020
+      },
+      {
+        "index": 2,
+        "source": "HS_109.mp4",
+        "original_insert_point": 558.213,
+        "start": 588.213,
+        "end": 618.213,
+        "duration": 30,
+        "start_frame": 17646,
+        "end_frame": 18546
+      },
+      {
+        "index": 3,
+        "source": "HS_11.mp4",
+        "original_insert_point": 844.409,
+        "start": 904.409,
+        "end": 934.409,
+        "duration": 30,
+        "start_frame": 27132,
+        "end_frame": 28032
+      },
+      {
+        "index": 4,
+        "source": "HS_110.mp4",
+        "original_insert_point": 1193.649,
+        "start": 1283.649,
+        "end": 1313.649,
+        "duration": 30,
+        "start_frame": 38509,
+        "end_frame": 39409
+      },
+      {
+        "index": 5,
+        "source": "HS_111.mp4",
+        "original_insert_point": 1471.882,
+        "start": 1591.882,
+        "end": 1621.882,
+        "duration": 30,
+        "start_frame": 47756,
+        "end_frame": 48656
+      }
     ]
   },
   {
-    "target_video": "attacked_05_video2.mp4",
+    "target_video": "attacked_5.mp4",
+    "carrier_source": "long14_.mp4",
+    "carrier_duration": 2149.471,
+    "attacked_duration": 2329.533,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 6,
     "segments": [
-      {"index": 1, "source": "V_309.mp4", "start": 71.367, "end": 75.969, "duration": 4.602},
-      {"index": 2, "source": "V_907.mp4", "start": 536.72, "end": 542.13, "duration": 5.41},
-      {"index": 3, "source": "V_37.mp4", "start": 802.477, "end": 808.21, "duration": 5.733},
-      {"index": 4, "source": "V_132.mp4", "start": 1142.352, "end": 1148.265, "duration": 5.913},
-      {"index": 5, "source": "V_30.mp4", "start": 1491.859, "end": 1495.376, "duration": 3.517},
-      {"index": 6, "source": "V_372.mp4", "start": 1785.931, "end": 1790.946, "duration": 5.015},
-      {"index": 7, "source": "V_157.mp4", "start": 2215.891, "end": 2220.394, "duration": 4.503},
-      {"index": 8, "source": "V_305.mp4", "start": 2430.956, "end": 2435.259, "duration": 4.303},
-      {"index": 9, "source": "V_461.mp4", "start": 2803.322, "end": 2809.022, "duration": 5.7},
-      {"index": 10, "source": "V_74.mp4", "start": 3116.673, "end": 3121.781, "duration": 5.108},
-      {"index": 11, "source": "V_919.mp4", "start": 3780.309, "end": 3784.52, "duration": 4.211},
-      {"index": 12, "source": "V_90.mp4", "start": 3888.594, "end": 3893.597, "duration": 5.003}
+      {
+        "index": 1,
+        "source": "HS_112.mp4",
+        "original_insert_point": 283.417,
+        "start": 283.417,
+        "end": 313.417,
+        "duration": 30,
+        "start_frame": 8503,
+        "end_frame": 9403
+      },
+      {
+        "index": 2,
+        "source": "HS_113.mp4",
+        "original_insert_point": 558.768,
+        "start": 588.768,
+        "end": 618.768,
+        "duration": 30,
+        "start_frame": 17663,
+        "end_frame": 18563
+      },
+      {
+        "index": 3,
+        "source": "HS_114.mp4",
+        "original_insert_point": 954.232,
+        "start": 1014.232,
+        "end": 1044.232,
+        "duration": 30,
+        "start_frame": 30427,
+        "end_frame": 31327
+      },
+      {
+        "index": 4,
+        "source": "HS_115.mp4",
+        "original_insert_point": 1201.698,
+        "start": 1291.698,
+        "end": 1321.698,
+        "duration": 30,
+        "start_frame": 38751,
+        "end_frame": 39651
+      },
+      {
+        "index": 5,
+        "source": "HS_116.mp4",
+        "original_insert_point": 1547.796,
+        "start": 1667.796,
+        "end": 1697.796,
+        "duration": 30,
+        "start_frame": 50034,
+        "end_frame": 50934
+      },
+      {
+        "index": 6,
+        "source": "HS_117.mp4",
+        "original_insert_point": 1743.31,
+        "start": 1893.31,
+        "end": 1923.31,
+        "duration": 30,
+        "start_frame": 56799,
+        "end_frame": 57699
+      }
     ]
   },
   {
-    "target_video": "attacked_06_video4.mp4",
+    "target_video": "attacked_6.mp4",
+    "carrier_source": "long15_.mp4",
+    "carrier_duration": 1444.003,
+    "attacked_duration": 1564.063,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 4,
     "segments": [
-      {"index": 1, "source": "V_416.mp4", "start": 154.433, "end": 158.733, "duration": 4.3},
-      {"index": 2, "source": "V_482.mp4", "start": 503.788, "end": 508.599, "duration": 4.811},
-      {"index": 3, "source": "V_960.mp4", "start": 975.381, "end": 979.181, "duration": 3.8},
-      {"index": 4, "source": "V_173.mp4", "start": 1260.732, "end": 1266.139, "duration": 5.407}
+      {
+        "index": 1,
+        "source": "HS_118.mp4",
+        "original_insert_point": 305.927,
+        "start": 305.927,
+        "end": 335.927,
+        "duration": 30,
+        "start_frame": 9178,
+        "end_frame": 10078
+      },
+      {
+        "index": 2,
+        "source": "HS_119.mp4",
+        "original_insert_point": 613.1,
+        "start": 643.1,
+        "end": 673.1,
+        "duration": 30,
+        "start_frame": 19293,
+        "end_frame": 20193
+      },
+      {
+        "index": 3,
+        "source": "HS_12.mp4",
+        "original_insert_point": 927.788,
+        "start": 987.788,
+        "end": 1017.788,
+        "duration": 30,
+        "start_frame": 29634,
+        "end_frame": 30534
+      },
+      {
+        "index": 4,
+        "source": "HS_120.mp4",
+        "original_insert_point": 1157.243,
+        "start": 1247.243,
+        "end": 1277.243,
+        "duration": 30,
+        "start_frame": 37417,
+        "end_frame": 38317
+      }
     ]
   },
   {
-    "target_video": "attacked_07_video3.mp4",
+    "target_video": "attacked_7.mp4",
+    "carrier_source": "long16_.mp4",
+    "carrier_duration": 1269.319,
+    "attacked_duration": 1389.39,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 4,
     "segments": [
-      {"index": 1, "source": "V_132.mp4", "start": 96.467, "end": 102.38, "duration": 5.913},
-      {"index": 2, "source": "V_122.mp4", "start": 382.985, "end": 387.987, "duration": 5.002},
-      {"index": 3, "source": "V_919.mp4", "start": 793.377, "end": 797.588, "duration": 4.211},
-      {"index": 4, "source": "V_297.mp4", "start": 927.289, "end": 931.99, "duration": 4.701},
-      {"index": 5, "source": "V_37.mp4", "start": 1280.99, "end": 1286.723, "duration": 5.733},
-      {"index": 6, "source": "V_432.mp4", "start": 1490.095, "end": 1494.517, "duration": 4.422},
-      {"index": 7, "source": "V_227.mp4", "start": 1651.883, "end": 1657.085, "duration": 5.202},
-      {"index": 8, "source": "V_524.mp4", "start": 1924.961, "end": 1929.973, "duration": 5.012},
-      {"index": 10, "source": "V_182.mp4", "start": 2395.652, "end": 2399.364, "duration": 3.712}
+      {
+        "index": 1,
+        "source": "HS_121.mp4",
+        "original_insert_point": 304.074,
+        "start": 304.074,
+        "end": 334.074,
+        "duration": 30,
+        "start_frame": 9122,
+        "end_frame": 10022
+      },
+      {
+        "index": 2,
+        "source": "HS_122.mp4",
+        "original_insert_point": 648.983,
+        "start": 678.983,
+        "end": 708.983,
+        "duration": 30,
+        "start_frame": 20369,
+        "end_frame": 21269
+      },
+      {
+        "index": 3,
+        "source": "HS_123.mp4",
+        "original_insert_point": 873.112,
+        "start": 933.112,
+        "end": 963.112,
+        "duration": 30,
+        "start_frame": 27993,
+        "end_frame": 28893
+      },
+      {
+        "index": 4,
+        "source": "HS_124.mp4",
+        "original_insert_point": 1170.427,
+        "start": 1260.427,
+        "end": 1290.427,
+        "duration": 30,
+        "start_frame": 37813,
+        "end_frame": 38713
+      }
     ]
   },
   {
-    "target_video": "attacked_08_video1.mp4",
+    "target_video": "attacked_8.mp4",
+    "carrier_source": "long17_.mp4",
+    "carrier_duration": 1252.833,
+    "attacked_duration": 1342.901,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 3,
     "segments": [
-      {"index": 1, "source": "V_52.mp4", "start": 341.867, "end": 348.886, "duration": 7.019},
-      {"index": 2, "source": "V_232.mp4", "start": 474.278, "end": 478.887, "duration": 4.609},
-      {"index": 3, "source": "V_208.mp4", "start": 972.754, "end": 977.955, "duration": 5.201}
+      {
+        "index": 1,
+        "source": "HS_125.mp4",
+        "original_insert_point": 292.991,
+        "start": 292.991,
+        "end": 322.991,
+        "duration": 30,
+        "start_frame": 8790,
+        "end_frame": 9690
+      },
+      {
+        "index": 2,
+        "source": "HS_126.mp4",
+        "original_insert_point": 590.005,
+        "start": 620.005,
+        "end": 650.005,
+        "duration": 30,
+        "start_frame": 18600,
+        "end_frame": 19500
+      },
+      {
+        "index": 3,
+        "source": "HS_127.mp4",
+        "original_insert_point": 893.211,
+        "start": 953.211,
+        "end": 983.211,
+        "duration": 30,
+        "start_frame": 28596,
+        "end_frame": 29496
+      }
     ]
   },
   {
-    "target_video": "attacked_09_video2.mp4",
+    "target_video": "attacked_9.mp4",
+    "carrier_source": "long18_.mp4",
+    "carrier_duration": 923.968,
+    "attacked_duration": 984.002,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 2,
     "segments": [
-      {"index": 1, "source": "V_807.mp4", "start": 337.767, "end": 342.584, "duration": 4.817},
-      {"index": 2, "source": "V_33.mp4", "start": 620.043, "end": 10.333, "duration": 5.733},
-      {"index": 3, "source": "V_827.mp4", "start": 1052.08, "end": 1056.881, "duration": 4.801},
-      {"index": 4, "source": "V_181.mp4", "start": 1089.428, "end": 1093.136, "duration": 3.708},
-      {"index": 5, "source": "V_113.mp4", "start": 1572.248, "end": 1577.655, "duration": 5.407},
-      {"index": 6, "source": "V_998.mp4", "start": 1806.917, "end": 1811.925, "duration": 5.008},
-      {"index": 7, "source": "V_91.mp4", "start": 2263.005, "end": 2268.023, "duration": 5.018},
-      {"index": 8, "source": "V_55.mp4", "start": 2436.221, "end": 2441.442, "duration": 5.221},
-      {"index": 9, "source": "V_428.mp4", "start": 2922.818, "end": 2926.834, "duration": 4.016},
-      {"index": 10, "source": "V_624.mp4", "start": 3267.002, "end": 3271.335, "duration": 4.333},
-      {"index": 11, "source": "V_127.mp4", "start": 3507.405, "end": 3513.326, "duration": 5.921},
-      {"index": 12, "source": "V_444.mp4", "start": 4060.386, "end": 4064.093, "duration": 3.707}
+      {
+        "index": 1,
+        "source": "HS_128.mp4",
+        "original_insert_point": 256.107,
+        "start": 256.107,
+        "end": 286.107,
+        "duration": 30,
+        "start_frame": 7683,
+        "end_frame": 8583
+      },
+      {
+        "index": 2,
+        "source": "HS_129.mp4",
+        "original_insert_point": 577.598,
+        "start": 607.598,
+        "end": 637.598,
+        "duration": 30,
+        "start_frame": 18228,
+        "end_frame": 19128
+      }
     ]
   },
   {
-    "target_video": "attacked_10_video4.mp4",
+    "target_video": "attacked_10.mp4",
+    "carrier_source": "long19_.mp4",
+    "carrier_duration": 2483.676,
+    "attacked_duration": 2723.757,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 8,
     "segments": [
-      {"index": 1, "source": "V_365.mp4", "start": 199.7, "end": 204.7, "duration": 5.0},
-      {"index": 2, "source": "V_49.mp4", "start": 417.845, "end": 421.865, "duration": 4.02},
-      {"index": 3, "source": "V_458.mp4", "start": 683.582, "end": 688.202, "duration": 4.62},
-      {"index": 4, "source": "V_435.mp4", "start": 1032.685, "end": 1037.185, "duration": 4.5},
-      {"index": 5, "source": "V_521.mp4", "start": 1206.865, "end": 1210.87, "duration": 4.005}
+      {
+        "index": 1,
+        "source": "HS_13.mp4",
+        "original_insert_point": 304.299,
+        "start": 304.299,
+        "end": 334.299,
+        "duration": 30,
+        "start_frame": 9129,
+        "end_frame": 10029
+      },
+      {
+        "index": 2,
+        "source": "HS_130.mp4",
+        "original_insert_point": 645.381,
+        "start": 675.381,
+        "end": 705.381,
+        "duration": 30,
+        "start_frame": 20261,
+        "end_frame": 21161
+      },
+      {
+        "index": 3,
+        "source": "HS_131.mp4",
+        "original_insert_point": 854.67,
+        "start": 914.67,
+        "end": 944.67,
+        "duration": 30,
+        "start_frame": 27440,
+        "end_frame": 28340
+      },
+      {
+        "index": 4,
+        "source": "HS_132.mp4",
+        "original_insert_point": 1210.93,
+        "start": 1300.93,
+        "end": 1330.93,
+        "duration": 30,
+        "start_frame": 39028,
+        "end_frame": 39928
+      },
+      {
+        "index": 5,
+        "source": "HS_133.mp4",
+        "original_insert_point": 1498.515,
+        "start": 1618.515,
+        "end": 1648.515,
+        "duration": 30,
+        "start_frame": 48555,
+        "end_frame": 49455
+      },
+      {
+        "index": 6,
+        "source": "HS_134.mp4",
+        "original_insert_point": 1797.747,
+        "start": 1947.747,
+        "end": 1977.747,
+        "duration": 30,
+        "start_frame": 58432,
+        "end_frame": 59332
+      },
+      {
+        "index": 7,
+        "source": "HS_135.mp4",
+        "original_insert_point": 2106.14,
+        "start": 2286.14,
+        "end": 2316.14,
+        "duration": 30,
+        "start_frame": 68584,
+        "end_frame": 69484
+      },
+      {
+        "index": 8,
+        "source": "HS_136.mp4",
+        "original_insert_point": 2342.306,
+        "start": 2552.306,
+        "end": 2582.306,
+        "duration": 30,
+        "start_frame": 76569,
+        "end_frame": 77469
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_11.mp4",
+    "carrier_source": "long1_.mp4",
+    "carrier_duration": 954.758,
+    "attacked_duration": 1014.802,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 2,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_137.mp4",
+        "original_insert_point": 355.351,
+        "start": 355.351,
+        "end": 385.351,
+        "duration": 30,
+        "start_frame": 10661,
+        "end_frame": 11561
+      },
+      {
+        "index": 2,
+        "source": "HS_138.mp4",
+        "original_insert_point": 613.148,
+        "start": 643.148,
+        "end": 673.148,
+        "duration": 30,
+        "start_frame": 19294,
+        "end_frame": 20194
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_12.mp4",
+    "carrier_source": "long20_.mp4",
+    "carrier_duration": 890.16,
+    "attacked_duration": 950.234,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 2,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_139.mp4",
+        "original_insert_point": 340.701,
+        "start": 340.701,
+        "end": 370.701,
+        "duration": 30,
+        "start_frame": 10221,
+        "end_frame": 11121
+      },
+      {
+        "index": 2,
+        "source": "HS_14.mp4",
+        "original_insert_point": 598.003,
+        "start": 628.003,
+        "end": 658.003,
+        "duration": 30,
+        "start_frame": 18840,
+        "end_frame": 19740
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_13.mp4",
+    "carrier_source": "long2_.mp4",
+    "carrier_duration": 878.945,
+    "attacked_duration": 938.973,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 2,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_140.mp4",
+        "original_insert_point": 314.306,
+        "start": 314.306,
+        "end": 344.306,
+        "duration": 30,
+        "start_frame": 9429,
+        "end_frame": 10329
+      },
+      {
+        "index": 2,
+        "source": "HS_141.mp4",
+        "original_insert_point": 578.735,
+        "start": 608.735,
+        "end": 638.735,
+        "duration": 30,
+        "start_frame": 18262,
+        "end_frame": 19162
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_14.mp4",
+    "carrier_source": "long3_.mp4",
+    "carrier_duration": 2399.295,
+    "attacked_duration": 2609.395,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 7,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_142.mp4",
+        "original_insert_point": 285.333,
+        "start": 285.333,
+        "end": 315.333,
+        "duration": 30,
+        "start_frame": 8560,
+        "end_frame": 9460
+      },
+      {
+        "index": 2,
+        "source": "HS_143.mp4",
+        "original_insert_point": 642.918,
+        "start": 672.918,
+        "end": 702.918,
+        "duration": 30,
+        "start_frame": 20188,
+        "end_frame": 21088
+      },
+      {
+        "index": 3,
+        "source": "HS_144.mp4",
+        "original_insert_point": 912.026,
+        "start": 972.026,
+        "end": 1002.026,
+        "duration": 30,
+        "start_frame": 29161,
+        "end_frame": 30061
+      },
+      {
+        "index": 4,
+        "source": "HS_145.mp4",
+        "original_insert_point": 1222.823,
+        "start": 1312.823,
+        "end": 1342.823,
+        "duration": 30,
+        "start_frame": 39385,
+        "end_frame": 40285
+      },
+      {
+        "index": 5,
+        "source": "HS_146.mp4",
+        "original_insert_point": 1527.001,
+        "start": 1647.001,
+        "end": 1677.001,
+        "duration": 30,
+        "start_frame": 49410,
+        "end_frame": 50310
+      },
+      {
+        "index": 6,
+        "source": "HS_147.mp4",
+        "original_insert_point": 1774.766,
+        "start": 1924.766,
+        "end": 1954.766,
+        "duration": 30,
+        "start_frame": 57743,
+        "end_frame": 58643
+      },
+      {
+        "index": 7,
+        "source": "HS_148.mp4",
+        "original_insert_point": 2091.871,
+        "start": 2271.871,
+        "end": 2301.871,
+        "duration": 30,
+        "start_frame": 68156,
+        "end_frame": 69056
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_15.mp4",
+    "carrier_source": "long4_.mp4",
+    "carrier_duration": 2276.949,
+    "attacked_duration": 2487.061,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 7,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_149.mp4",
+        "original_insert_point": 357.684,
+        "start": 357.684,
+        "end": 387.684,
+        "duration": 30,
+        "start_frame": 10731,
+        "end_frame": 11631
+      },
+      {
+        "index": 2,
+        "source": "HS_15.mp4",
+        "original_insert_point": 592.181,
+        "start": 622.181,
+        "end": 652.181,
+        "duration": 30,
+        "start_frame": 18665,
+        "end_frame": 19565
+      },
+      {
+        "index": 3,
+        "source": "HS_150.mp4",
+        "original_insert_point": 952.522,
+        "start": 1012.522,
+        "end": 1042.522,
+        "duration": 30,
+        "start_frame": 30376,
+        "end_frame": 31276
+      },
+      {
+        "index": 4,
+        "source": "HS_151.mp4",
+        "original_insert_point": 1221.959,
+        "start": 1311.959,
+        "end": 1341.959,
+        "duration": 30,
+        "start_frame": 39359,
+        "end_frame": 40259
+      },
+      {
+        "index": 5,
+        "source": "HS_152.mp4",
+        "original_insert_point": 1509.157,
+        "start": 1629.157,
+        "end": 1659.157,
+        "duration": 30,
+        "start_frame": 48875,
+        "end_frame": 49775
+      },
+      {
+        "index": 6,
+        "source": "HS_153.mp4",
+        "original_insert_point": 1841.372,
+        "start": 1991.372,
+        "end": 2021.372,
+        "duration": 30,
+        "start_frame": 59741,
+        "end_frame": 60641
+      },
+      {
+        "index": 7,
+        "source": "HS_154.mp4",
+        "original_insert_point": 2081.013,
+        "start": 2261.013,
+        "end": 2291.013,
+        "duration": 30,
+        "start_frame": 67830,
+        "end_frame": 68730
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_16.mp4",
+    "carrier_source": "long5_.mp4",
+    "carrier_duration": 1863.564,
+    "attacked_duration": 2043.621,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 6,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_155.mp4",
+        "original_insert_point": 353.752,
+        "start": 353.752,
+        "end": 383.752,
+        "duration": 30,
+        "start_frame": 10613,
+        "end_frame": 11513
+      },
+      {
+        "index": 2,
+        "source": "HS_156.mp4",
+        "original_insert_point": 571.755,
+        "start": 601.755,
+        "end": 631.755,
+        "duration": 30,
+        "start_frame": 18053,
+        "end_frame": 18953
+      },
+      {
+        "index": 3,
+        "source": "HS_157.mp4",
+        "original_insert_point": 899.523,
+        "start": 959.523,
+        "end": 989.523,
+        "duration": 30,
+        "start_frame": 28786,
+        "end_frame": 29686
+      },
+      {
+        "index": 4,
+        "source": "HS_158.mp4",
+        "original_insert_point": 1198.75,
+        "start": 1288.75,
+        "end": 1318.75,
+        "duration": 30,
+        "start_frame": 38662,
+        "end_frame": 39562
+      },
+      {
+        "index": 5,
+        "source": "HS_159.mp4",
+        "original_insert_point": 1549.156,
+        "start": 1669.156,
+        "end": 1699.156,
+        "duration": 30,
+        "start_frame": 50075,
+        "end_frame": 50975
+      },
+      {
+        "index": 6,
+        "source": "HS_16.mp4",
+        "original_insert_point": 1764.045,
+        "start": 1914.045,
+        "end": 1944.045,
+        "duration": 30,
+        "start_frame": 57421,
+        "end_frame": 58321
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_17.mp4",
+    "carrier_source": "long6_.mp4",
+    "carrier_duration": 1280.766,
+    "attacked_duration": 1400.806,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 4,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_160.mp4",
+        "original_insert_point": 303.93,
+        "start": 303.93,
+        "end": 333.93,
+        "duration": 30,
+        "start_frame": 9118,
+        "end_frame": 10018
+      },
+      {
+        "index": 2,
+        "source": "HS_161.mp4",
+        "original_insert_point": 634.598,
+        "start": 664.598,
+        "end": 694.598,
+        "duration": 30,
+        "start_frame": 19938,
+        "end_frame": 20838
+      },
+      {
+        "index": 3,
+        "source": "HS_162.mp4",
+        "original_insert_point": 890.492,
+        "start": 950.492,
+        "end": 980.492,
+        "duration": 30,
+        "start_frame": 28515,
+        "end_frame": 29415
+      },
+      {
+        "index": 4,
+        "source": "HS_163.mp4",
+        "original_insert_point": 1166.392,
+        "start": 1256.392,
+        "end": 1286.392,
+        "duration": 30,
+        "start_frame": 37692,
+        "end_frame": 38592
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_18.mp4",
+    "carrier_source": "long7_.mp4",
+    "carrier_duration": 2117.846,
+    "attacked_duration": 2297.923,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 6,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_164.mp4",
+        "original_insert_point": 274.71,
+        "start": 274.71,
+        "end": 304.71,
+        "duration": 30,
+        "start_frame": 8241,
+        "end_frame": 9141
+      },
+      {
+        "index": 2,
+        "source": "HS_165.mp4",
+        "original_insert_point": 557.803,
+        "start": 587.803,
+        "end": 617.803,
+        "duration": 30,
+        "start_frame": 17634,
+        "end_frame": 18534
+      },
+      {
+        "index": 3,
+        "source": "HS_166.mp4",
+        "original_insert_point": 846.254,
+        "start": 906.254,
+        "end": 936.254,
+        "duration": 30,
+        "start_frame": 27188,
+        "end_frame": 28088
+      },
+      {
+        "index": 4,
+        "source": "HS_167.mp4",
+        "original_insert_point": 1228.041,
+        "start": 1318.041,
+        "end": 1348.041,
+        "duration": 30,
+        "start_frame": 39541,
+        "end_frame": 40441
+      },
+      {
+        "index": 5,
+        "source": "HS_168.mp4",
+        "original_insert_point": 1442.232,
+        "start": 1562.232,
+        "end": 1592.232,
+        "duration": 30,
+        "start_frame": 46867,
+        "end_frame": 47767
+      },
+      {
+        "index": 6,
+        "source": "HS_169.mp4",
+        "original_insert_point": 1742.343,
+        "start": 1892.343,
+        "end": 1922.343,
+        "duration": 30,
+        "start_frame": 56770,
+        "end_frame": 57670
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_19.mp4",
+    "carrier_source": "long8_.mp4",
+    "carrier_duration": 1564.955,
+    "attacked_duration": 1715.023,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 5,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_17.mp4",
+        "original_insert_point": 247.085,
+        "start": 247.085,
+        "end": 277.085,
+        "duration": 30,
+        "start_frame": 7413,
+        "end_frame": 8313
+      },
+      {
+        "index": 2,
+        "source": "HS_170.mp4",
+        "original_insert_point": 569.472,
+        "start": 599.472,
+        "end": 629.472,
+        "duration": 30,
+        "start_frame": 17984,
+        "end_frame": 18884
+      },
+      {
+        "index": 3,
+        "source": "HS_171.mp4",
+        "original_insert_point": 930.17,
+        "start": 990.17,
+        "end": 1020.17,
+        "duration": 30,
+        "start_frame": 29705,
+        "end_frame": 30605
+      },
+      {
+        "index": 4,
+        "source": "HS_172.mp4",
+        "original_insert_point": 1201.557,
+        "start": 1291.557,
+        "end": 1321.557,
+        "duration": 30,
+        "start_frame": 38747,
+        "end_frame": 39647
+      },
+      {
+        "index": 5,
+        "source": "HS_173.mp4",
+        "original_insert_point": 1466.97,
+        "start": 1586.97,
+        "end": 1616.97,
+        "duration": 30,
+        "start_frame": 47609,
+        "end_frame": 48509
+      }
+    ]
+  },
+  {
+    "target_video": "attacked_20.mp4",
+    "carrier_source": "long9_.mp4",
+    "carrier_duration": 1312.787,
+    "attacked_duration": 1432.852,
+    "resolution": "1280x720",
+    "fps": 30,
+    "n_inserts": 4,
+    "segments": [
+      {
+        "index": 1,
+        "source": "HS_174.mp4",
+        "original_insert_point": 353.71,
+        "start": 353.71,
+        "end": 383.71,
+        "duration": 30,
+        "start_frame": 10611,
+        "end_frame": 11511
+      },
+      {
+        "index": 2,
+        "source": "HS_175.mp4",
+        "original_insert_point": 574.481,
+        "start": 604.481,
+        "end": 634.481,
+        "duration": 30,
+        "start_frame": 18134,
+        "end_frame": 19034
+      },
+      {
+        "index": 3,
+        "source": "HS_176.mp4",
+        "original_insert_point": 859.872,
+        "start": 919.872,
+        "end": 949.872,
+        "duration": 30,
+        "start_frame": 27596,
+        "end_frame": 28496
+      },
+      {
+        "index": 4,
+        "source": "HS_177.mp4",
+        "original_insert_point": 1143.091,
+        "start": 1233.091,
+        "end": 1263.091,
+        "duration": 30,
+        "start_frame": 36993,
+        "end_frame": 37893
+      }
     ]
   }
 ]
