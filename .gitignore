@@ -32,16 +32,10 @@ ffmpeg-master-latest-win64-gpl/
 *.onnx
 
 # =================================================================
-#  CHECKPOINTS — ignore the heavy stuff, KEEP the index files
+#  CHECKPOINTS
 # =================================================================
-checkpoints/fold*_last.pth
-checkpoints/fold*_best.pth
-checkpoints/best_model.pth
-
-# DO NOT ignore these — they lock your data split and fold progress
-# checkpoints/data_split.json   ← intentionally tracked
-# checkpoints/fold_state.json   ← intentionally tracked
-# checkpoints/test_results.json ← intentionally tracked
+**/checkpoints/*
+!**/checkpoints/*.json
 
 # =================================================================
 #  PYTHON ARTIFACTS
@@ -56,3 +50,8 @@ __pycache__/
 # =================================================================
 training_log.json
 model/training_log.json
+
+# =================================================================
+#  WORKER DATA
+# =================================================================
+**/worker_data/

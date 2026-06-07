@@ -1,0 +1,700 @@
+================================================================================
+  TRIGGER CLUSTER ANALYSIS PER SEGMENT
+================================================================================
+
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_1.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 271.487s - 301.487s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['271.533']
+    Trigger types: {'Motion_GOP': 1}
+
+  Segment 2: 578.141s - 608.141s
+    Triggers hitting: 3
+    Time spread: 20.533s
+    Avg gap between triggers: 10.267s
+    Timestamps: ['589.000', '609.000', '609.533']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 1, 'AudioRMS': 1}
+
+  Segment 3: 967.244s - 997.244s
+    Triggers hitting: 3
+    Time spread: 22.467s
+    Avg gap between triggers: 11.233s
+    Timestamps: ['967.333', '971.000', '989.800']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 4: 1288.227s - 1318.227s
+    Triggers hitting: 4
+    Time spread: 28.033s
+    Avg gap between triggers: 9.344s
+    Timestamps: ['1288.333', '1297.233', '1304.100', '1316.366']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 3}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_10.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 304.299s - 334.299s
+    Triggers hitting: 4
+    Time spread: 27.500s
+    Avg gap between triggers: 9.167s
+    Timestamps: ['307.000', '315.766', '324.633', '334.500']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 2: 675.381s - 705.381s
+    Triggers hitting: 4
+    Time spread: 28.900s
+    Avg gap between triggers: 9.633s
+    Timestamps: ['676.533', '685.066', '695.433', '705.433']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 3}
+
+  Segment 3: 914.670s - 944.670s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['929.900']
+    Trigger types: {'Motion_PB': 1}
+
+  Segment 4: 1300.930s - 1330.930s
+    Triggers hitting: 2
+    Time spread: 9.333s
+    Avg gap between triggers: 9.333s
+    Timestamps: ['1301.500', '1310.833']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 5: 1618.515s - 1648.515s
+    Triggers hitting: 3
+    Time spread: 9.500s
+    Avg gap between triggers: 4.750s
+    Timestamps: ['1639.100', '1642.500', '1648.600']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 6: 1947.747s - 1977.747s
+    MISSED - No triggers hit this segment
+
+  Segment 7: 2286.140s - 2316.140s
+    Triggers hitting: 2
+    Time spread: 24.100s
+    Avg gap between triggers: 24.100s
+    Timestamps: ['2286.233', '2310.333']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 8: 2552.306s - 2582.306s
+    Triggers hitting: 4
+    Time spread: 26.533s
+    Avg gap between triggers: 8.844s
+    Timestamps: ['2556.500', '2559.533', '2573.000', '2583.033']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_11.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 355.351s - 385.351s
+    Triggers hitting: 4
+    Time spread: 22.067s
+    Avg gap between triggers: 7.356s
+    Timestamps: ['359.633', '370.466', '370.466', '381.700']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 2}
+
+  Segment 2: 643.148s - 673.148s
+    Triggers hitting: 3
+    Time spread: 24.734s
+    Avg gap between triggers: 12.367s
+    Timestamps: ['643.466', '653.000', '668.200']
+    Trigger types: {'Motion_GOP': 3}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_12.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 340.701s - 370.701s
+    Triggers hitting: 5
+    Time spread: 17.500s
+    Avg gap between triggers: 4.375s
+    Timestamps: ['341.000', '346.866', '351.933', '358.333', '358.500']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 1, 'AudioRMS': 1, 'Silence': 1}
+
+  Segment 2: 628.003s - 658.003s
+    Triggers hitting: 5
+    Time spread: 32.234s
+    Avg gap between triggers: 8.058s
+    Timestamps: ['628.066', '628.366', '637.433', '653.766', '660.300']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 3}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_13.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 314.306s - 344.306s
+    Triggers hitting: 2
+    Time spread: 18.266s
+    Avg gap between triggers: 18.266s
+    Timestamps: ['314.800', '333.066']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 2: 608.735s - 638.735s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['634.600']
+    Trigger types: {'Motion_GOP': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_14.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 285.333s - 315.333s
+    Triggers hitting: 3
+    Time spread: 30.233s
+    Avg gap between triggers: 15.117s
+    Timestamps: ['284.800', '306.466', '315.033']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 2: 672.918s - 702.918s
+    Triggers hitting: 3
+    Time spread: 20.767s
+    Avg gap between triggers: 10.383s
+    Timestamps: ['673.533', '683.133', '694.300']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 3: 972.026s - 1002.026s
+    Triggers hitting: 3
+    Time spread: 23.234s
+    Avg gap between triggers: 11.617s
+    Timestamps: ['972.166', '983.633', '995.400']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 4: 1312.823s - 1342.823s
+    Triggers hitting: 2
+    Time spread: 30.634s
+    Avg gap between triggers: 30.634s
+    Timestamps: ['1312.866', '1343.500']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1}
+
+  Segment 5: 1647.001s - 1677.001s
+    Triggers hitting: 2
+    Time spread: 0.566s
+    Avg gap between triggers: 0.566s
+    Timestamps: ['1677.500', '1678.066']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1}
+
+  Segment 6: 1924.766s - 1954.766s
+    Triggers hitting: 3
+    Time spread: 31.067s
+    Avg gap between triggers: 15.534s
+    Timestamps: ['1925.433', '1934.533', '1956.500']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 7: 2271.871s - 2301.871s
+    Triggers hitting: 3
+    Time spread: 25.833s
+    Avg gap between triggers: 12.917s
+    Timestamps: ['2272.000', '2283.733', '2297.833']
+    Trigger types: {'Motion_GOP': 3}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_15.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 357.684s - 387.684s
+    Triggers hitting: 5
+    Time spread: 30.000s
+    Avg gap between triggers: 7.500s
+    Timestamps: ['358.000', '358.466', '378.200', '387.733', '388.000']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1, 'Silence': 1}
+
+  Segment 2: 622.181s - 652.181s
+    Triggers hitting: 3
+    Time spread: 30.900s
+    Avg gap between triggers: 15.450s
+    Timestamps: ['622.600', '652.500', '653.500']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1, 'SpectralFlux': 1}
+
+  Segment 3: 1012.522s - 1042.522s
+    Triggers hitting: 2
+    Time spread: 30.400s
+    Avg gap between triggers: 30.400s
+    Timestamps: ['1012.600', '1043.000']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1}
+
+  Segment 4: 1311.959s - 1341.959s
+    Triggers hitting: 5
+    Time spread: 28.133s
+    Avg gap between triggers: 7.033s
+    Timestamps: ['1312.200', '1312.200', '1321.966', '1332.633', '1340.333']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 3}
+
+  Segment 5: 1629.157s - 1659.157s
+    Triggers hitting: 5
+    Time spread: 29.967s
+    Avg gap between triggers: 7.492s
+    Timestamps: ['1629.266', '1629.266', '1637.600', '1653.366', '1659.233']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 3}
+
+  Segment 6: 1991.372s - 2021.372s
+    Triggers hitting: 5
+    Time spread: 33.967s
+    Avg gap between triggers: 8.492s
+    Timestamps: ['1989.033', '2002.266', '2002.800', '2011.166', '2023.000']
+    Trigger types: {'Motion_GOP': 2, 'Motion_PB': 1, 'AudioRMS': 1, 'SpectralFlux': 1}
+
+  Segment 7: 2261.013s - 2291.013s
+    Triggers hitting: 4
+    Time spread: 30.000s
+    Avg gap between triggers: 10.000s
+    Timestamps: ['2261.500', '2270.300', '2286.700', '2291.500']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 2, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_16.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 353.752s - 383.752s
+    Triggers hitting: 4
+    Time spread: 21.466s
+    Avg gap between triggers: 7.155s
+    Timestamps: ['354.000', '354.066', '363.366', '375.466']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 2: 601.755s - 631.755s
+    Triggers hitting: 4
+    Time spread: 30.566s
+    Avg gap between triggers: 10.189s
+    Timestamps: ['602.000', '611.266', '631.000', '632.566']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 2}
+
+  Segment 3: 959.523s - 989.523s
+    Triggers hitting: 4
+    Time spread: 29.867s
+    Avg gap between triggers: 9.956s
+    Timestamps: ['959.733', '960.000', '980.900', '989.600']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 4: 1288.750s - 1318.750s
+    Triggers hitting: 3
+    Time spread: 15.433s
+    Avg gap between triggers: 7.716s
+    Timestamps: ['1303.000', '1309.133', '1318.433']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 5: 1669.156s - 1699.156s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['1693.566']
+    Trigger types: {'Motion_GOP': 1}
+
+  Segment 6: 1914.045s - 1944.045s
+    Triggers hitting: 4
+    Time spread: 32.000s
+    Avg gap between triggers: 10.667s
+    Timestamps: ['1914.500', '1914.500', '1917.700', '1946.500']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1, 'Silence': 1, 'SpectralFlux': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_17.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 303.930s - 333.930s
+    Triggers hitting: 2
+    Time spread: 9.600s
+    Avg gap between triggers: 9.600s
+    Timestamps: ['324.366', '333.966']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 2: 664.598s - 694.598s
+    Triggers hitting: 3
+    Time spread: 23.433s
+    Avg gap between triggers: 11.716s
+    Timestamps: ['671.200', '682.966', '694.633']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 3: 950.492s - 980.492s
+    Triggers hitting: 3
+    Time spread: 21.900s
+    Avg gap between triggers: 10.950s
+    Timestamps: ['951.133', '964.966', '973.033']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 4: 1256.392s - 1286.392s
+    Triggers hitting: 2
+    Time spread: 17.366s
+    Avg gap between triggers: 17.366s
+    Timestamps: ['1260.500', '1277.866']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_18.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 274.710s - 304.710s
+    Triggers hitting: 3
+    Time spread: 24.000s
+    Avg gap between triggers: 12.000s
+    Timestamps: ['274.733', '288.066', '298.733']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 2: 587.803s - 617.803s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['617.866']
+    Trigger types: {'Motion_GOP': 1}
+
+  Segment 3: 906.254s - 936.254s
+    Triggers hitting: 3
+    Time spread: 0.267s
+    Avg gap between triggers: 0.134s
+    Timestamps: ['936.333', '936.500', '936.600']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1, 'SpectralFlux': 1}
+
+  Segment 4: 1318.041s - 1348.041s
+    Triggers hitting: 3
+    Time spread: 26.667s
+    Avg gap between triggers: 13.333s
+    Timestamps: ['1318.366', '1329.300', '1345.033']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 5: 1562.232s - 1592.232s
+    Triggers hitting: 5
+    Time spread: 18.800s
+    Avg gap between triggers: 4.700s
+    Timestamps: ['1562.333', '1562.500', '1564.566', '1577.600', '1581.133']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 6: 1892.343s - 1922.343s
+    Triggers hitting: 3
+    Time spread: 19.266s
+    Avg gap between triggers: 9.633s
+    Timestamps: ['1898.100', '1908.666', '1917.366']
+    Trigger types: {'Motion_GOP': 3}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_19.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 247.085s - 277.085s
+    Triggers hitting: 2
+    Time spread: 16.300s
+    Avg gap between triggers: 16.300s
+    Timestamps: ['247.800', '264.100']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 2: 599.472s - 629.472s
+    Triggers hitting: 6
+    Time spread: 31.066s
+    Avg gap between triggers: 6.213s
+    Timestamps: ['600.000', '600.066', '600.466', '608.166', '625.600', '631.066']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 3: 990.170s - 1020.170s
+    Triggers hitting: 3
+    Time spread: 8.667s
+    Avg gap between triggers: 4.334s
+    Timestamps: ['990.333', '990.500', '999.000']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 4: 1291.557s - 1321.557s
+    Triggers hitting: 5
+    Time spread: 30.000s
+    Avg gap between triggers: 7.500s
+    Timestamps: ['1292.000', '1293.433', '1301.100', '1314.266', '1322.000']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 2, 'AudioRMS': 1, 'Silence': 1}
+
+  Segment 5: 1586.970s - 1616.970s
+    Triggers hitting: 7
+    Time spread: 31.500s
+    Avg gap between triggers: 5.250s
+    Timestamps: ['1587.500', '1589.533', '1590.500', '1597.900', '1604.700', '1605.000', '1619.000']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 2, 'AudioRMS': 2, 'Silence': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_2.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 276.736s - 306.736s
+    Triggers hitting: 3
+    Time spread: 27.767s
+    Avg gap between triggers: 13.884s
+    Timestamps: ['278.566', '287.166', '306.333']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 2: 647.956s - 677.956s
+    Triggers hitting: 5
+    Time spread: 29.634s
+    Avg gap between triggers: 7.409s
+    Timestamps: ['648.366', '648.366', '657.600', '669.100', '678.000']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 4}
+
+  Segment 3: 977.129s - 1007.129s
+    Triggers hitting: 5
+    Time spread: 21.533s
+    Avg gap between triggers: 5.383s
+    Timestamps: ['977.500', '977.733', '977.733', '986.100', '999.033']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 2, 'AudioRMS': 1}
+
+  Segment 4: 1324.505s - 1354.505s
+    Triggers hitting: 3
+    Time spread: 13.867s
+    Avg gap between triggers: 6.933s
+    Timestamps: ['1324.633', '1324.633', '1338.500']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 2}
+
+  Segment 5: 1585.123s - 1615.123s
+    Triggers hitting: 5
+    Time spread: 28.400s
+    Avg gap between triggers: 7.100s
+    Timestamps: ['1586.766', '1594.800', '1605.600', '1612.900', '1615.166']
+    Trigger types: {'Motion_GOP': 4, 'SpectralFlux': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_20.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 353.710s - 383.710s
+    Triggers hitting: 4
+    Time spread: 29.633s
+    Avg gap between triggers: 9.878s
+    Timestamps: ['353.733', '356.133', '363.866', '383.366']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 3}
+
+  Segment 2: 604.481s - 634.481s
+    Triggers hitting: 4
+    Time spread: 30.234s
+    Avg gap between triggers: 10.078s
+    Timestamps: ['604.866', '617.600', '629.933', '635.100']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 3}
+
+  Segment 3: 919.872s - 949.872s
+    Triggers hitting: 2
+    Time spread: 15.066s
+    Avg gap between triggers: 15.066s
+    Timestamps: ['923.600', '938.666']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 4: 1233.091s - 1263.091s
+    Triggers hitting: 3
+    Time spread: 17.433s
+    Avg gap between triggers: 8.716s
+    Timestamps: ['1233.500', '1233.600', '1250.933']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_3.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 253.098s - 283.098s
+    MISSED - No triggers hit this segment
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_4.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 337.322s - 367.322s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['368.000']
+    Trigger types: {'AudioRMS': 1}
+
+  Segment 2: 588.213s - 618.213s
+    Triggers hitting: 2
+    Time spread: 21.100s
+    Avg gap between triggers: 21.100s
+    Timestamps: ['596.533', '617.633']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 3: 904.409s - 934.409s
+    Triggers hitting: 2
+    Time spread: 2.433s
+    Avg gap between triggers: 2.433s
+    Timestamps: ['932.500', '934.933']
+    Trigger types: {'Motion_GOP': 1, 'AudioRMS': 1}
+
+  Segment 4: 1283.649s - 1313.649s
+    Triggers hitting: 2
+    Time spread: 8.500s
+    Avg gap between triggers: 8.500s
+    Timestamps: ['1283.933', '1292.433']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 5: 1591.882s - 1621.882s
+    Triggers hitting: 4
+    Time spread: 20.767s
+    Avg gap between triggers: 6.922s
+    Timestamps: ['1592.633', '1601.766', '1602.000', '1613.400']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_5.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 283.417s - 313.417s
+    Triggers hitting: 4
+    Time spread: 21.600s
+    Avg gap between triggers: 7.200s
+    Timestamps: ['283.466', '290.500', '296.033', '305.066']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 2: 588.768s - 618.768s
+    Triggers hitting: 3
+    Time spread: 21.800s
+    Avg gap between triggers: 10.900s
+    Timestamps: ['589.933', '602.033', '611.733']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 3: 1014.232s - 1044.232s
+    Triggers hitting: 5
+    Time spread: 27.300s
+    Avg gap between triggers: 6.825s
+    Timestamps: ['1017.000', '1017.633', '1025.933', '1034.966', '1044.300']
+    Trigger types: {'Motion_GOP': 4, 'AudioRMS': 1}
+
+  Segment 4: 1291.698s - 1321.698s
+    Triggers hitting: 3
+    Time spread: 27.933s
+    Avg gap between triggers: 13.966s
+    Timestamps: ['1291.800', '1302.566', '1319.733']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 5: 1667.796s - 1697.796s
+    Triggers hitting: 4
+    Time spread: 23.533s
+    Avg gap between triggers: 7.844s
+    Timestamps: ['1667.900', '1668.000', '1676.866', '1691.433']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 6: 1893.310s - 1923.310s
+    Triggers hitting: 2
+    Time spread: 9.600s
+    Avg gap between triggers: 9.600s
+    Timestamps: ['1893.666', '1903.266']
+    Trigger types: {'Motion_GOP': 2}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_6.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 305.927s - 335.927s
+    Triggers hitting: 3
+    Time spread: 28.833s
+    Avg gap between triggers: 14.417s
+    Timestamps: ['306.000', '306.500', '334.833']
+    Trigger types: {'Motion_GOP': 1, 'Motion_PB': 1, 'AudioRMS': 1}
+
+  Segment 2: 643.100s - 673.100s
+    Triggers hitting: 4
+    Time spread: 25.800s
+    Avg gap between triggers: 8.600s
+    Timestamps: ['645.233', '646.000', '653.266', '671.033']
+    Trigger types: {'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 3: 987.788s - 1017.788s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['990.900']
+    Trigger types: {'Motion_GOP': 1}
+
+  Segment 4: 1247.243s - 1277.243s
+    Triggers hitting: 3
+    Time spread: 21.667s
+    Avg gap between triggers: 10.834s
+    Timestamps: ['1247.666', '1248.000', '1269.333']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_7.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 304.074s - 334.074s
+    Triggers hitting: 2
+    Time spread: 9.633s
+    Avg gap between triggers: 9.633s
+    Timestamps: ['308.133', '317.766']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 2: 678.983s - 708.983s
+    Triggers hitting: 2
+    Time spread: 23.533s
+    Avg gap between triggers: 23.533s
+    Timestamps: ['685.533', '709.066']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 3: 933.112s - 963.112s
+    Triggers hitting: 2
+    Time spread: 12.900s
+    Avg gap between triggers: 12.900s
+    Timestamps: ['939.700', '952.600']
+    Trigger types: {'Motion_GOP': 2}
+
+  Segment 4: 1260.427s - 1290.427s
+    Triggers hitting: 3
+    Time spread: 24.733s
+    Avg gap between triggers: 12.366s
+    Timestamps: ['1263.500', '1273.966', '1288.233']
+    Trigger types: {'Motion_GOP': 2, 'AudioRMS': 1}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_8.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 292.991s - 322.991s
+    Triggers hitting: 6
+    Time spread: 29.950s
+    Avg gap between triggers: 5.990s
+    Timestamps: ['293.300', '293.300', '293.500', '301.366', '320.500', '323.250']
+    Trigger types: {'Visual': 2, 'Motion_GOP': 2, 'AudioRMS': 1, 'SpectralFlux': 1}
+
+  Segment 2: 620.005s - 650.005s
+    Triggers hitting: 5
+    Time spread: 25.800s
+    Avg gap between triggers: 6.450s
+    Timestamps: ['620.500', '623.000', '623.366', '632.900', '646.300']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 3, 'AudioRMS': 1}
+
+  Segment 3: 953.211s - 983.211s
+    Triggers hitting: 3
+    Time spread: 15.333s
+    Avg gap between triggers: 7.667s
+    Timestamps: ['954.233', '954.233', '969.566']
+    Trigger types: {'Visual': 1, 'Motion_GOP': 2}
+
+────────────────────────────────────────────────────────────
+VIDEO: attacked_9.mp4
+────────────────────────────────────────────────────────────
+
+  Segment 1: 256.107s - 286.107s
+    Triggers hitting: 3
+    Time spread: 19.233s
+    Avg gap between triggers: 9.617s
+    Timestamps: ['264.400', '275.600', '283.633']
+    Trigger types: {'Motion_GOP': 3}
+
+  Segment 2: 607.598s - 637.598s
+    Triggers hitting: 1
+    Time spread: 0.000s
+    Avg gap between triggers: 0.000s
+    Timestamps: ['632.000']
+    Trigger types: {'Motion_GOP': 1}
+
+================================================================================
+  CLUSTER STATISTICS SUMMARY
+================================================================================
+
+  Total segments with hits: 85
+  Average triggers per segment: 3.22
+  Median triggers per segment: 3
+  Min triggers per segment: 1
+  Max triggers per segment: 7
+
+  Average time spread: 20.366s
+  Median time spread: 22.467s
+  95th percentile time spread: 31.067s
+  Recommended fusion window: 31.1s

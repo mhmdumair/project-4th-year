@@ -1,0 +1,962 @@
+import subprocess
+import json
+import numpy as np
+import os
+import sys
+import time
+import datetime
+from collections import deque
+
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
+ATTACKED_DIR            = "dataset"
+GROUND_TRUTH_JSON       = "attack.json"
+REPORT_FILE             = "report.txt"
+
+SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
+FFMPEG_EXE  = "ffmpeg"
+FFPROBE_EXE = "ffprobe"
+
+# --- Fusion / Scoring ---
+BOUNDARY_TOLERANCE      = 2.5
+TOLERANCE_SEC           = 2.5
+MIN_SIGNALS_TO_CONFIRM  = 1
+REQUIRE_MULTIMODAL      = False
+LOCKOUT_PERIOD          = 5.0
+
+# --- Window merge ---
+MERGE_WINDOW            = 10.0
+
+# --- Visual: I-frame size ---
+VISUAL_MAX_FRAMES       = 30
+VISUAL_MIN_WARMUP       = 10
+K_VISUAL_THRESHOLD      = 2.5
+VISUAL_COOLDOWN         = 3.0
+VISUAL_PERSIST_NEEDED   = 2
+VISUAL_PERSIST_WINDOW   = 4
+
+# NEW: Scene transition gate
+SCENE_CHANGE_RATIO      = 8.0  # Size ratio that indicates scene change
+SCENE_CHANGE_TOLERANCE  = 0.5  # Seconds to suppress after scene change
+
+# --- Motion Vector proxy ---
+MV_WINDOW               = 60
+MV_MIN_WARMUP           = 30
+K_MV_THRESHOLD          = 4.5
+MV_COOLDOWN             = 8.0
+MV_PERSIST_NEEDED       = 3
+MV_PERSIST_WINDOW       = 5
+GOP_SHORT_RATIO         = 0.25
+
+# --- Audio RMS ---
+AUDIO_SAMPLE_RATE       = 44100
+AUDIO_BUFFER_SEC        = 15.0
+AUDIO_MICRO_WINDOW_SEC  = 0.5
+K_AUDIO_RMS_THRESHOLD   = 3.0
+AUDIO_NOISE_FLOOR       = 800.0
+AUDIO_COOLDOWN          = 3.0
+AUDIO_PERSIST_NEEDED    = 2
+
+# REMOVED: AV_SYNC_WINDOW — audio-requires-motion gate removed entirely.
+# Audio now only upgrades confidence; it cannot anchor an event on its own.
+
+# --- Silence ---
+SILENCE_THRESHOLD_RATIO = 0.05
+SILENCE_MIN_DURATION    = 2.0
+SILENCE_COOLDOWN        = 30.0
+
+# --- Spectral Flux ---
+FLUX_SAMPLE_RATE        = 22050
+FLUX_WINDOW_SEC         = 0.05
+FLUX_BUFFER_SEC         = 10.0
+K_FLUX_THRESHOLD        = 3.0
+FLUX_COOLDOWN           = 3.0
+FLUX_PERSIST_NEEDED     = 3
+
+# --- Trust hierarchy ---
+# Visual/Motion are ground-truth signals (hard to fake by attacker).
+# Audio signals (RMS, Silence, SpectralFlux) are untrusted corroborating
+# evidence only — they can upgrade confidence but cannot anchor an event.
+VISUAL_MOTION_SIGNALS   = {"Visual", "Motion"}
+AUDIO_SIGNALS           = {"AudioRMS", "Silence", "SpectralFlux"}
+
+# Confidence upgrade window: how close (seconds) an audio trigger must be
+# to a visual/motion trigger to be counted as co-occurring.
+AUDIO_UPGRADE_WINDOW    = 2.5
+
+# Minimum event gap (prevents trigger storms)
+MIN_EVENT_GAP           = 0.5  # seconds between same-modality triggers
+
+# ==============================================================================
+# CONFIDENCE HELPERS
+# ==============================================================================
+
+def confidence_label(weight):
+    if weight >= 3:   return "WIDE"
+    elif weight == 2: return "HIGH"
+    else:             return "LOW"
+
+# ==============================================================================
+# PROGRESS / DISPLAY HELPERS
+# ==============================================================================
+
+def hms(seconds):
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    s = seconds % 60
+    return f"{h:02d}:{m:02d}:{s:05.2f}"
+
+def progress_bar(label, current, total, width=35, extra=""):
+    frac   = min(current / total, 1.0) if total > 0 else 0
+    filled = int(width * frac)
+    bar    = "█" * filled + "░" * (width - filled)
+    sys.stdout.write(f"\r    [{bar}] {frac*100:5.1f}%  {extra}  ")
+    sys.stdout.flush()
+
+def section(title):
+    print(f"\n{'─'*65}\n  {title}\n{'─'*65}")
+
+def banner(title):
+    w = 65
+    print("\n" + "═"*w)
+    print(" " * ((w - len(title) - 2) // 2) + f" {title} ")
+    print("═"*w)
+
+# ==============================================================================
+# ADAPTIVE Z-SCORE
+# ==============================================================================
+
+def adaptive_zscore(value, buffer, k):
+    arr = np.array(buffer, dtype=np.float64)
+    if len(arr) < 2: return 0.0, False
+    mu, sigma = np.mean(arr), np.std(arr)
+    if sigma < 1e-9: return 0.0, False
+    z = (value - mu) / sigma
+    return z, abs(z) > k
+
+# ==============================================================================
+# STREAMING AUDIO PIPE
+# ==============================================================================
+
+class AudioPipe:
+    def __init__(self, video_path, sample_rate):
+        self.sample_rate = sample_rate
+        self.bytes_per_sample = 2
+        cmd = [
+            FFMPEG_EXE, '-v', 'error',
+            '-i', video_path,
+            '-vn',
+            '-acodec', 'pcm_s16le',
+            '-ar', str(sample_rate),
+            '-ac', '1',
+            '-f', 's16le',
+            'pipe:1'
+        ]
+        self._proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        self._pos_samples = 0
+        self._exhausted   = False
+        self._leftover    = b""
+
+    @property
+    def position_sec(self):
+        return self._pos_samples / self.sample_rate
+
+    def read_chunk(self, n_samples):
+        if self._exhausted:
+            return None
+        need_bytes = n_samples * self.bytes_per_sample
+        buf = self._leftover
+        while len(buf) < need_bytes:
+            chunk = self._proc.stdout.read(need_bytes - len(buf))
+            if not chunk:
+                self._exhausted = True
+                break
+            buf += chunk
+        if len(buf) == 0:
+            return None
+        use = buf[:need_bytes]
+        self._leftover = buf[need_bytes:]
+        samples = np.frombuffer(use, dtype=np.int16).astype(np.float64)
+        if len(samples) < n_samples:
+            samples = np.pad(samples, (0, n_samples - len(samples)))
+        self._pos_samples += n_samples
+        return samples
+
+    def skip_to(self, target_sec):
+        target_samples = int(target_sec * self.sample_rate)
+        gap = target_samples - self._pos_samples
+        if gap <= 0:
+            return
+        need_bytes = gap * self.bytes_per_sample
+        buf = self._leftover
+        while len(buf) < need_bytes and not self._exhausted:
+            chunk = self._proc.stdout.read(need_bytes - len(buf))
+            if not chunk:
+                self._exhausted = True
+                break
+            buf += chunk
+        consumed = min(len(buf), need_bytes)
+        self._leftover = buf[consumed:]
+        self._pos_samples += consumed // self.bytes_per_sample
+
+    def close(self):
+        try:
+            self._proc.stdout.close()
+            self._proc.stderr.close()
+            self._proc.wait(timeout=5)
+        except Exception:
+            self._proc.kill()
+
+
+# ==============================================================================
+# STREAMING FRAME ITERATOR
+# ==============================================================================
+
+def stream_frames(video_path):
+    cmd = [
+        FFPROBE_EXE, '-v', 'error',
+        '-select_streams', 'v:0',
+        '-show_entries',
+        'frame=pkt_pts_time,pts_time,pkt_size,size,pict_type,key_frame',
+        '-of', 'json=compact=1',
+        video_path
+    ]
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    for raw_line in proc.stdout:
+        line = raw_line.strip().rstrip(',')
+        if not line.startswith('{'):
+            continue
+        try:
+            yield json.loads(line)
+        except json.JSONDecodeError:
+            continue
+    proc.stdout.close()
+    proc.stderr.close()
+    proc.wait()
+
+
+# ==============================================================================
+# SINGLE-PASS STREAMING DETECTOR
+# ==============================================================================
+
+def run_single_pass(video_path, total_frames_hint=0):
+    rms_pipe  = AudioPipe(video_path, AUDIO_SAMPLE_RATE)
+    flux_pipe = AudioPipe(video_path, FLUX_SAMPLE_RATE)
+
+    rms_hop   = int(AUDIO_MICRO_WINDOW_SEC * AUDIO_SAMPLE_RATE)
+    flux_hop  = max(1, int(FLUX_WINDOW_SEC  * FLUX_SAMPLE_RATE))
+    flux_nfft = flux_hop * 2
+    flux_hann = np.hanning(flux_nfft)
+
+    # Visual
+    v_size_buf    = deque(maxlen=VISUAL_MAX_FRAMES)
+    v_spike_flags = deque(maxlen=VISUAL_PERSIST_WINDOW)
+    v_last_trig   = -999.0
+    v_triggers    = []
+
+    # Scene transition tracking
+    scene_transition_end = 0.0
+
+    # Motion
+    mv_pb_buf     = deque(maxlen=MV_WINDOW)
+    mv_spike_flags= deque(maxlen=MV_PERSIST_WINDOW)
+    mv_last_trig  = -999.0
+    mv_last_i_t   = -999.0
+    mv_gop        = deque(maxlen=30)
+    mv_triggers   = []
+
+    # Audio RMS
+    rms_buf       = deque(maxlen=int(AUDIO_BUFFER_SEC / AUDIO_MICRO_WINDOW_SEC))
+    rms_consec    = 0
+    rms_last_trig = -999.0
+    rms_triggers  = []
+
+    # Silence
+    sil_in        = False
+    sil_start     = -999.0
+    sil_last_trig = -999.0
+    sil_triggers  = []
+
+    # Spectral Flux
+    flux_buf      = deque(maxlen=max(10, int(FLUX_BUFFER_SEC / FLUX_WINDOW_SEC)))
+    flux_consec   = 0
+    flux_last_trig= -999.0
+    flux_triggers = []
+    flux_prev_spec= None
+
+    frame_count = 0
+
+    for frame in stream_frames(video_path):
+
+        ptype    = frame.get('pict_type', 'U')
+        size     = float(frame.get('pkt_size') or frame.get('size') or 0)
+        time_pts = float(frame.get('pkt_pts_time') or frame.get('pts_time') or -1)
+
+        if time_pts < 0 or size == 0:
+            continue
+
+        frame_count += 1
+        if frame_count % 500 == 0:
+            extra = hms(time_pts)
+            if total_frames_hint > 0:
+                progress_bar("Pass", frame_count, total_frames_hint, extra=extra)
+            else:
+                sys.stdout.write(f"\r    {extra}  frame {frame_count}   ")
+                sys.stdout.flush()
+
+        is_i = (ptype == 'I' or frame.get('key_frame') == 1)
+
+        # ── Visual with Scene Transition Gate ─────────────────────────────────
+        if is_i:
+            if len(v_size_buf) >= 2:
+                prev_size = list(v_size_buf)[-1]
+                if prev_size > 0:
+                    size_ratio = size / prev_size
+                    if size_ratio > SCENE_CHANGE_RATIO:
+                        scene_transition_end = time_pts + SCENE_CHANGE_TOLERANCE
+
+            if time_pts < scene_transition_end:
+                spike = False
+            elif time_pts > LOCKOUT_PERIOD and len(v_size_buf) >= VISUAL_MIN_WARMUP:
+                _, spike = adaptive_zscore(size, v_size_buf, K_VISUAL_THRESHOLD)
+            else:
+                spike = False
+
+            v_spike_flags.append(1 if spike else 0)
+
+            if (time_pts > LOCKOUT_PERIOD
+                    and len(v_spike_flags) == VISUAL_PERSIST_WINDOW
+                    and sum(v_spike_flags) >= VISUAL_PERSIST_NEEDED
+                    and (time_pts - v_last_trig) > VISUAL_COOLDOWN
+                    and (time_pts - v_last_trig) > MIN_EVENT_GAP):
+                v_triggers.append(time_pts)
+                v_last_trig = time_pts
+                v_spike_flags.clear()
+            v_size_buf.append(size)
+
+        # ── Motion ────────────────────────────────────────────────────────────
+        if is_i:
+            if mv_last_i_t > 0:
+                interval = time_pts - mv_last_i_t
+                if len(mv_gop) >= 10:
+                    mean_gop = np.mean(mv_gop)
+                    if (time_pts > LOCKOUT_PERIOD and mean_gop > 0
+                            and interval < mean_gop * GOP_SHORT_RATIO
+                            and (time_pts - mv_last_trig) > MV_COOLDOWN):
+                        mv_triggers.append(time_pts)
+                        mv_last_trig = time_pts
+                mv_gop.append(interval)
+            mv_last_i_t = time_pts
+
+        if ptype in ('P', 'B'):
+            if time_pts > LOCKOUT_PERIOD and len(mv_pb_buf) >= MV_MIN_WARMUP:
+                _, spike = adaptive_zscore(size, mv_pb_buf, K_MV_THRESHOLD)
+            else:
+                spike = False
+            mv_spike_flags.append(1 if spike else 0)
+
+            if (time_pts > LOCKOUT_PERIOD
+                    and len(mv_spike_flags) == MV_PERSIST_WINDOW
+                    and sum(mv_spike_flags) >= MV_PERSIST_NEEDED
+                    and (time_pts - mv_last_trig) > MV_COOLDOWN
+                    and (time_pts - mv_last_trig) > MIN_EVENT_GAP):
+                mv_triggers.append(time_pts)
+                mv_last_trig = time_pts
+                mv_spike_flags.clear()
+            mv_pb_buf.append(size)
+
+        # ── Audio RMS + Silence ───────────────────────────────────────────────
+        # Audio signals are collected faithfully — no AV sync gate here.
+        # The trust hierarchy is enforced at fusion time, not collection time.
+        while (not rms_pipe._exhausted
+               and rms_pipe.position_sec + AUDIO_MICRO_WINDOW_SEC <= time_pts):
+
+            chunk = rms_pipe.read_chunk(rms_hop)
+            if chunk is None:
+                break
+            micro_t   = rms_pipe.position_sec
+            micro_rms = float(np.sqrt(np.mean(chunk ** 2))) if np.any(chunk) else 0.0
+
+            if micro_t > LOCKOUT_PERIOD and len(rms_buf) == rms_buf.maxlen:
+                mu    = float(np.mean(rms_buf))
+                sigma = float(np.std(rms_buf))
+
+                is_spike = (micro_rms > AUDIO_NOISE_FLOOR and sigma > 0
+                            and micro_rms > mu + K_AUDIO_RMS_THRESHOLD * sigma)
+
+                rms_consec = rms_consec + 1 if is_spike else 0
+                if (rms_consec >= AUDIO_PERSIST_NEEDED
+                        and (micro_t - rms_last_trig) > AUDIO_COOLDOWN
+                        and (micro_t - rms_last_trig) > MIN_EVENT_GAP):
+                    rms_triggers.append(micro_t)
+                    rms_last_trig = micro_t
+                    rms_consec = 0
+
+                if mu > AUDIO_NOISE_FLOOR:
+                    is_silent = micro_rms < mu * SILENCE_THRESHOLD_RATIO
+                    if is_silent and not sil_in:
+                        sil_in, sil_start = True, micro_t
+                    elif not is_silent and sil_in:
+                        sil_in = False
+                        duration = micro_t - sil_start
+                        if (duration >= SILENCE_MIN_DURATION
+                                and (sil_start - sil_last_trig) > SILENCE_COOLDOWN):
+                            sil_triggers.append(sil_start)
+                            sil_last_trig = sil_start
+
+            rms_buf.append(micro_rms)
+
+        # ── Spectral Flux ─────────────────────────────────────────────────────
+        while (not flux_pipe._exhausted
+               and flux_pipe.position_sec + FLUX_WINDOW_SEC <= time_pts):
+
+            chunk = flux_pipe.read_chunk(flux_nfft)
+            if chunk is None:
+                break
+            flux_t = flux_pipe.position_sec
+
+            spectrum = np.abs(np.fft.rfft(chunk * flux_hann))
+            norm = np.linalg.norm(spectrum)
+            if norm > 1e-9:
+                spectrum /= norm
+
+            if flux_prev_spec is not None:
+                flux_val = float(np.sum(np.maximum(spectrum - flux_prev_spec, 0.0)))
+                if (flux_t > LOCKOUT_PERIOD
+                        and len(flux_buf) >= int(flux_buf.maxlen * 0.3)):
+                    _, spike = adaptive_zscore(flux_val, flux_buf, K_FLUX_THRESHOLD)
+                    flux_consec = flux_consec + 1 if spike else 0
+
+                    if (flux_consec >= FLUX_PERSIST_NEEDED
+                            and (flux_t - flux_last_trig) > FLUX_COOLDOWN
+                            and (flux_t - flux_last_trig) > MIN_EVENT_GAP):
+                        flux_triggers.append(flux_t)
+                        flux_last_trig = flux_t
+                        flux_consec = 0
+                flux_buf.append(flux_val)
+
+            flux_prev_spec = spectrum
+
+    # ── Drain remaining audio after last frame ────────────────────────────────
+    for pipe, hop, is_flux in [(rms_pipe, rms_hop, False), (flux_pipe, flux_nfft, True)]:
+        while not pipe._exhausted:
+            if is_flux:
+                chunk = pipe.read_chunk(flux_nfft)
+                if chunk is None: break
+                flux_t   = pipe.position_sec
+                spectrum = np.abs(np.fft.rfft(chunk * flux_hann))
+                norm     = np.linalg.norm(spectrum)
+                if norm > 1e-9: spectrum /= norm
+                if flux_prev_spec is not None:
+                    fv = float(np.sum(np.maximum(spectrum - flux_prev_spec, 0.0)))
+                    if flux_t > LOCKOUT_PERIOD and len(flux_buf) >= int(flux_buf.maxlen * 0.3):
+                        _, spike = adaptive_zscore(fv, flux_buf, K_FLUX_THRESHOLD)
+                        flux_consec = flux_consec + 1 if spike else 0
+                        if (flux_consec >= FLUX_PERSIST_NEEDED
+                                and (flux_t - flux_last_trig) > FLUX_COOLDOWN):
+                            flux_triggers.append(flux_t)
+                            flux_last_trig = flux_t
+                            flux_consec = 0
+                    flux_buf.append(fv)
+                flux_prev_spec = spectrum
+            else:
+                chunk = pipe.read_chunk(hop)
+                if chunk is None: break
+                micro_t   = pipe.position_sec
+                micro_rms = float(np.sqrt(np.mean(chunk ** 2))) if np.any(chunk) else 0.0
+                if micro_t > LOCKOUT_PERIOD and len(rms_buf) == rms_buf.maxlen:
+                    mu    = float(np.mean(rms_buf))
+                    sigma = float(np.std(rms_buf))
+                    is_spike = (micro_rms > AUDIO_NOISE_FLOOR and sigma > 0
+                                and micro_rms > mu + K_AUDIO_RMS_THRESHOLD * sigma)
+                    rms_consec = rms_consec + 1 if is_spike else 0
+                    if (rms_consec >= AUDIO_PERSIST_NEEDED
+                            and (micro_t - rms_last_trig) > AUDIO_COOLDOWN):
+                        rms_triggers.append(micro_t)
+                        rms_last_trig = micro_t
+                        rms_consec = 0
+                    if mu > AUDIO_NOISE_FLOOR:
+                        is_silent = micro_rms < mu * SILENCE_THRESHOLD_RATIO
+                        if is_silent and not sil_in:
+                            sil_in, sil_start = True, micro_t
+                        elif not is_silent and sil_in:
+                            sil_in = False
+                            dur = micro_t - sil_start
+                            if dur >= SILENCE_MIN_DURATION and (sil_start - sil_last_trig) > SILENCE_COOLDOWN:
+                                sil_triggers.append(sil_start)
+                                sil_last_trig = sil_start
+                rms_buf.append(micro_rms)
+
+    rms_pipe.close()
+    flux_pipe.close()
+
+    print()
+
+    mv_triggers.sort()
+    deduped, last = [], -999.0
+    for t in mv_triggers:
+        if t - last > MV_COOLDOWN:
+            deduped.append(t)
+            last = t
+
+    return {
+        "Visual":       v_triggers,
+        "Motion":       deduped,
+        "AudioRMS":     rms_triggers,
+        "Silence":      sil_triggers,
+        "SpectralFlux": flux_triggers,
+    }
+
+
+# ==============================================================================
+# FUSION  (trust-hierarchy aware)
+#
+# Rules
+# ─────
+# 1. Cluster all triggers within TOLERANCE_SEC of each other.
+# 2. DROP any cluster that has no Visual or Motion signal — audio-only events
+#    are untrusted and discarded entirely.
+# 3. For surviving clusters, compute base weight from Visual/Motion count only.
+# 4. Each distinct audio signal co-occurring within AUDIO_UPGRADE_WINDOW of
+#    the cluster centroid adds +1 to the weight (upgrade path only).
+#    Audio cannot create weight on its own.
+# ==============================================================================
+
+def fuse_all_signals(signal_dict):
+    all_events = sorted(
+        [{"time": t, "signal": lbl}
+         for lbl, ts in signal_dict.items() for t in ts],
+        key=lambda x: x["time"]
+    )
+    used, clusters = [False] * len(all_events), []
+    for i, ev in enumerate(all_events):
+        if used[i]: continue
+        cluster = [ev]; used[i] = True
+        for j in range(i + 1, len(all_events)):
+            if used[j]: continue
+            if all_events[j]["time"] - cluster[0]["time"] > TOLERANCE_SEC: break
+            cluster.append(all_events[j]); used[j] = True
+        clusters.append(cluster)
+
+    merged = []
+    for cluster in clusters:
+        sigs = list({e["signal"] for e in cluster})
+
+        # ── GATE: require at least one trusted (visual/motion) signal ─────────
+        vm_sigs   = [s for s in sigs if s in VISUAL_MOTION_SIGNALS]
+        if not vm_sigs:
+            continue  # audio-only cluster — drop entirely
+
+        avg_t = round(float(np.mean([e["time"] for e in cluster])), 2)
+
+        # ── Base weight: number of distinct Visual/Motion signals ─────────────
+        base_weight = len(set(vm_sigs))   # 1 or 2
+
+        # ── Upgrade: each distinct audio signal within window adds +1 ─────────
+        audio_sigs_present = set()
+        for e in cluster:
+            if e["signal"] in AUDIO_SIGNALS:
+                if abs(e["time"] - avg_t) <= AUDIO_UPGRADE_WINDOW:
+                    audio_sigs_present.add(e["signal"])
+        upgrade = len(audio_sigs_present)   # 0, 1, 2, or 3
+
+        weight = base_weight + upgrade
+
+        # Build label from ALL contributing signals (for traceability)
+        all_contributing = sorted(set(vm_sigs) | audio_sigs_present)
+        merged.append((avg_t, "+".join(all_contributing), len(all_contributing), weight))
+
+    merged.sort(key=lambda x: x[0])
+    return merged
+
+
+# ==============================================================================
+# WINDOW MERGE  (unchanged — operates on already-trusted events)
+# ==============================================================================
+
+def apply_window_merge(fused_events, window=MERGE_WINDOW):
+    if not fused_events: return []
+    result, i = [], 0
+    while i < len(fused_events):
+        group, j = [], i
+        while j < len(fused_events) and fused_events[j][0] <= fused_events[i][0] + window:
+            group.append(fused_events[j]); j += 1
+        if len(group) >= 2:
+            all_lbl = set(s for e in group for s in e[1].split("+"))
+            result.append((round(float(np.mean([e[0] for e in group])), 2),
+                           "+".join(sorted(all_lbl)), len(all_lbl), 3))
+        else:
+            t, lbl, nsigs, weight = group[0]
+            result.append((t, lbl, nsigs, weight))
+        i = j
+    return result
+
+
+# ==============================================================================
+# VALIDATE
+# ==============================================================================
+
+def classify_hit_position(ts, seg):
+    ns = abs(ts - seg["start"]) <= BOUNDARY_TOLERANCE
+    ne = abs(ts - seg["end"])   <= BOUNDARY_TOLERANCE
+    inside = seg["start"] < ts < seg["end"]
+    if ns and not ne:        return "START"
+    elif ne and not ns:      return "END"
+    elif ns and ne:          return "START+END"
+    elif inside:             return "IN-BETWEEN"
+    return None
+
+def validate_video(video_name, segments, final_events):
+    segs = [dict(s, hit=None) for s in segments]
+    fp_events = []
+    for ts, label, n_sig, weight in final_events:
+        claimed = False
+        for seg in segs:
+            pos = classify_hit_position(ts, seg)
+            if pos is not None and seg["hit"] is None:
+                seg["hit"] = {"ts": ts, "label": label,
+                              "n_sig": n_sig, "weight": weight, "position": pos}
+                claimed = True; break
+        if not claimed:
+            fp_events.append({"ts": ts, "label": label, "n_sig": n_sig, "weight": weight})
+
+    seg_results = []
+    for seg in segs:
+        src = seg.get('source', seg.get('sources', ['unknown'])[0] if seg.get('sources') else 'unknown')
+        if isinstance(src, list): src = ', '.join(src[:2])
+        seg_results.append({"index": seg["index"], "source": src,
+                             "start": seg["start"], "end": seg["end"],
+                             "duration": seg["duration"], "hit": seg["hit"]})
+    return seg_results, fp_events
+
+
+# ==============================================================================
+# CONSOLE REPORT
+# ==============================================================================
+
+def print_video_report(video_name, seg_results, fp_events, signal_dict,
+                       fused_events, final_events):
+    total    = len(seg_results)
+    hits     = sum(1 for s in seg_results if s["hit"])
+    wide_h   = sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] >= 3)
+    high_h   = sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] == 2)
+    low_h    = sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] == 1)
+    wide_fp  = sum(1 for e in fp_events if e["weight"] >= 3)
+    high_fp  = sum(1 for e in fp_events if e["weight"] == 2)
+    low_fp   = sum(1 for e in fp_events if e["weight"] == 1)
+
+    section(f"VIDEO: {video_name}   [{hits}/{total}  WIDE:{wide_h} HIGH:{high_h} LOW:{low_h}]")
+    print("  Raw triggers per signal:")
+    for sig, ts in signal_dict.items():
+        print(f"    {sig:<15} {len(ts):>4}  {'▪'*min(len(ts),40)}")
+    print(f"  Fused : {len(fused_events)}   Final : {len(final_events)}"
+          f"  [WIDE={sum(1 for e in final_events if e[3]>=3)}"
+          f"  HIGH={sum(1 for e in final_events if e[3]==2)}"
+          f"  LOW={sum(1 for e in final_events if e[3]==1)}]")
+
+    print(f"\n  {'#':>3}  {'SOURCE':<16}  {'START':>8}  {'END':>8}  {'DUR':>5}"
+          f"  {'HIT @':>8}  {'CONF':<5}  {'POS':<12}  SIGNALS")
+    print(f"  {'─'*3}  {'─'*16}  {'─'*8}  {'─'*8}  {'─'*5}"
+          f"  {'─'*8}  {'─'*5}  {'─'*12}  {'─'*35}")
+    for s in seg_results:
+        src = s["source"][:15]
+        if s["hit"]:
+            h = s["hit"]
+            print(f"  {s['index']:>3}  {src:<16}  {s['start']:>8.3f}  {s['end']:>8.3f}"
+                  f"  {s['duration']:>5.2f}  {h['ts']:>8.2f}  {confidence_label(h['weight']):<5}"
+                  f"  ✓ {h['position']:<10}  {h['label'][:35]}")
+        else:
+            print(f"  {s['index']:>3}  {src:<16}  {s['start']:>8.3f}  {s['end']:>8.3f}"
+                  f"  {s['duration']:>5.2f}  {'—':>8}  {'—':<5}  ✗ {'MISSED':<10}")
+
+    if fp_events:
+        print(f"\n  False Positives ({len(fp_events)})  [WIDE:{wide_fp}  HIGH:{high_fp}  LOW:{low_fp}]:")
+        for fp in fp_events:
+            print(f"    @ {fp['ts']:>9.2f}s  [{confidence_label(fp['weight'])}]  {fp['label']}")
+    else:
+        print("\n  False Positives: 0  ✓")
+
+    rate = hits / total * 100 if total else 0
+    print(f"\n  Detection rate: {hits}/{total}  ({rate:.1f}%)"
+          f"   WIDE:{wide_h}  HIGH:{high_h}  LOW:{low_h}"
+          f"   |   FP:{len(fp_events)}  WIDE:{wide_fp}  HIGH:{high_fp}  LOW:{low_fp}")
+
+
+def print_overall_summary(all_video_stats):
+    banner("COMPLETE EVALUATION SUMMARY")
+    total_segs = sum(v["total"] for v in all_video_stats)
+    total_hits = sum(v["hits"]  for v in all_video_stats)
+    total_fp   = sum(v["fp"]    for v in all_video_stats)
+    overall    = total_hits / total_segs * 100 if total_segs else 0
+    fpr        = total_fp / (total_fp + total_hits) * 100 if (total_fp + total_hits) > 0 else 0
+
+    print(f"\n  {'VIDEO':<35}  {'SEGS':>4}  {'HITS':>5}  {'RATE':>6}"
+          f"  {'FP':>4}  STATUS")
+    print(f"  {'─'*35}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*6}")
+    for v in all_video_stats:
+        rate   = v["hits"] / v["total"] * 100 if v["total"] else 0
+        status = "✓ PASS" if rate >= 50 else "✗ FAIL"
+        print(f"  {v['name']:<35}  {v['total']:>4}  {v['hits']:>5}  {rate:>5.1f}%"
+              f"  {v['fp']:>4}  {status}")
+    print(f"  {'─'*35}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*6}")
+    print(f"  {'TOTAL':<35}  {total_segs:>4}  {total_hits:>5}  {overall:>5.1f}%"
+          f"  {total_fp:>4}")
+    print(f"\n  DETECTION RATE : {total_hits}/{total_segs}  ({overall:.2f}%)")
+    print(f"  FALSE POS RATE : {fpr:.2f}%")
+    print(f"  VIDEOS         : {len(all_video_stats)}")
+
+
+# ==============================================================================
+# REPORT WRITER
+# ==============================================================================
+
+W = 80
+def rl(f, text=""): f.write(text + "\n")
+def rheader(f, title, char="="):
+    f.write("\n" + char*W + "\n")
+    f.write(" "*max(0,(W-len(title))//2) + title + "\n")
+    f.write(char*W + "\n")
+def rsection(f, title, char="-"):
+    f.write("\n" + char*W + "\n  " + title + "\n" + char*W + "\n")
+def rbar(f, label, value, max_val, width=40, unit=""):
+    filled = int(width * min(value/max_val, 1.0)) if max_val > 0 else 0
+    f.write(f"  {label:<22} [{'#'*filled + '.'*(width-filled)}] {value}{unit}\n")
+
+def write_full_report(report_path, all_video_data, run_ts):
+    with open(report_path, "a", encoding="utf-8") as f:
+        rheader(f, "MULTI-MODAL VIOLENT CONTENT DETECTOR  -  EVALUATION REPORT")
+        rl(f, f"  Run timestamp  : {run_ts}")
+        rl(f, f"  Mode           : STREAMING SINGLE PASS (no full arrays cached)")
+        rl(f, f"  Signals        : Visual | Motion | AudioRMS | Silence | SpectralFlux")
+        rl(f, f"  Fusion window  : {TOLERANCE_SEC}s   Merge window : {MERGE_WINDOW}s")
+        rl(f, f"  Boundary tol   : {BOUNDARY_TOLERANCE}s")
+        rl(f, f"  Trust hierarchy: Visual/Motion anchor events; Audio upgrades confidence only")
+        rl(f, f"  Audio upgrade  : window={AUDIO_UPGRADE_WINDOW}s  (audio-only clusters dropped)")
+
+        rheader(f, "PER-VIDEO DETAILED RESULTS")
+        for vd in all_video_data:
+            seg_res   = vd["seg_results"]
+            fp_events = vd["fp_events"]
+            sig_dict  = vd["signal_dict"]
+            fused     = vd["fused_events"]
+            final     = vd["final_events"]
+            hits      = sum(1 for s in seg_res if s["hit"])
+            total_s   = len(seg_res)
+            rate      = hits / total_s * 100 if total_s else 0
+
+            rsection(f, f"VIDEO: {vd['name']}")
+            rl(f, f"  Detection  : {hits}/{total_s}  ({rate:.1f}%)  "
+                   f"FP: {len(fp_events)}  Time: {vd['elapsed']:.1f}s")
+            rl(f)
+            rl(f, "  RAW TRIGGER COUNTS:")
+            max_raw = max((len(v) for v in sig_dict.values()), default=1)
+            for sig, ts_list in sig_dict.items():
+                rbar(f, sig, len(ts_list), max(max_raw,1), width=30, unit=" triggers")
+            rl(f, f"  Fused events : {len(fused)}   Final events : {len(final)}")
+            rl(f)
+
+            rl(f, "  ALL RAW TIMESTAMPS:")
+            for sig, ts_list in sig_dict.items():
+                times = "  ".join(f"{t:.3f}s" for t in sorted(ts_list)) or "(none)"
+                rl(f, f"  {sig:<15} ({len(ts_list):>4}): {times}")
+            rl(f)
+
+            rl(f, "  FINAL EVENTS:")
+            rl(f, f"  {'TIME':>10}  {'CONF':<5}  {'SIGNALS':<35}  OUTCOME")
+            hit_lkp = {round(s["hit"]["ts"],2): (s["index"], s["hit"]["position"])
+                       for s in seg_res if s["hit"]}
+            for ts, label, n_sig, weight in final:
+                key     = round(ts, 2)
+                outcome = (f"HIT seg {hit_lkp[key][0]} pos={hit_lkp[key][1]}"
+                           if key in hit_lkp else "FALSE POSITIVE")
+                rl(f, f"  {ts:>10.3f}s  {confidence_label(weight):<5}  {label:<35}  {outcome}")
+            rl(f)
+
+            rl(f, "  SEGMENT TABLE:")
+            rl(f, f"  {'#':>3}  {'SOURCE':<16}  {'START':>9}  {'END':>9}  "
+                   f"{'HIT @':>9}  {'CONF':<5}  {'POS':<12}  SIGNALS")
+            for s in seg_res:
+                src = s["source"][:15]
+                if s["hit"]:
+                    h = s["hit"]
+                    rl(f, f"  {s['index']:>3}  {src:<16}  {s['start']:>9.3f}  {s['end']:>9.3f}  "
+                           f"{h['ts']:>9.3f}  {confidence_label(h['weight']):<5}  "
+                           f"{h['position']:<12}  {h['label'][:30]}")
+                else:
+                    rl(f, f"  {s['index']:>3}  {src:<16}  {s['start']:>9.3f}  {s['end']:>9.3f}  "
+                           f"{'---':>9}  {'---':<5}  {'MISSED':<12}")
+            rl(f)
+
+            missed = [s for s in seg_res if not s["hit"]]
+            if missed:
+                rl(f, f"  MISSED SEGMENTS ({len(missed)}):")
+                for s in missed:
+                    mid = (s["start"] + s["end"]) / 2.0
+                    if final:
+                        closest = min(final, key=lambda e: abs(e[0] - mid))
+                        rl(f, f"  Seg {s['index']:>2}  {s['start']:.3f}s-{s['end']:.3f}s  "
+                               f"closest={closest[0]:.3f}s ({confidence_label(closest[3])})  "
+                               f"dist_start={abs(closest[0]-s['start']):.3f}s")
+            rl(f)
+
+        rheader(f, "OVERALL SUMMARY")
+        total_segs = sum(len(vd["seg_results"]) for vd in all_video_data)
+        total_hits = sum(sum(1 for s in vd["seg_results"] if s["hit"]) for vd in all_video_data)
+        total_fp   = sum(len(vd["fp_events"]) for vd in all_video_data)
+        overall    = total_hits / total_segs * 100 if total_segs else 0
+        fpr        = total_fp / (total_fp + total_hits) * 100 if (total_fp + total_hits) > 0 else 0
+        total_time = sum(vd["elapsed"] for vd in all_video_data)
+
+        rl(f, f"  {'VIDEO':<38}  {'SEGS':>4}  {'HITS':>5}  {'RATE':>6}  {'FP':>4}  STATUS")
+        rl(f, f"  {'─'*38}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*6}")
+        for vd in all_video_data:
+            h = sum(1 for s in vd["seg_results"] if s["hit"])
+            t = len(vd["seg_results"])
+            r = h / t * 100 if t else 0
+            rl(f, f"  {vd['name']:<38}  {t:>4}  {h:>5}  {r:>5.1f}%"
+                   f"  {len(vd['fp_events']):>4}  {'PASS' if r>=50 else 'FAIL'}")
+        rl(f, f"  {'─'*38}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*6}")
+        rl(f, f"  {'TOTAL':<38}  {total_segs:>4}  {total_hits:>5}  {overall:>5.1f}%  {total_fp:>4}")
+        rl(f)
+        rl(f, "="*W)
+        rl(f, f"  DETECTION RATE     : {total_hits}/{total_segs}  ({overall:.2f}%)")
+        rl(f, f"  FALSE POSITIVE RATE: {fpr:.2f}%")
+        rl(f, f"  TOTAL PROCESS TIME : {total_time:.1f}s")
+        rl(f, f"  VIDEOS PASSING     : "
+               f"{sum(1 for vd in all_video_data if sum(1 for s in vd['seg_results'] if s['hit'])/len(vd['seg_results'])*100>=50)}"
+               f"/{len(all_video_data)}")
+        rl(f, "="*W)
+
+
+# ==============================================================================
+# PROCESS ONE VIDEO
+# ==============================================================================
+
+def get_frame_count(video_path):
+    try:
+        r = subprocess.run(
+            [FFPROBE_EXE, '-v', 'error', '-select_streams', 'v:0',
+             '-count_packets', '-show_entries', 'stream=nb_read_packets',
+             '-of', 'csv=p=0', video_path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        return int(r.stdout.strip())
+    except Exception:
+        return 0
+
+def process_video(video_path, ground_truth_entry):
+    video_name = os.path.basename(video_path)
+    segments   = ground_truth_entry["segments"]
+    for seg in segments:
+        if seg["end"] < seg["start"]:
+            seg["end"] = seg["start"] + seg["duration"]
+
+    print(f"\n  Counting frames for progress bar...", end=" ", flush=True)
+    total_frames = get_frame_count(video_path)
+    print(f"{total_frames} frames")
+
+    print(f"  Streaming single pass (video frames + audio piped together)...")
+    t0 = time.time()
+    signal_dict  = run_single_pass(video_path, total_frames_hint=total_frames)
+    elapsed      = time.time() - t0
+
+    print(f"  Done in {elapsed:.1f}s")
+    for sig, ts_list in signal_dict.items():
+        print(f"    {sig:<15} -> {len(ts_list)} triggers")
+
+    fused_events = fuse_all_signals(signal_dict)
+    final_events = apply_window_merge(fused_events, window=MERGE_WINDOW)
+    seg_results, fp_events = validate_video(video_name, segments, final_events)
+    print_video_report(video_name, seg_results, fp_events, signal_dict,
+                       fused_events, final_events)
+
+    sig_hits, sig_fp = {}, {}
+    for seg in seg_results:
+        if seg["hit"]:
+            for sig in seg["hit"]["label"].split("+"):
+                sig_hits[sig] = sig_hits.get(sig, 0) + 1
+    for fp in fp_events:
+        for sig in fp["label"].split("+"):
+            sig_fp[sig] = sig_fp.get(sig, 0) + 1
+
+    return {
+        "name":         video_name,
+        "total":        len(seg_results),
+        "hits":         sum(1 for s in seg_results if s["hit"]),
+        "fp":           len(fp_events),
+        "wide_hits":    sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] >= 3),
+        "high_hits":    sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] == 2),
+        "low_hits":     sum(1 for s in seg_results if s["hit"] and s["hit"]["weight"] == 1),
+        "wide_fp":      sum(1 for e in fp_events if e["weight"] >= 3),
+        "high_fp":      sum(1 for e in fp_events if e["weight"] == 2),
+        "low_fp":       sum(1 for e in fp_events if e["weight"] == 1),
+        "positions":    [s["hit"]["position"] for s in seg_results if s["hit"]],
+        "sig_hits":     sig_hits,
+        "sig_fp":       sig_fp,
+        "raw_triggers": {sig: len(ts) for sig, ts in signal_dict.items()},
+        "seg_results":  seg_results,
+        "fp_events":    fp_events,
+        "signal_dict":  signal_dict,
+        "fused_events": fused_events,
+        "final_events": final_events,
+        "elapsed":      elapsed,
+    }
+
+
+# ==============================================================================
+# MAIN
+# ==============================================================================
+
+if __name__ == "__main__":
+    gt_path = os.path.join(SCRIPT_DIR, GROUND_TRUTH_JSON)
+    if not os.path.exists(gt_path):
+        print(f"[ERROR] Ground truth not found: {gt_path}"); sys.exit(1)
+
+    with open(gt_path) as f:
+        ground_truth = json.load(f)
+
+    VIDEOS_TO_MONITOR = [f"attacked_{i}.mp4" for i in range(1, 42)]
+
+    gt_map = {e["target_video"]: e for e in ground_truth}
+    run_ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    banner("MULTI-MODAL VIOLENT CONTENT DETECTOR  -  STREAMING SINGLE PASS")
+    print(f"  Memory model   : streaming — no full arrays cached")
+    print(f"    Video frames : ffprobe stdout, one JSON line at a time")
+    print(f"    Audio RMS    : ffmpeg PCM pipe, {int(AUDIO_MICRO_WINDOW_SEC*1000)}ms chunks")
+    print(f"    Spectral Flux: ffmpeg PCM pipe, {int(FLUX_WINDOW_SEC*1000)}ms chunks")
+    print(f"    History kept : only deque rolling windows (maxlen fixed)")
+    print(f"  Trust hierarchy: Visual/Motion anchor | Audio upgrades confidence only")
+    print(f"  Audio upgrade  : window={AUDIO_UPGRADE_WINDOW}s — audio-only clusters dropped")
+    print(f"  Ground truth   : {GROUND_TRUTH_JSON}")
+    print(f"  Attacked folder: {ATTACKED_DIR}/")
+
+    all_videos = [os.path.join(SCRIPT_DIR, ATTACKED_DIR, e["target_video"])
+                  for e in ground_truth]
+    attacked_videos = ([v for v in all_videos if os.path.basename(v) in VIDEOS_TO_MONITOR]
+                       if VIDEOS_TO_MONITOR else all_videos)
+    print(f"\n  Processing {len(attacked_videos)} video(s)")
+
+    all_video_stats = []
+    for vid_idx, video_path in enumerate(attacked_videos):
+        video_name = os.path.basename(video_path)
+        banner(f"VIDEO {vid_idx+1}/{len(attacked_videos)}: {video_name}")
+        if not os.path.exists(video_path):
+            print(f"  [!] Not found: {video_path}"); continue
+        if video_name not in gt_map:
+            print(f"  [!] No ground truth for {video_name}"); continue
+        all_video_stats.append(process_video(video_path, gt_map[video_name]))
+
+    if all_video_stats:
+        print_overall_summary(all_video_stats)
+        report_path = os.path.join(SCRIPT_DIR, REPORT_FILE)
+        write_full_report(report_path, all_video_stats, run_ts)
+        print(f"\n[+] Report written to: {report_path}")
+    else:
+        print("\n[!] No videos processed.")

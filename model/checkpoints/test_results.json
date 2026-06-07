@@ -1,8 +1,5 @@
 {
-  "test_accuracy": 0.94,
-  "test_loss": 0.3124,
-  "correct": 94,
-  "total": 100,
-  "best_fold": 1,
-  "final_model": "checkpoints/best_model.pth"
+  "accuracy": 0.88,
+  "correct": 176,
+  "total": 200
 }

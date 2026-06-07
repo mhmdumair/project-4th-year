@@ -1,0 +1,1972 @@
+================================================================================
+DISTRIBUTED VIOLENCE DETECTION - FINAL REPORT
+================================================================================
+
+Run: 2026-06-01 21:34:27
+Architecture: 10 workers (extract JSON) + 1 leader (detect)
+Chunk size: 5.0s
+Audio overlap: 50ms (for spectral flux continuity)
+Total videos: 40
+
+VIDEO                                SEGS   HITS    RATE    FP    WORKER    LEADER
+--------------------------------------------------------------------------------
+attacked_1.mp4                          4      3   75.0%    33     91.8s    1.051s
+attacked_2.mp4                          5      5  100.0%    20     98.2s    1.395s
+attacked_3.mp4                          1      0    0.0%     7     29.5s    0.438s
+attacked_4.mp4                          5      5  100.0%    23     79.9s    1.188s
+attacked_5.mp4                          6      6  100.0%    28    107.1s    1.625s
+attacked_6.mp4                          4      3   75.0%    30     70.5s    1.086s
+attacked_7.mp4                          4      3   75.0%    23     77.6s    0.999s
+attacked_8.mp4                          3      3  100.0%     9     71.4s    0.941s
+attacked_9.mp4                          2      2  100.0%    14     75.0s    0.731s
+attacked_10.mp4                         8      6   75.0%    36    169.2s    1.754s
+attacked_11.mp4                         2      2  100.0%    10     68.0s    0.725s
+attacked_12.mp4                         2      2  100.0%     9     64.1s    0.641s
+attacked_13.mp4                         2      2  100.0%     9     44.9s    0.600s
+attacked_14.mp4                         7      6   85.7%    29    120.0s    1.707s
+attacked_15.mp4                         7      7  100.0%    34    156.7s    1.772s
+attacked_16.mp4                         6      6  100.0%    26    115.7s    1.436s
+attacked_17.mp4                         4      4  100.0%    13     60.9s    0.890s
+attacked_18.mp4                         6      5   83.3%    28    119.2s    1.555s
+attacked_19.mp4                         5      5  100.0%    18     84.3s    1.358s
+attacked_20.mp4                         4      4  100.0%    18     78.7s    1.130s
+attacked_21.mp4                         7      4   57.1%    17     67.6s    0.759s
+attacked_22.mp4                        12     10   83.3%    26    159.2s    1.764s
+attacked_23.mp4                        10      7   70.0%    13     97.0s    1.244s
+attacked_24.mp4                         4      3   75.0%     4     36.7s    0.514s
+attacked_25.mp4                        15     12   80.0%     7    204.7s    2.092s
+attacked_26.mp4                         5      5  100.0%     8     55.5s    0.686s
+attacked_27.mp4                         6      3   50.0%     7     54.3s    0.669s
+attacked_28.mp4                        11      6   54.5%    58     95.4s    1.268s
+attacked_29.mp4                        10      9   90.0%    19    128.4s    1.483s
+attacked_30.mp4                        19     14   73.7%    58    213.2s    2.436s
+attacked_32.mp4                        17     17  100.0%    85    284.0s    3.283s
+attacked_33.mp4                         4      4  100.0%    18     66.6s    0.939s
+attacked_34.mp4                         3      3  100.0%    15     50.4s    0.699s
+attacked_35.mp4                         5      5  100.0%    20     72.5s    0.913s
+attacked_36.mp4                        10     10  100.0%    78    132.8s    2.155s
+attacked_37.mp4                        13     13  100.0%    38    253.0s    2.840s
+attacked_38.mp4                        13     13  100.0%    67    204.0s    2.251s
+attacked_39.mp4                         7      7  100.0%    31     87.4s    1.178s
+attacked_40.mp4                        10     10  100.0%    46    168.0s    2.134s
+attacked_41.mp4                         8      8  100.0%    36    125.0s    1.736s
+--------------------------------------------------------------------------------
+TOTAL                                 276    242   87.7%  1068   4338.2s   54.069s
+
+DETECTION RATE: 242/276 (87.68%)
+WORKER TIME:    4338.2s (72.3 minutes)
+LEADER TIME:    54.069s
+SPEEDUP:        80x
+
+================================================================================
+PER-VIDEO  HIT & FALSE-POSITIVE DETAIL
+================================================================================
+
+──────────────────────────────────────────────────────────────────────
+  attacked_1.mp4  [30s group]  3/4 (75.0%)  FP=33
+  HITS (3):
+    @   271.50s  [LOW ]  score=0.4000  signals=Motion
+    @   989.77s  [LOW ]  score=0.4000  signals=Motion
+    @  1290.97s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (33):
+    @    47.23s  [WIDE]  score=0.7500  signals=Motion
+    @    94.43s  [LOW ]  score=0.4000  signals=Motion
+    @   186.48s  [WIDE]  score=0.7500  signals=Motion
+    @   205.72s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   322.48s  [WIDE]  score=0.7500  signals=Motion
+    @   332.83s  [LOW ]  score=0.4000  signals=Visual
+    @   374.00s  [WIDE]  score=0.7500  signals=Motion
+    @   428.73s  [LOW ]  score=0.4000  signals=Motion
+    @   446.33s  [WIDE]  score=0.7500  signals=Motion
+    @   507.07s  [LOW ]  score=0.4000  signals=Motion
+    @   518.17s  [LOW ]  score=0.4000  signals=Motion
+    @   554.93s  [LOW ]  score=0.4000  signals=Visual
+    @   571.37s  [LOW ]  score=0.4000  signals=Motion
+    @   613.11s  [WIDE]  score=0.7500  signals=AudioRMS+Visual
+    @   625.23s  [LOW ]  score=0.4000  signals=Visual
+    @   648.87s  [LOW ]  score=0.4000  signals=Motion
+    @   695.11s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   727.40s  [LOW ]  score=0.4000  signals=Motion
+    @   756.47s  [LOW ]  score=0.4000  signals=Motion
+    @   797.90s  [LOW ]  score=0.4000  signals=Motion
+    @   837.17s  [LOW ]  score=0.4000  signals=Motion
+    @   892.37s  [LOW ]  score=0.4000  signals=Motion
+    @   942.30s  [LOW ]  score=0.4000  signals=Motion
+    @   964.25s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1165.76s  [WIDE]  score=0.7500  signals=Motion
+    @  1188.83s  [LOW ]  score=0.4000  signals=Motion
+    @  1231.45s  [WIDE]  score=0.7500  signals=Motion
+    @  1248.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1301.68s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1353.23s  [WIDE]  score=0.7500  signals=Motion
+    @  1415.08s  [WIDE]  score=0.7500  signals=Motion
+    @  1463.50s  [LOW ]  score=0.4000  signals=Motion
+    @  1495.27s  [WIDE]  score=0.7500  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     7   21.2%
+    Motion              3  100.0%    29   87.9%
+    AudioRMS            0    0.0%     2    6.1%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_2.mp4  [30s group]  5/5 (100.0%)  FP=20
+  HITS (5):
+    @   283.30s  [WIDE]  score=0.7500  signals=Motion
+    @   651.16s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   980.29s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1327.43s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1590.74s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (20):
+    @    75.00s  [LOW ]  score=0.4000  signals=Motion
+    @   100.00s  [LOW ]  score=0.4000  signals=Motion
+    @   121.37s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   142.17s  [LOW ]  score=0.4000  signals=Visual
+    @   306.31s  [LOW ]  score=0.4000  signals=Motion
+    @   356.33s  [LOW ]  score=0.4000  signals=Visual
+    @   450.60s  [LOW ]  score=0.4000  signals=Motion
+    @   483.83s  [LOW ]  score=0.4000  signals=Visual
+    @   999.52s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1499.10s  [LOW ]  score=0.4000  signals=Motion
+    @  1602.80s  [WIDE]  score=0.7500  signals=Motion
+    @  1735.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1760.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1785.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1810.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1860.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1885.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1910.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1935.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1963.57s  [LOW ]  score=0.4000  signals=Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              3   60.0%     6   30.0%
+    Motion              5  100.0%    16   80.0%
+    AudioRMS            1   20.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_3.mp4  [30s group]  0/1 (0.0%)  FP=7
+  HITS: none
+  FALSE POSITIVES (7):
+    @   125.03s  [LOW ]  score=0.4000  signals=Motion
+    @   177.80s  [LOW ]  score=0.4000  signals=Visual
+    @   215.70s  [LOW ]  score=0.4000  signals=Motion
+    @   229.13s  [LOW ]  score=0.4000  signals=Motion
+    @   330.03s  [LOW ]  score=0.4000  signals=Motion
+    @   475.03s  [LOW ]  score=0.4000  signals=Motion
+    @   495.00s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     1   14.3%
+    Motion              0    0.0%     6   85.7%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_4.mp4  [30s group]  5/5 (100.0%)  FP=23
+  HITS (5):
+    @   360.03s  [LOW ]  score=0.4000  signals=Motion
+    @   599.95s  [WIDE]  score=0.7500  signals=Motion
+    @   902.62s  [WIDE]  score=0.7500  signals=Motion
+    @  1287.15s  [WIDE]  score=0.7500  signals=Motion
+    @  1604.60s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+  FALSE POSITIVES (23):
+    @   125.00s  [WIDE]  score=0.7500  signals=Motion
+    @   197.20s  [LOW ]  score=0.4000  signals=Motion
+    @   267.87s  [LOW ]  score=0.4000  signals=Motion
+    @   406.22s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   581.60s  [LOW ]  score=0.4000  signals=Motion
+    @   790.47s  [LOW ]  score=0.4000  signals=Motion
+    @   834.23s  [LOW ]  score=0.4000  signals=Motion
+    @   848.93s  [LOW ]  score=0.4000  signals=Motion
+    @   934.05s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   989.73s  [LOW ]  score=0.4000  signals=Visual
+    @  1010.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1095.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1255.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1319.83s  [LOW ]  score=0.4000  signals=Visual
+    @  1347.20s  [LOW ]  score=0.4000  signals=Visual
+    @  1370.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1455.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1469.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1490.60s  [LOW ]  score=0.4000  signals=Motion
+    @  1527.07s  [LOW ]  score=0.4000  signals=Visual
+    @  1551.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1588.42s  [WIDE]  score=0.7500  signals=Motion
+    @  1649.33s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     4   17.4%
+    Motion              5  100.0%    19   82.6%
+    AudioRMS            1   20.0%     2    8.7%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_5.mp4  [30s group]  6/6 (100.0%)  FP=28
+  HITS (6):
+    @   298.74s  [WIDE]  score=0.7500  signals=Motion
+    @   589.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1021.65s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1302.53s  [LOW ]  score=0.4000  signals=Motion
+    @  1671.39s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1896.19s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (28):
+    @    71.87s  [LOW ]  score=0.4000  signals=Motion
+    @   194.33s  [LOW ]  score=0.4000  signals=Motion
+    @   340.27s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   510.73s  [LOW ]  score=0.4000  signals=Motion
+    @   604.82s  [WIDE]  score=0.7500  signals=Motion
+    @   631.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   657.70s  [LOW ]  score=0.4000  signals=Visual
+    @   684.20s  [LOW ]  score=0.4000  signals=Visual
+    @   759.37s  [LOW ]  score=0.4000  signals=Motion
+    @   889.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1031.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1131.37s  [LOW ]  score=0.4000  signals=Visual
+    @  1186.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1250.10s  [LOW ]  score=0.4000  signals=Motion
+    @  1280.63s  [LOW ]  score=0.4000  signals=Motion
+    @  1343.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1578.17s  [LOW ]  score=0.4000  signals=Visual
+    @  1691.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1707.90s  [LOW ]  score=0.4000  signals=Visual
+    @  1729.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1817.20s  [LOW ]  score=0.4000  signals=Motion
+    @  1940.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1978.40s  [LOW ]  score=0.4000  signals=Visual
+    @  2019.67s  [LOW ]  score=0.4000  signals=Motion
+    @  2035.53s  [LOW ]  score=0.4000  signals=Motion
+    @  2104.73s  [LOW ]  score=0.4000  signals=Visual
+    @  2184.33s  [LOW ]  score=0.4000  signals=Motion
+    @  2322.32s  [WIDE]  score=0.7500  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     9   32.1%
+    Motion              6  100.0%    21   75.0%
+    AudioRMS            2   33.3%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_6.mp4  [30s group]  3/4 (75.0%)  FP=30
+  HITS (3):
+    @   649.47s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   993.80s  [WIDE]  score=0.7500  signals=Motion
+    @  1247.63s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (30):
+    @    52.83s  [LOW ]  score=0.4000  signals=Motion
+    @    65.47s  [LOW ]  score=0.4000  signals=Motion
+    @   110.03s  [LOW ]  score=0.4000  signals=Motion
+    @   187.50s  [LOW ]  score=0.4000  signals=Motion
+    @   223.13s  [LOW ]  score=0.4000  signals=Motion
+    @   245.00s  [LOW ]  score=0.4000  signals=Motion
+    @   303.27s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   349.77s  [LOW ]  score=0.4000  signals=Visual
+    @   371.53s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   485.03s  [LOW ]  score=0.4000  signals=Motion
+    @   497.40s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @   551.77s  [LOW ]  score=0.4000  signals=Motion
+    @   592.90s  [LOW ]  score=0.4000  signals=Motion
+    @   610.73s  [LOW ]  score=0.4000  signals=Motion
+    @   686.98s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   728.00s  [LOW ]  score=0.4000  signals=Motion
+    @   751.07s  [LOW ]  score=0.4000  signals=Motion
+    @   800.03s  [WIDE]  score=0.7500  signals=Motion
+    @   816.77s  [LOW ]  score=0.4000  signals=Motion
+    @   925.00s  [LOW ]  score=0.4000  signals=Motion
+    @   968.83s  [LOW ]  score=0.4000  signals=Motion
+    @  1055.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1102.20s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1118.63s  [LOW ]  score=0.4000  signals=Motion
+    @  1158.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1269.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1348.50s  [WIDE]  score=0.7500  signals=Motion
+    @  1380.00s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1443.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1525.67s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     3   10.0%
+    Motion              3  100.0%    29   96.7%
+    AudioRMS            1   33.3%     3   10.0%
+    Silence             0    0.0%     1    3.3%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_7.mp4  [30s group]  3/4 (75.0%)  FP=23
+  HITS (3):
+    @   312.92s  [WIDE]  score=0.7500  signals=Motion
+    @   679.40s  [WIDE]  score=0.7500  signals=Motion
+    @   931.44s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (23):
+    @    77.37s  [LOW ]  score=0.4000  signals=Motion
+    @   137.63s  [LOW ]  score=0.4000  signals=Motion
+    @   180.00s  [LOW ]  score=0.4000  signals=Motion
+    @   224.73s  [LOW ]  score=0.4000  signals=Motion
+    @   269.13s  [LOW ]  score=0.4000  signals=Motion
+    @   324.73s  [LOW ]  score=0.4000  signals=Motion
+    @   364.03s  [LOW ]  score=0.4000  signals=Visual
+    @   399.00s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   419.43s  [LOW ]  score=0.4000  signals=Motion
+    @   525.00s  [LOW ]  score=0.4000  signals=Motion
+    @   565.00s  [LOW ]  score=0.4000  signals=Motion
+    @   726.26s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   744.85s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   843.63s  [LOW ]  score=0.4000  signals=Motion
+    @   909.10s  [LOW ]  score=0.4000  signals=Motion
+    @   952.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1053.43s  [LOW ]  score=0.4000  signals=Motion
+    @  1128.61s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1228.50s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1254.67s  [LOW ]  score=0.4000  signals=Visual
+    @  1293.18s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1342.43s  [LOW ]  score=0.4000  signals=Visual
+    @  1366.27s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     7   30.4%
+    Motion              3  100.0%    20   87.0%
+    AudioRMS            0    0.0%     2    8.7%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_8.mp4  [30s group]  3/3 (100.0%)  FP=9
+  HITS (3):
+    @   296.19s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @   622.68s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @   954.20s  [HIGH]  score=0.5750  signals=Motion+Visual
+  FALSE POSITIVES (9):
+    @   175.03s  [LOW ]  score=0.4000  signals=Motion
+    @   203.42s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   304.13s  [LOW ]  score=0.4000  signals=Motion
+    @   341.57s  [LOW ]  score=0.4000  signals=Visual
+    @   648.13s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   675.20s  [LOW ]  score=0.4000  signals=Visual
+    @   865.00s  [LOW ]  score=0.4000  signals=Motion
+    @   903.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1045.03s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              3  100.0%     4   44.4%
+    Motion              3  100.0%     7   77.8%
+    AudioRMS            2   66.7%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_9.mp4  [30s group]  2/2 (100.0%)  FP=14
+  HITS (2):
+    @   279.30s  [WIDE]  score=0.7500  signals=Motion
+    @   631.97s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (14):
+    @   195.03s  [LOW ]  score=0.4000  signals=Motion
+    @   250.47s  [LOW ]  score=0.4000  signals=Motion
+    @   318.01s  [WIDE]  score=0.7500  signals=Motion
+    @   384.10s  [LOW ]  score=0.4000  signals=Visual
+    @   466.70s  [LOW ]  score=0.4000  signals=Motion
+    @   527.30s  [LOW ]  score=0.4000  signals=Motion
+    @   542.30s  [LOW ]  score=0.4000  signals=Motion
+    @   567.00s  [LOW ]  score=0.4000  signals=Motion
+    @   690.10s  [LOW ]  score=0.4000  signals=Motion
+    @   717.57s  [LOW ]  score=0.4000  signals=Motion
+    @   866.80s  [WIDE]  score=0.7500  signals=Motion
+    @   917.23s  [LOW ]  score=0.4000  signals=Motion
+    @   930.63s  [LOW ]  score=0.4000  signals=Motion
+    @   952.53s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     1    7.1%
+    Motion              2  100.0%    13   92.9%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_10.mp4  [30s group]  6/8 (75.0%)  FP=36
+  HITS (6):
+    @   311.36s  [WIDE]  score=0.7500  signals=Motion
+    @   688.18s  [WIDE]  score=0.7500  signals=Motion
+    @  1304.26s  [WIDE]  score=0.7500  signals=Motion
+    @  1642.42s  [WIDE]  score=0.7500  signals=Motion
+    @  2286.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2559.50s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (36):
+    @    79.37s  [LOW ]  score=0.4000  signals=Motion
+    @    92.80s  [LOW ]  score=0.4000  signals=Motion
+    @   212.27s  [LOW ]  score=0.4000  signals=Motion
+    @   324.60s  [LOW ]  score=0.4000  signals=Motion
+    @   451.57s  [LOW ]  score=0.4000  signals=Motion
+    @   514.98s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   649.68s  [WIDE]  score=0.7500  signals=Motion
+    @   744.48s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   825.37s  [LOW ]  score=0.4000  signals=Motion
+    @   855.08s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   976.87s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1103.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1147.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1188.06s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1364.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1421.50s  [LOW ]  score=0.4000  signals=Motion
+    @  1436.27s  [LOW ]  score=0.4000  signals=Motion
+    @  1503.17s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1563.50s  [LOW ]  score=0.4000  signals=Motion
+    @  1731.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1825.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1869.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1915.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1930.59s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  2010.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2055.23s  [LOW ]  score=0.4000  signals=Motion
+    @  2135.00s  [LOW ]  score=0.4000  signals=Motion
+    @  2162.61s  [WIDE]  score=0.7500  signals=Motion
+    @  2225.03s  [LOW ]  score=0.4000  signals=Motion
+    @  2310.30s  [LOW ]  score=0.4000  signals=Motion
+    @  2328.97s  [LOW ]  score=0.4000  signals=Motion
+    @  2454.50s  [LOW ]  score=0.4000  signals=Motion
+    @  2473.77s  [LOW ]  score=0.4000  signals=Motion
+    @  2576.48s  [WIDE]  score=0.7500  signals=Motion
+    @  2621.80s  [LOW ]  score=0.4000  signals=Motion
+    @  2655.03s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     2    5.6%
+    Motion              6  100.0%    36  100.0%
+    AudioRMS            0    0.0%     5   13.9%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_11.mp4  [30s group]  2/2 (100.0%)  FP=10
+  HITS (2):
+    @   370.43s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   645.94s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (10):
+    @    76.47s  [LOW ]  score=0.4000  signals=Motion
+    @   124.07s  [LOW ]  score=0.4000  signals=Motion
+    @   200.20s  [LOW ]  score=0.4000  signals=Motion
+    @   275.03s  [LOW ]  score=0.4000  signals=Motion
+    @   381.67s  [LOW ]  score=0.4000  signals=Motion
+    @   440.53s  [LOW ]  score=0.4000  signals=Motion
+    @   524.27s  [LOW ]  score=0.4000  signals=Motion
+    @   668.17s  [LOW ]  score=0.4000  signals=Motion
+    @   780.03s  [LOW ]  score=0.4000  signals=Motion
+    @   841.20s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1   50.0%     0    0.0%
+    Motion              2  100.0%    10  100.0%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_12.mp4  [30s group]  2/2 (100.0%)  FP=9
+  HITS (2):
+    @   349.37s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   632.19s  [WIDE]  score=0.7500  signals=Motion+Visual
+  FALSE POSITIVES (9):
+    @   179.07s  [LOW ]  score=0.4000  signals=Motion
+    @   311.47s  [LOW ]  score=0.4000  signals=Visual
+    @   361.76s  [WIDE]  score=0.7500  signals=Motion+Silence+Visual
+    @   540.63s  [LOW ]  score=0.4000  signals=Motion
+    @   648.98s  [WIDE]  score=0.7500  signals=Motion
+    @   688.67s  [LOW ]  score=0.4000  signals=Visual
+    @   735.00s  [LOW ]  score=0.4000  signals=Motion
+    @   860.23s  [LOW ]  score=0.4000  signals=Motion
+    @   900.00s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              2  100.0%     3   33.3%
+    Motion              2  100.0%     7   77.8%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     1   11.1%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_13.mp4  [30s group]  2/2 (100.0%)  FP=9
+  HITS (2):
+    @   314.76s  [LOW ]  score=0.4000  signals=Motion
+    @   608.87s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (9):
+    @    74.33s  [LOW ]  score=0.4000  signals=Motion
+    @   184.13s  [LOW ]  score=0.4000  signals=Motion
+    @   269.37s  [WIDE]  score=0.7500  signals=Motion
+    @   336.30s  [WIDE]  score=0.7500  signals=Motion
+    @   445.91s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   634.57s  [LOW ]  score=0.4000  signals=Motion
+    @   744.40s  [LOW ]  score=0.4000  signals=Motion
+    @   774.00s  [LOW ]  score=0.4000  signals=Motion
+    @   806.63s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     1   11.1%
+    Motion              2  100.0%     9  100.0%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_14.mp4  [30s group]  6/7 (85.7%)  FP=29
+  HITS (6):
+    @   284.77s  [LOW ]  score=0.4000  signals=Motion
+    @   676.03s  [WIDE]  score=0.7500  signals=Motion
+    @   974.95s  [WIDE]  score=0.7500  signals=Motion
+    @  1677.86s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1928.27s  [WIDE]  score=0.7500  signals=Motion
+    @  2274.49s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (29):
+    @    26.33s  [LOW ]  score=0.4000  signals=Motion
+    @    55.00s  [LOW ]  score=0.4000  signals=Motion
+    @   309.43s  [WIDE]  score=0.7500  signals=Motion
+    @   339.53s  [LOW ]  score=0.4000  signals=Visual
+    @   562.83s  [LOW ]  score=0.4000  signals=Motion
+    @   711.27s  [LOW ]  score=0.4000  signals=Visual
+    @   794.20s  [LOW ]  score=0.4000  signals=Motion
+    @   841.90s  [LOW ]  score=0.4000  signals=Motion
+    @   879.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1088.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1111.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1165.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1194.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1292.73s  [LOW ]  score=0.4000  signals=Motion
+    @  1308.63s  [WIDE]  score=0.7500  signals=Motion
+    @  1367.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1405.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1444.20s  [LOW ]  score=0.4000  signals=Motion
+    @  1469.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1535.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1740.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1829.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1845.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1876.59s  [WIDE]  score=0.7500  signals=Motion+Silence
+    @  2096.67s  [LOW ]  score=0.4000  signals=Motion
+    @  2181.07s  [LOW ]  score=0.4000  signals=Motion
+    @  2209.53s  [WIDE]  score=0.7500  signals=Motion
+    @  2297.80s  [LOW ]  score=0.4000  signals=Motion
+    @  2529.23s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     2    6.9%
+    Motion              6  100.0%    27   93.1%
+    AudioRMS            1   16.7%     0    0.0%
+    Silence             0    0.0%     1    3.4%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_15.mp4  [30s group]  7/7 (100.0%)  FP=34
+  HITS (7):
+    @   358.32s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @   625.17s  [WIDE]  score=0.7500  signals=Motion
+    @  1012.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1314.84s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1631.83s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1992.01s  [WIDE]  score=0.7500  signals=Motion
+    @  2264.82s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (34):
+    @    80.23s  [LOW ]  score=0.4000  signals=Motion
+    @   101.83s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   218.87s  [LOW ]  score=0.4000  signals=Motion
+    @   344.63s  [LOW ]  score=0.4000  signals=Motion
+    @   381.53s  [WIDE]  score=0.7500  signals=Motion
+    @   428.97s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   449.43s  [LOW ]  score=0.4000  signals=Visual
+    @   552.67s  [LOW ]  score=0.4000  signals=Motion
+    @   577.51s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   610.67s  [LOW ]  score=0.4000  signals=Motion
+    @   669.37s  [LOW ]  score=0.4000  signals=Motion
+    @   800.82s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @   818.20s  [LOW ]  score=0.4000  signals=Motion
+    @   839.83s  [LOW ]  score=0.4000  signals=Motion
+    @   915.37s  [LOW ]  score=0.4000  signals=Motion
+    @   979.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1179.50s  [LOW ]  score=0.4000  signals=Motion
+    @  1288.73s  [LOW ]  score=0.4000  signals=Motion
+    @  1329.98s  [WIDE]  score=0.7500  signals=Motion
+    @  1350.03s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1556.43s  [LOW ]  score=0.4000  signals=Motion
+    @  1656.26s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1692.00s  [LOW ]  score=0.4000  signals=Visual
+    @  1844.83s  [LOW ]  score=0.4000  signals=Motion
+    @  1879.83s  [LOW ]  score=0.4000  signals=Motion
+    @  1904.83s  [LOW ]  score=0.4000  signals=Visual
+    @  1960.26s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2002.23s  [LOW ]  score=0.4000  signals=Motion
+    @  2029.89s  [LOW ]  score=0.4000  signals=Motion
+    @  2109.40s  [LOW ]  score=0.4000  signals=Visual
+    @  2155.03s  [LOW ]  score=0.4000  signals=Motion
+    @  2286.67s  [LOW ]  score=0.4000  signals=Visual
+    @  2399.33s  [LOW ]  score=0.4000  signals=Motion
+    @  2480.40s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              2   28.6%     9   26.5%
+    Motion              7  100.0%    29   85.3%
+    AudioRMS            0    0.0%     3    8.8%
+    Silence             1   14.3%     1    2.9%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_16.mp4  [30s group]  6/6 (100.0%)  FP=26
+  HITS (6):
+    @   357.03s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   631.39s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @   984.64s  [WIDE]  score=0.7500  signals=Motion
+    @  1311.70s  [WIDE]  score=0.7500  signals=Motion
+    @  1693.53s  [LOW ]  score=0.4000  signals=Motion
+    @  1917.67s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (26):
+    @    96.60s  [LOW ]  score=0.4000  signals=Motion
+    @   165.73s  [LOW ]  score=0.4000  signals=Motion
+    @   191.63s  [LOW ]  score=0.4000  signals=Motion
+    @   277.47s  [LOW ]  score=0.4000  signals=Motion
+    @   303.47s  [LOW ]  score=0.4000  signals=Motion
+    @   388.20s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   411.93s  [LOW ]  score=0.4000  signals=Visual
+    @   490.00s  [LOW ]  score=0.4000  signals=Motion
+    @   520.00s  [LOW ]  score=0.4000  signals=Motion
+    @   545.87s  [LOW ]  score=0.4000  signals=Motion
+    @   697.40s  [LOW ]  score=0.4000  signals=Motion
+    @   807.97s  [LOW ]  score=0.4000  signals=Motion
+    @   917.53s  [LOW ]  score=0.4000  signals=Motion
+    @   955.40s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1063.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1110.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1165.53s  [LOW ]  score=0.4000  signals=Motion
+    @  1246.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1367.80s  [WIDE]  score=0.7500  signals=Motion
+    @  1500.93s  [LOW ]  score=0.4000  signals=Motion
+    @  1524.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1555.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1787.60s  [LOW ]  score=0.4000  signals=Motion
+    @  1815.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1836.20s  [LOW ]  score=0.4000  signals=Motion
+    @  2001.93s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     2    7.7%
+    Motion              6  100.0%    25   96.2%
+    AudioRMS            2   33.3%     1    3.8%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        1   16.7%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_17.mp4  [30s group]  4/4 (100.0%)  FP=13
+  HITS (4):
+    @   329.13s  [WIDE]  score=0.7500  signals=Motion
+    @   674.60s  [WIDE]  score=0.7500  signals=Motion
+    @   968.46s  [WIDE]  score=0.7500  signals=Motion
+    @  1277.83s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (13):
+    @    61.77s  [LOW ]  score=0.4000  signals=Motion
+    @   118.23s  [LOW ]  score=0.4000  signals=Motion
+    @   375.00s  [LOW ]  score=0.4000  signals=Motion
+    @   458.30s  [LOW ]  score=0.4000  signals=Motion
+    @   575.00s  [LOW ]  score=0.4000  signals=Motion
+    @   694.60s  [LOW ]  score=0.4000  signals=Motion
+    @   978.17s  [LOW ]  score=0.4000  signals=Motion
+    @  1045.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1070.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1105.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1117.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1202.60s  [LOW ]  score=0.4000  signals=Motion
+    @  1326.73s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     0    0.0%
+    Motion              4  100.0%    13  100.0%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_18.mp4  [30s group]  5/6 (83.3%)  FP=28
+  HITS (5):
+    @   274.70s  [LOW ]  score=0.4000  signals=Motion
+    @   936.49s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1318.31s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1563.16s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1889.99s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (28):
+    @    97.17s  [LOW ]  score=0.4000  signals=Motion
+    @   298.70s  [LOW ]  score=0.4000  signals=Motion
+    @   437.70s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   535.73s  [LOW ]  score=0.4000  signals=Motion
+    @   620.91s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   635.03s  [LOW ]  score=0.4000  signals=Motion
+    @   670.00s  [LOW ]  score=0.4000  signals=Motion
+    @   732.63s  [LOW ]  score=0.4000  signals=Motion
+    @   901.93s  [LOW ]  score=0.4000  signals=Motion
+    @   961.70s  [LOW ]  score=0.4000  signals=Motion
+    @   976.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1120.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1145.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1187.43s  [LOW ]  score=0.4000  signals=Motion
+    @  1230.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1255.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1278.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1331.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1373.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1400.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1430.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1450.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1579.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1852.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1904.33s  [WIDE]  score=0.7500  signals=Motion
+    @  1944.37s  [LOW ]  score=0.4000  signals=Visual
+    @  2042.37s  [LOW ]  score=0.4000  signals=Motion
+    @  2086.33s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              2   40.0%     2    7.1%
+    Motion              5  100.0%    27   96.4%
+    AudioRMS            2   40.0%     2    7.1%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_19.mp4  [30s group]  5/5 (100.0%)  FP=18
+  HITS (5):
+    @   250.36s  [WIDE]  score=0.7500  signals=Motion
+    @   602.80s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @   993.79s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1296.93s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1592.31s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+  FALSE POSITIVES (18):
+    @    95.70s  [LOW ]  score=0.4000  signals=Motion
+    @   111.03s  [LOW ]  score=0.4000  signals=Motion
+    @   183.20s  [LOW ]  score=0.4000  signals=Motion
+    @   283.78s  [LOW ]  score=0.4000  signals=Visual
+    @   326.03s  [LOW ]  score=0.4000  signals=Motion
+    @   460.80s  [LOW ]  score=0.4000  signals=Motion
+    @   502.07s  [LOW ]  score=0.4000  signals=Motion
+    @   543.83s  [LOW ]  score=0.4000  signals=Motion
+    @   634.82s  [WIDE]  score=0.7500  signals=Visual
+    @   760.00s  [LOW ]  score=0.4000  signals=Motion
+    @   897.92s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   936.50s  [LOW ]  score=0.4000  signals=Motion
+    @  1002.97s  [LOW ]  score=0.4000  signals=Motion
+    @  1212.17s  [LOW ]  score=0.4000  signals=Motion
+    @  1517.97s  [LOW ]  score=0.4000  signals=Motion
+    @  1558.25s  [WIDE]  score=0.7500  signals=Motion
+    @  1604.93s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1625.74s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              3   60.0%     2   11.1%
+    Motion              5  100.0%    16   88.9%
+    AudioRMS            4   80.0%     2   11.1%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_20.mp4  [30s group]  4/4 (100.0%)  FP=18
+  HITS (4):
+    @   359.48s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   607.50s  [WIDE]  score=0.7500  signals=Motion
+    @   918.12s  [WIDE]  score=0.7500  signals=Motion
+    @  1236.13s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+  FALSE POSITIVES (18):
+    @    64.53s  [LOW ]  score=0.4000  signals=Motion
+    @   109.25s  [WIDE]  score=0.7500  signals=Motion
+    @   160.73s  [LOW ]  score=0.4000  signals=Visual
+    @   383.33s  [LOW ]  score=0.4000  signals=Motion
+    @   563.57s  [LOW ]  score=0.4000  signals=Motion
+    @   633.70s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   655.33s  [LOW ]  score=0.4000  signals=Visual
+    @   750.00s  [LOW ]  score=0.4000  signals=Motion
+    @   807.50s  [LOW ]  score=0.4000  signals=Motion
+    @   872.30s  [LOW ]  score=0.4000  signals=Visual
+    @   962.17s  [LOW ]  score=0.4000  signals=Visual
+    @  1057.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1129.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1170.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1250.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1274.80s  [LOW ]  score=0.4000  signals=Visual
+    @  1303.80s  [LOW ]  score=0.4000  signals=Visual
+    @  1331.05s  [WIDE]  score=0.7500  signals=Motion+Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1   25.0%     8   44.4%
+    Motion              4  100.0%    12   66.7%
+    AudioRMS            1   25.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_21.mp4  [10s group]  4/7 (57.1%)  FP=17
+  HITS (4):
+    @   548.00s  [WIDE]  score=0.7500  signals=Motion
+    @   689.49s  [WIDE]  score=0.7500  signals=Motion
+    @   818.81s  [LOW ]  score=0.4000  signals=Motion
+    @   932.38s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (17):
+    @    46.33s  [LOW ]  score=0.4000  signals=Visual
+    @    70.57s  [LOW ]  score=0.4000  signals=Motion
+    @   143.90s  [LOW ]  score=0.4000  signals=Motion
+    @   172.50s  [WIDE]  score=0.7500  signals=Motion
+    @   286.53s  [LOW ]  score=0.4000  signals=Visual
+    @   302.95s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   498.42s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   520.00s  [LOW ]  score=0.4000  signals=Motion
+    @   590.03s  [LOW ]  score=0.4000  signals=Motion
+    @   610.00s  [LOW ]  score=0.4000  signals=Motion
+    @   632.03s  [LOW ]  score=0.4000  signals=Visual
+    @   655.03s  [LOW ]  score=0.4000  signals=Motion
+    @   706.07s  [LOW ]  score=0.4000  signals=Visual
+    @   795.00s  [LOW ]  score=0.4000  signals=Motion
+    @   904.87s  [LOW ]  score=0.4000  signals=Motion
+    @   980.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1080.25s  [WIDE]  score=0.7500  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     5   29.4%
+    Motion              4  100.0%    13   76.5%
+    AudioRMS            0    0.0%     1    5.9%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_22.mp4  [10s group]  10/12 (83.3%)  FP=26
+  HITS (10):
+    @   234.19s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   394.04s  [WIDE]  score=0.7500  signals=Motion+Silence+Visual
+    @   559.73s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Silence
+    @   745.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1076.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1232.74s  [WIDE]  score=0.7500  signals=Motion
+    @  1586.34s  [LOW ]  score=0.4000  signals=Motion
+    @  1760.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1907.30s  [LOW ]  score=0.4000  signals=Motion
+    @  2086.14s  [WIDE]  score=0.7500  signals=Motion+Visual
+  FALSE POSITIVES (26):
+    @    92.30s  [LOW ]  score=0.4000  signals=Motion
+    @   118.60s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   155.00s  [LOW ]  score=0.4000  signals=Motion
+    @   444.20s  [LOW ]  score=0.4000  signals=Motion
+    @   622.73s  [LOW ]  score=0.4000  signals=Motion
+    @   650.00s  [LOW ]  score=0.4000  signals=Motion
+    @   780.03s  [LOW ]  score=0.4000  signals=Motion
+    @   812.97s  [LOW ]  score=0.4000  signals=Motion
+    @   871.60s  [LOW ]  score=0.4000  signals=Visual
+    @   951.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1096.13s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1194.60s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1273.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1423.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1445.22s  [WIDE]  score=0.7500  signals=Motion
+    @  1465.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1497.77s  [LOW ]  score=0.4000  signals=Motion
+    @  1609.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1699.97s  [WIDE]  score=0.7500  signals=Motion
+    @  1712.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1750.05s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1817.00s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1983.40s  [LOW ]  score=0.4000  signals=Motion
+    @  2124.60s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  2174.83s  [LOW ]  score=0.4000  signals=Motion
+    @  2249.33s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              3   30.0%     2    7.7%
+    Motion             10  100.0%    25   96.2%
+    AudioRMS            1   10.0%     5   19.2%
+    Silence             2   20.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_23.mp4  [10s group]  7/10 (70.0%)  FP=13
+  HITS (7):
+    @   185.22s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   467.51s  [LOW ]  score=0.4000  signals=Motion
+    @   776.54s  [WIDE]  score=0.7500  signals=Motion
+    @   913.72s  [WIDE]  score=0.7500  signals=Motion
+    @  1044.23s  [LOW ]  score=0.4000  signals=Motion
+    @  1345.37s  [WIDE]  score=0.7500  signals=Motion
+    @  1493.30s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+  FALSE POSITIVES (13):
+    @    76.67s  [LOW ]  score=0.4000  signals=Motion
+    @   110.53s  [LOW ]  score=0.4000  signals=Motion
+    @   279.90s  [LOW ]  score=0.4000  signals=Visual
+    @   309.97s  [LOW ]  score=0.4000  signals=Visual
+    @   602.77s  [LOW ]  score=0.4000  signals=Visual
+    @   804.20s  [LOW ]  score=0.4000  signals=Visual
+    @   828.60s  [LOW ]  score=0.4000  signals=Visual
+    @   841.03s  [LOW ]  score=0.4000  signals=Motion
+    @   996.77s  [LOW ]  score=0.4000  signals=Motion
+    @  1124.00s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1170.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1573.10s  [LOW ]  score=0.4000  signals=Visual
+    @  1606.43s  [LOW ]  score=0.4000  signals=Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     7   53.8%
+    Motion              7  100.0%     6   46.2%
+    AudioRMS            2   28.6%     1    7.7%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_24.mp4  [10s group]  3/4 (75.0%)  FP=4
+  HITS (3):
+    @   148.81s  [WIDE]  score=0.7500  signals=Motion
+    @   280.95s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @   375.03s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (4):
+    @   170.00s  [LOW ]  score=0.4000  signals=Motion
+    @   270.00s  [LOW ]  score=0.4000  signals=Motion
+    @   340.03s  [LOW ]  score=0.4000  signals=Motion
+    @   640.46s  [WIDE]  score=0.7500  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     0    0.0%
+    Motion              3  100.0%     4  100.0%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             1   33.3%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_25.mp4  [10s group]  12/15 (80.0%)  FP=7
+  HITS (12):
+    @   212.69s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @   360.51s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   523.02s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   831.54s  [WIDE]  score=0.7500  signals=Motion
+    @   993.22s  [WIDE]  score=0.7500  signals=Motion
+    @  1312.66s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1453.18s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1626.99s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1795.94s  [LOW ]  score=0.4000  signals=Motion
+    @  1935.28s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  2088.48s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  2238.72s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+  FALSE POSITIVES (7):
+    @   227.74s  [LOW ]  score=0.4000  signals=Visual
+    @   261.07s  [LOW ]  score=0.4000  signals=Visual
+    @   545.70s  [LOW ]  score=0.4000  signals=Visual
+    @   579.03s  [LOW ]  score=0.4000  signals=Visual
+    @  1045.60s  [LOW ]  score=0.4000  signals=Visual
+    @  1108.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2573.27s  [LOW ]  score=0.4000  signals=Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1    8.3%     6   85.7%
+    Motion             12  100.0%     1   14.3%
+    AudioRMS            8   66.7%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        1    8.3%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_26.mp4  [10s group]  5/5 (100.0%)  FP=8
+  HITS (5):
+    @   198.55s  [LOW ]  score=0.4000  signals=Motion
+    @   340.97s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   508.20s  [LOW ]  score=0.4000  signals=Motion
+    @   661.07s  [LOW ]  score=0.4000  signals=Motion
+    @   812.50s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (8):
+    @   110.03s  [LOW ]  score=0.4000  signals=Motion
+    @   180.00s  [LOW ]  score=0.4000  signals=Motion
+    @   234.75s  [WIDE]  score=0.7500  signals=Motion
+    @   312.87s  [LOW ]  score=0.4000  signals=Motion
+    @   457.60s  [LOW ]  score=0.4000  signals=Motion
+    @   485.00s  [LOW ]  score=0.4000  signals=Motion
+    @   700.60s  [LOW ]  score=0.4000  signals=Motion
+    @   765.97s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1   20.0%     0    0.0%
+    Motion              5  100.0%     8  100.0%
+    AudioRMS            0    0.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_27.mp4  [10s group]  3/6 (50.0%)  FP=7
+  HITS (3):
+    @   179.01s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   427.50s  [LOW ]  score=0.4000  signals=Motion
+    @   554.87s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (7):
+    @   111.03s  [LOW ]  score=0.4000  signals=Motion
+    @   438.72s  [LOW ]  score=0.4000  signals=Motion
+    @   470.00s  [LOW ]  score=0.4000  signals=Motion
+    @   599.53s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   705.03s  [LOW ]  score=0.4000  signals=Motion
+    @   830.00s  [LOW ]  score=0.4000  signals=Motion
+    @   917.70s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     1   14.3%
+    Motion              3  100.0%     7  100.0%
+    AudioRMS            1   33.3%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_28.mp4  [10s group]  6/11 (54.5%)  FP=58
+  HITS (6):
+    @   189.60s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @   359.23s  [LOW ]  score=0.4000  signals=Motion
+    @   503.63s  [WIDE]  score=0.7500  signals=Motion
+    @  1088.81s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1390.16s  [WIDE]  score=0.7500  signals=Motion
+    @  1676.93s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (58):
+    @    25.73s  [LOW ]  score=0.4000  signals=Motion
+    @    51.00s  [WIDE]  score=0.7500  signals=Motion
+    @    76.82s  [WIDE]  score=0.7500  signals=Motion
+    @    88.42s  [WIDE]  score=0.7500  signals=Motion
+    @   120.00s  [WIDE]  score=0.7500  signals=Motion
+    @   155.33s  [WIDE]  score=0.7500  signals=Motion
+    @   181.45s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   219.77s  [WIDE]  score=0.7500  signals=Motion
+    @   254.90s  [WIDE]  score=0.7500  signals=Motion
+    @   291.52s  [WIDE]  score=0.7500  signals=Motion
+    @   312.40s  [WIDE]  score=0.7500  signals=Motion
+    @   348.40s  [WIDE]  score=0.7500  signals=Motion
+    @   403.90s  [WIDE]  score=0.7500  signals=Motion
+    @   430.62s  [WIDE]  score=0.7500  signals=Motion
+    @   443.72s  [WIDE]  score=0.7500  signals=Motion
+    @   481.93s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   528.00s  [LOW ]  score=0.4000  signals=Motion
+    @   562.45s  [WIDE]  score=0.7500  signals=Motion
+    @   576.90s  [LOW ]  score=0.4000  signals=Motion
+    @   605.97s  [LOW ]  score=0.4000  signals=Motion
+    @   646.75s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   664.07s  [WIDE]  score=0.7500  signals=Motion
+    @   683.82s  [WIDE]  score=0.7500  signals=Motion
+    @   707.35s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   747.55s  [WIDE]  score=0.7500  signals=Motion
+    @   776.04s  [WIDE]  score=0.7500  signals=Motion
+    @   795.23s  [WIDE]  score=0.7500  signals=Motion
+    @   814.53s  [WIDE]  score=0.7500  signals=Motion
+    @   845.37s  [WIDE]  score=0.7500  signals=Motion
+    @   875.07s  [LOW ]  score=0.4000  signals=Motion
+    @   906.87s  [WIDE]  score=0.7500  signals=Motion
+    @   922.29s  [WIDE]  score=0.7500  signals=Motion
+    @   956.40s  [WIDE]  score=0.7500  signals=Motion
+    @   975.85s  [WIDE]  score=0.7500  signals=Motion
+    @  1002.07s  [WIDE]  score=0.7500  signals=Motion
+    @  1054.90s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1119.54s  [WIDE]  score=0.7500  signals=Motion
+    @  1134.60s  [LOW ]  score=0.4000  signals=Motion
+    @  1169.70s  [LOW ]  score=0.4000  signals=Motion
+    @  1214.27s  [WIDE]  score=0.7500  signals=Motion
+    @  1228.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1247.26s  [WIDE]  score=0.7500  signals=Motion
+    @  1271.91s  [WIDE]  score=0.7500  signals=Motion
+    @  1309.20s  [LOW ]  score=0.4000  signals=Motion
+    @  1338.99s  [WIDE]  score=0.7500  signals=Motion
+    @  1441.45s  [WIDE]  score=0.7500  signals=Motion
+    @  1475.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1498.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1522.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1559.82s  [WIDE]  score=0.7500  signals=Motion
+    @  1582.63s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1594.93s  [LOW ]  score=0.4000  signals=Motion
+    @  1718.23s  [LOW ]  score=0.4000  signals=Visual
+    @  1731.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1763.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1800.60s  [LOW ]  score=0.4000  signals=Motion
+    @  1835.77s  [LOW ]  score=0.4000  signals=Motion
+    @  1870.17s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     7   12.1%
+    Motion              6  100.0%    57   98.3%
+    AudioRMS            1   16.7%     0    0.0%
+    Silence             1   16.7%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_29.mp4  [10s group]  9/10 (90.0%)  FP=19
+  HITS (9):
+    @   230.73s  [LOW ]  score=0.4000  signals=Motion
+    @   403.85s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   548.72s  [WIDE]  score=0.7500  signals=Motion
+    @   723.50s  [LOW ]  score=0.4000  signals=Motion
+    @   887.16s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1061.17s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1229.32s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1396.86s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1728.86s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+  FALSE POSITIVES (19):
+    @   176.80s  [LOW ]  score=0.4000  signals=Visual
+    @   251.31s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   310.03s  [LOW ]  score=0.4000  signals=Motion
+    @   413.29s  [LOW ]  score=0.4000  signals=Motion
+    @   444.15s  [WIDE]  score=0.7500  signals=Motion
+    @   495.00s  [LOW ]  score=0.4000  signals=Motion
+    @   621.86s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   659.13s  [LOW ]  score=0.4000  signals=Motion
+    @   746.80s  [LOW ]  score=0.4000  signals=Motion
+    @   780.03s  [LOW ]  score=0.4000  signals=Motion
+    @   980.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1010.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1090.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1150.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1571.48s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1594.11s  [LOW ]  score=0.4000  signals=Motion
+    @  1671.23s  [LOW ]  score=0.4000  signals=Motion
+    @  1694.13s  [LOW ]  score=0.4000  signals=Motion
+    @  1804.20s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              4   44.4%     2   10.5%
+    Motion              9  100.0%    18   94.7%
+    AudioRMS            5   55.6%     2   10.5%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_30.mp4  [10s group]  14/19 (73.7%)  FP=58
+  HITS (14):
+    @   231.47s  [WIDE]  score=0.7500  signals=Motion
+    @   569.59s  [WIDE]  score=0.7500  signals=Motion
+    @   754.93s  [LOW ]  score=0.4000  signals=Motion
+    @  1237.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1429.59s  [WIDE]  score=0.7500  signals=Motion
+    @  1599.49s  [WIDE]  score=0.7500  signals=Motion
+    @  1774.63s  [WIDE]  score=0.7500  signals=Motion
+    @  1928.16s  [WIDE]  score=0.7500  signals=Motion+Silence
+    @  2129.96s  [LOW ]  score=0.4000  signals=Motion
+    @  2286.85s  [WIDE]  score=0.7500  signals=Motion
+    @  2454.86s  [WIDE]  score=0.7500  signals=Motion
+    @  2783.44s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @  3153.13s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3312.09s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (58):
+    @    30.00s  [LOW ]  score=0.4000  signals=Motion
+    @    64.80s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @    90.00s  [WIDE]  score=0.7500  signals=Motion
+    @   130.03s  [LOW ]  score=0.4000  signals=Motion
+    @   150.00s  [LOW ]  score=0.4000  signals=Motion
+    @   182.57s  [LOW ]  score=0.4000  signals=Motion
+    @   250.00s  [WIDE]  score=0.7500  signals=Motion
+    @   310.00s  [LOW ]  score=0.4000  signals=Motion
+    @   330.00s  [LOW ]  score=0.4000  signals=Motion
+    @   370.00s  [WIDE]  score=0.7500  signals=Motion
+    @   405.29s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   490.52s  [WIDE]  score=0.7500  signals=Motion
+    @   530.00s  [WIDE]  score=0.7500  signals=Motion
+    @   615.58s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   630.03s  [LOW ]  score=0.4000  signals=Motion
+    @   654.83s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   710.49s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   775.03s  [LOW ]  score=0.4000  signals=Motion
+    @   810.03s  [LOW ]  score=0.4000  signals=Motion
+    @   840.03s  [LOW ]  score=0.4000  signals=Motion
+    @   887.53s  [LOW ]  score=0.4000  signals=Visual
+    @   905.66s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   925.12s  [WIDE]  score=0.7500  signals=Motion
+    @   952.17s  [LOW ]  score=0.4000  signals=Motion
+    @   980.03s  [WIDE]  score=0.7500  signals=Motion
+    @  1035.03s  [WIDE]  score=0.7500  signals=Motion
+    @  1085.03s  [WIDE]  score=0.7500  signals=Motion
+    @  1107.12s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1166.78s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1205.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1247.57s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1496.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1864.83s  [WIDE]  score=0.7500  signals=Motion
+    @  1890.10s  [LOW ]  score=0.4000  signals=Visual
+    @  2223.93s  [LOW ]  score=0.4000  signals=Motion
+    @  2337.09s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2386.43s  [LOW ]  score=0.4000  signals=Motion
+    @  2405.30s  [LOW ]  score=0.4000  signals=Motion
+    @  2493.47s  [LOW ]  score=0.4000  signals=Visual
+    @  2530.70s  [LOW ]  score=0.4000  signals=Motion
+    @  2608.63s  [LOW ]  score=0.4000  signals=Motion
+    @  2625.48s  [WIDE]  score=0.7500  signals=Motion
+    @  2675.00s  [LOW ]  score=0.4000  signals=Motion
+    @  2712.83s  [LOW ]  score=0.4000  signals=Motion
+    @  2817.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2860.27s  [LOW ]  score=0.4000  signals=Motion
+    @  2898.80s  [LOW ]  score=0.4000  signals=Motion
+    @  2919.73s  [LOW ]  score=0.4000  signals=Motion
+    @  2966.40s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  3029.77s  [LOW ]  score=0.4000  signals=Motion
+    @  3085.00s  [LOW ]  score=0.4000  signals=Motion
+    @  3110.03s  [LOW ]  score=0.4000  signals=Motion
+    @  3177.10s  [LOW ]  score=0.4000  signals=Visual
+    @  3220.30s  [LOW ]  score=0.4000  signals=Motion
+    @  3264.55s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3349.03s  [LOW ]  score=0.4000  signals=Visual
+    @  3390.10s  [LOW ]  score=0.4000  signals=Motion
+    @  3485.57s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1    7.1%    12   20.7%
+    Motion             14  100.0%    53   91.4%
+    AudioRMS            0    0.0%     6   10.3%
+    Silence             2   14.3%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_32.mp4  [60s+ group]  17/17 (100.0%)  FP=85
+  HITS (17):
+    @   238.48s  [WIDE]  score=0.7500  signals=Motion
+    @   535.66s  [HIGH]  score=0.5750  signals=Motion+SpectralFlux
+    @   846.58s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1102.55s  [WIDE]  score=0.7500  signals=Motion
+    @  1307.80s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1569.51s  [WIDE]  score=0.7500  signals=Motion
+    @  1810.60s  [WIDE]  score=0.7500  signals=Motion
+    @  2080.13s  [LOW ]  score=0.4000  signals=Motion
+    @  2319.77s  [WIDE]  score=0.7500  signals=Motion
+    @  2574.36s  [WIDE]  score=0.7500  signals=Motion
+    @  2839.87s  [LOW ]  score=0.4000  signals=Motion
+    @  3135.02s  [WIDE]  score=0.7500  signals=Motion
+    @  3359.18s  [WIDE]  score=0.7500  signals=Motion
+    @  3667.47s  [LOW ]  score=0.4000  signals=Motion
+    @  3884.98s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @  4158.35s  [WIDE]  score=0.7500  signals=Motion
+    @  4395.03s  [LOW ]  score=0.4000  signals=Motion
+  FALSE POSITIVES (85):
+    @    30.00s  [LOW ]  score=0.4000  signals=Motion
+    @    64.80s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @    90.00s  [WIDE]  score=0.7500  signals=Motion
+    @   130.03s  [LOW ]  score=0.4000  signals=Motion
+    @   150.00s  [LOW ]  score=0.4000  signals=Motion
+    @   182.57s  [LOW ]  score=0.4000  signals=Motion
+    @   254.40s  [WIDE]  score=0.7500  signals=Motion
+    @   306.04s  [WIDE]  score=0.7500  signals=Motion
+    @   330.03s  [WIDE]  score=0.7500  signals=Motion
+    @   400.03s  [LOW ]  score=0.4000  signals=Motion
+    @   420.03s  [LOW ]  score=0.4000  signals=Motion
+    @   460.03s  [WIDE]  score=0.7500  signals=Motion
+    @   495.03s  [WIDE]  score=0.7500  signals=Motion
+    @   570.09s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @   595.50s  [LOW ]  score=0.4000  signals=Motion
+    @   640.03s  [LOW ]  score=0.4000  signals=Motion
+    @   670.58s  [WIDE]  score=0.7500  signals=Motion
+    @   707.40s  [LOW ]  score=0.4000  signals=Visual
+    @   866.93s  [WIDE]  score=0.7500  signals=Motion
+    @   892.33s  [LOW ]  score=0.4000  signals=Visual
+    @   985.85s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1070.93s  [LOW ]  score=0.4000  signals=Motion
+    @  1116.47s  [WIDE]  score=0.7500  signals=Motion
+    @  1207.67s  [LOW ]  score=0.4000  signals=Visual
+    @  1221.43s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1262.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1280.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1323.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1356.38s  [WIDE]  score=0.7500  signals=Motion
+    @  1425.67s  [LOW ]  score=0.4000  signals=Motion
+    @  1536.95s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1605.68s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1624.27s  [LOW ]  score=0.4000  signals=Motion
+    @  1650.47s  [LOW ]  score=0.4000  signals=Visual
+    @  1858.30s  [LOW ]  score=0.4000  signals=Motion
+    @  1900.03s  [LOW ]  score=0.4000  signals=Motion
+    @  2095.31s  [WIDE]  score=0.7500  signals=Motion
+    @  2121.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2141.82s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2328.50s  [LOW ]  score=0.4000  signals=Motion
+    @  2358.28s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @  2475.07s  [WIDE]  score=0.7500  signals=Motion
+    @  2484.00s  [LOW ]  score=0.4000  signals=Visual
+    @  2616.35s  [WIDE]  score=0.7500  signals=Motion
+    @  2637.29s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2666.40s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @  2682.67s  [LOW ]  score=0.4000  signals=Visual
+    @  2735.03s  [LOW ]  score=0.4000  signals=Motion
+    @  2881.97s  [LOW ]  score=0.4000  signals=Motion
+    @  2908.90s  [LOW ]  score=0.4000  signals=Motion
+    @  2945.44s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2978.40s  [LOW ]  score=0.4000  signals=Visual
+    @  3014.23s  [LOW ]  score=0.4000  signals=Motion
+    @  3117.39s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3168.45s  [WIDE]  score=0.7500  signals=Motion
+    @  3213.20s  [LOW ]  score=0.4000  signals=Visual
+    @  3245.63s  [LOW ]  score=0.4000  signals=Motion
+    @  3395.83s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3416.18s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  3434.17s  [WIDE]  score=0.7500  signals=Motion
+    @  3535.85s  [WIDE]  score=0.7500  signals=Motion
+    @  3579.62s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  3609.25s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  3680.00s  [LOW ]  score=0.4000  signals=Motion
+    @  3763.07s  [LOW ]  score=0.4000  signals=Motion
+    @  3787.57s  [LOW ]  score=0.4000  signals=Motion
+    @  3830.67s  [LOW ]  score=0.4000  signals=Motion
+    @  3895.00s  [LOW ]  score=0.4000  signals=Motion
+    @  3928.07s  [LOW ]  score=0.4000  signals=Motion
+    @  3945.32s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  3975.03s  [LOW ]  score=0.4000  signals=Motion
+    @  4026.00s  [LOW ]  score=0.4000  signals=Motion
+    @  4090.17s  [LOW ]  score=0.4000  signals=Motion
+    @  4205.44s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  4247.40s  [LOW ]  score=0.4000  signals=Motion
+    @  4268.17s  [LOW ]  score=0.4000  signals=Visual
+    @  4330.77s  [LOW ]  score=0.4000  signals=Motion
+    @  4371.03s  [LOW ]  score=0.4000  signals=Motion
+    @  4406.70s  [LOW ]  score=0.4000  signals=Motion
+    @  4439.73s  [WIDE]  score=0.7500  signals=Motion
+    @  4478.23s  [WIDE]  score=0.7500  signals=Motion
+    @  4500.41s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  4525.03s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  4590.63s  [LOW ]  score=0.4000  signals=Motion
+    @  4686.10s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1    5.9%    23   27.1%
+    Motion             17  100.0%    75   88.2%
+    AudioRMS            1    5.9%     7    8.2%
+    Silence             1    5.9%     1    1.2%
+    SpectralFlux        1    5.9%     1    1.2%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_33.mp4  [60s+ group]  4/4 (100.0%)  FP=18
+  HITS (4):
+    @   251.70s  [LOW ]  score=0.4000  signals=Motion
+    @   482.71s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   735.00s  [LOW ]  score=0.4000  signals=Motion
+    @   946.90s  [WIDE]  score=0.7500  signals=Motion+Visual
+  FALSE POSITIVES (18):
+    @   110.03s  [LOW ]  score=0.4000  signals=Motion
+    @   180.00s  [LOW ]  score=0.4000  signals=Motion
+    @   220.13s  [LOW ]  score=0.4000  signals=Motion
+    @   279.27s  [LOW ]  score=0.4000  signals=Motion
+    @   301.83s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @   372.90s  [LOW ]  score=0.4000  signals=Motion
+    @   524.13s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @   553.50s  [LOW ]  score=0.4000  signals=Visual
+    @   573.40s  [LOW ]  score=0.4000  signals=Visual
+    @   708.88s  [WIDE]  score=0.7500  signals=Motion
+    @   765.07s  [LOW ]  score=0.4000  signals=Motion
+    @   798.48s  [WIDE]  score=0.7500  signals=AudioRMS+Visual
+    @   880.70s  [LOW ]  score=0.4000  signals=Motion
+    @   997.22s  [WIDE]  score=0.7500  signals=Motion
+    @  1012.09s  [WIDE]  score=0.7500  signals=Motion
+    @  1032.40s  [LOW ]  score=0.4000  signals=Visual
+    @  1057.01s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1240.03s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              2   50.0%     6   33.3%
+    Motion              4  100.0%    14   77.8%
+    AudioRMS            0    0.0%     3   16.7%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     1    5.6%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_34.mp4  [60s+ group]  3/3 (100.0%)  FP=15
+  HITS (3):
+    @   199.32s  [LOW ]  score=0.4000  signals=Motion
+    @   378.65s  [LOW ]  score=0.4000  signals=Motion
+    @   617.43s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (15):
+    @   160.00s  [LOW ]  score=0.4000  signals=Motion
+    @   240.53s  [LOW ]  score=0.4000  signals=Motion
+    @   250.77s  [LOW ]  score=0.4000  signals=Motion
+    @   285.23s  [LOW ]  score=0.4000  signals=Visual
+    @   330.03s  [LOW ]  score=0.4000  signals=Motion
+    @   416.57s  [LOW ]  score=0.4000  signals=Motion
+    @   447.78s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   477.18s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   639.96s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   658.25s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   697.75s  [WIDE]  score=0.7500  signals=Motion
+    @   724.32s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   744.93s  [LOW ]  score=0.4000  signals=Visual
+    @   791.03s  [LOW ]  score=0.4000  signals=Visual
+    @   896.03s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     7   46.7%
+    Motion              3  100.0%    12   80.0%
+    AudioRMS            0    0.0%     1    6.7%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_35.mp4  [60s+ group]  5/5 (100.0%)  FP=20
+  HITS (5):
+    @   179.02s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   415.65s  [WIDE]  score=0.7500  signals=Motion
+    @   647.85s  [WIDE]  score=0.7500  signals=Motion
+    @   881.43s  [WIDE]  score=0.7500  signals=Motion
+    @  1069.43s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (20):
+    @   111.03s  [LOW ]  score=0.4000  signals=Motion
+    @   192.94s  [WIDE]  score=0.7500  signals=Motion
+    @   241.50s  [WIDE]  score=0.7500  signals=Motion
+    @   264.08s  [WIDE]  score=0.7500  signals=Motion
+    @   273.46s  [LOW ]  score=0.4000  signals=Visual
+    @   302.93s  [LOW ]  score=0.4000  signals=Visual
+    @   402.73s  [LOW ]  score=0.4000  signals=Motion
+    @   463.71s  [WIDE]  score=0.7500  signals=Motion
+    @   511.40s  [LOW ]  score=0.4000  signals=Visual
+    @   532.50s  [LOW ]  score=0.4000  signals=Visual
+    @   665.83s  [LOW ]  score=0.4000  signals=Motion
+    @   690.00s  [WIDE]  score=0.7500  signals=Motion
+    @   705.03s  [LOW ]  score=0.4000  signals=Motion
+    @   735.00s  [LOW ]  score=0.4000  signals=Motion
+    @   839.63s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   895.99s  [WIDE]  score=0.7500  signals=Motion
+    @   920.40s  [LOW ]  score=0.4000  signals=Visual
+    @   952.60s  [LOW ]  score=0.4000  signals=Visual
+    @  1082.28s  [WIDE]  score=0.7500  signals=Motion
+    @  1109.55s  [WIDE]  score=0.7500  signals=Motion+Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%     8   40.0%
+    Motion              5  100.0%    14   70.0%
+    AudioRMS            1   20.0%     0    0.0%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_36.mp4  [60s+ group]  10/10 (100.0%)  FP=78
+  HITS (10):
+    @   233.00s  [LOW ]  score=0.4000  signals=Motion
+    @   465.96s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   743.98s  [WIDE]  score=0.7500  signals=Motion
+    @   979.00s  [WIDE]  score=0.7500  signals=Motion
+    @  1183.55s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1452.18s  [WIDE]  score=0.7500  signals=Motion
+    @  1662.07s  [WIDE]  score=0.7500  signals=Motion
+    @  1870.17s  [LOW ]  score=0.4000  signals=Motion
+    @  2143.34s  [WIDE]  score=0.7500  signals=Motion
+    @  2372.76s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (78):
+    @    25.73s  [LOW ]  score=0.4000  signals=Motion
+    @    51.00s  [WIDE]  score=0.7500  signals=Motion
+    @    76.82s  [WIDE]  score=0.7500  signals=Motion
+    @    88.42s  [WIDE]  score=0.7500  signals=Motion
+    @   120.00s  [WIDE]  score=0.7500  signals=Motion
+    @   155.33s  [WIDE]  score=0.7500  signals=Motion
+    @   181.45s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   209.78s  [WIDE]  score=0.7500  signals=Motion
+    @   273.35s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   304.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   331.62s  [WIDE]  score=0.7500  signals=Motion
+    @   356.70s  [WIDE]  score=0.7500  signals=Motion
+    @   381.45s  [WIDE]  score=0.7500  signals=Motion
+    @   413.40s  [LOW ]  score=0.4000  signals=Motion
+    @   438.45s  [WIDE]  score=0.7500  signals=Motion
+    @   536.77s  [WIDE]  score=0.7500  signals=Motion
+    @   559.00s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @   575.31s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   610.72s  [WIDE]  score=0.7500  signals=Motion
+    @   623.82s  [WIDE]  score=0.7500  signals=Motion
+    @   662.03s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   702.63s  [WIDE]  score=0.7500  signals=Motion
+    @   769.77s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   812.57s  [WIDE]  score=0.7500  signals=Motion
+    @   842.93s  [LOW ]  score=0.4000  signals=Motion
+    @   886.86s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   904.20s  [WIDE]  score=0.7500  signals=Motion
+    @   923.90s  [WIDE]  score=0.7500  signals=Motion
+    @   945.76s  [WIDE]  score=0.7500  signals=Motion
+    @  1027.84s  [WIDE]  score=0.7500  signals=Motion
+    @  1076.76s  [WIDE]  score=0.7500  signals=Motion
+    @  1104.60s  [WIDE]  score=0.7500  signals=Motion
+    @  1119.49s  [WIDE]  score=0.7500  signals=Motion
+    @  1135.50s  [WIDE]  score=0.7500  signals=Motion
+    @  1207.88s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1245.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1277.05s  [WIDE]  score=0.7500  signals=Motion
+    @  1304.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1336.05s  [WIDE]  score=0.7500  signals=Motion
+    @  1362.27s  [WIDE]  score=0.7500  signals=Motion
+    @  1480.42s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1490.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1525.18s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1542.45s  [WIDE]  score=0.7500  signals=Motion
+    @  1579.73s  [WIDE]  score=0.7500  signals=Motion
+    @  1594.80s  [LOW ]  score=0.4000  signals=Motion
+    @  1629.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1684.53s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1727.37s  [WIDE]  score=0.7500  signals=Motion
+    @  1743.25s  [WIDE]  score=0.7500  signals=Motion
+    @  1761.27s  [WIDE]  score=0.7500  signals=Motion
+    @  1792.50s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1814.57s  [WIDE]  score=0.7500  signals=Motion
+    @  1859.19s  [WIDE]  score=0.7500  signals=Motion
+    @  1917.13s  [LOW ]  score=0.4000  signals=Motion
+    @  1963.97s  [LOW ]  score=0.4000  signals=Motion
+    @  1975.87s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @  2018.37s  [LOW ]  score=0.4000  signals=Motion
+    @  2061.70s  [WIDE]  score=0.7500  signals=Motion
+    @  2095.27s  [LOW ]  score=0.4000  signals=Motion
+    @  2118.27s  [LOW ]  score=0.4000  signals=Motion
+    @  2166.35s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2191.10s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  2220.53s  [LOW ]  score=0.4000  signals=Motion
+    @  2260.10s  [WIDE]  score=0.7500  signals=Motion
+    @  2290.27s  [WIDE]  score=0.7500  signals=Motion
+    @  2305.48s  [WIDE]  score=0.7500  signals=Motion
+    @  2338.36s  [WIDE]  score=0.7500  signals=Motion
+    @  2385.00s  [LOW ]  score=0.4000  signals=Motion
+    @  2425.30s  [LOW ]  score=0.4000  signals=Motion
+    @  2484.29s  [LOW ]  score=0.4000  signals=Motion
+    @  2532.05s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  2561.18s  [WIDE]  score=0.7500  signals=Motion
+    @  2573.53s  [WIDE]  score=0.7500  signals=Motion
+    @  2600.83s  [LOW ]  score=0.4000  signals=Motion
+    @  2636.10s  [LOW ]  score=0.4000  signals=Motion
+    @  2670.63s  [LOW ]  score=0.4000  signals=Motion
+    @  2680.83s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1   10.0%    16   20.5%
+    Motion             10  100.0%    77   98.7%
+    AudioRMS            1   10.0%     5    6.4%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_37.mp4  [60s+ group]  13/13 (100.0%)  FP=38
+  HITS (13):
+    @   222.95s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   481.78s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   714.82s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   998.35s  [WIDE]  score=0.7500  signals=Motion
+    @  1246.32s  [WIDE]  score=0.7500  signals=Motion
+    @  1459.73s  [WIDE]  score=0.7500  signals=Motion
+    @  1696.11s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @  1971.32s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  2197.51s  [WIDE]  score=0.7500  signals=Motion+SpectralFlux
+    @  2440.57s  [WIDE]  score=0.7500  signals=Motion
+    @  2688.18s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+SpectralFlux
+    @  2956.06s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  3200.06s  [WIDE]  score=0.7500  signals=Motion+Silence+SpectralFlux
+  FALSE POSITIVES (38):
+    @   266.76s  [WIDE]  score=0.7500  signals=Motion
+    @   296.60s  [LOW ]  score=0.4000  signals=Visual
+    @   329.93s  [LOW ]  score=0.4000  signals=Visual
+    @   507.63s  [WIDE]  score=0.7500  signals=Motion
+    @   529.15s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   549.70s  [LOW ]  score=0.4000  signals=Visual
+    @   744.73s  [WIDE]  score=0.7500  signals=Motion+Silence+Visual
+    @   762.43s  [WIDE]  score=0.7500  signals=Motion
+    @   808.28s  [HIGH]  score=0.5750  signals=Motion+Silence
+    @  1056.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1093.83s  [LOW ]  score=0.4000  signals=Visual
+    @  1150.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1298.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1488.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1515.93s  [LOW ]  score=0.4000  signals=Motion
+    @  1542.37s  [LOW ]  score=0.4000  signals=Visual
+    @  1574.70s  [LOW ]  score=0.4000  signals=Visual
+    @  1709.10s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1733.27s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  1765.62s  [WIDE]  score=0.7500  signals=Motion
+    @  1827.83s  [LOW ]  score=0.4000  signals=Visual
+    @  2025.00s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  2224.64s  [WIDE]  score=0.7500  signals=Motion+Silence+Visual
+    @  2262.40s  [LOW ]  score=0.4000  signals=Visual
+    @  2296.72s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @  2462.37s  [LOW ]  score=0.4000  signals=Motion
+    @  2490.55s  [WIDE]  score=0.7500  signals=Motion
+    @  2515.17s  [LOW ]  score=0.4000  signals=Visual
+    @  2572.80s  [LOW ]  score=0.4000  signals=Visual
+    @  2719.66s  [WIDE]  score=0.7500  signals=Motion
+    @  2759.28s  [WIDE]  score=0.7500  signals=Motion
+    @  2811.00s  [LOW ]  score=0.4000  signals=Visual
+    @  2982.96s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3017.17s  [LOW ]  score=0.4000  signals=Motion
+    @  3041.50s  [LOW ]  score=0.4000  signals=Visual
+    @  3216.17s  [WIDE]  score=0.7500  signals=Motion
+    @  3249.49s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  3286.30s  [LOW ]  score=0.4000  signals=Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              1    7.7%    20   52.6%
+    Motion             13  100.0%    24   63.2%
+    AudioRMS            6   46.2%     4   10.5%
+    Silence             1    7.7%     3    7.9%
+    SpectralFlux        4   30.8%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_38.mp4  [60s+ group]  13/13 (100.0%)  FP=67
+  HITS (13):
+    @   198.80s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   423.05s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   679.72s  [WIDE]  score=0.7500  signals=Motion
+    @   879.83s  [WIDE]  score=0.7500  signals=Motion
+    @  1119.70s  [LOW ]  score=0.4000  signals=Motion
+    @  1335.72s  [WIDE]  score=0.7500  signals=Motion
+    @  1570.65s  [WIDE]  score=0.7500  signals=Motion
+    @  1798.93s  [LOW ]  score=0.4000  signals=Motion
+    @  2014.60s  [LOW ]  score=0.4000  signals=Motion
+    @  2315.87s  [LOW ]  score=0.4000  signals=Motion
+    @  2514.75s  [WIDE]  score=0.7500  signals=Motion+Silence+Visual
+    @  2748.10s  [WIDE]  score=0.7500  signals=Motion
+    @  2934.84s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (67):
+    @    92.30s  [LOW ]  score=0.4000  signals=Motion
+    @   118.60s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   155.00s  [LOW ]  score=0.4000  signals=Motion
+    @   231.23s  [LOW ]  score=0.4000  signals=Visual
+    @   255.30s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @   291.23s  [LOW ]  score=0.4000  signals=Visual
+    @   435.75s  [WIDE]  score=0.7500  signals=Motion
+    @   483.13s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   492.47s  [LOW ]  score=0.4000  signals=Motion
+    @   523.80s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   540.50s  [LOW ]  score=0.4000  signals=Visual
+    @   594.27s  [LOW ]  score=0.4000  signals=Motion
+    @   712.53s  [LOW ]  score=0.4000  signals=Motion
+    @   729.03s  [LOW ]  score=0.4000  signals=Motion
+    @   763.87s  [LOW ]  score=0.4000  signals=Motion
+    @   824.47s  [LOW ]  score=0.4000  signals=Visual
+    @   891.07s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   925.95s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   945.94s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   974.30s  [LOW ]  score=0.4000  signals=Visual
+    @  1022.70s  [LOW ]  score=0.4000  signals=Motion
+    @  1083.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1163.22s  [WIDE]  score=0.7500  signals=Motion
+    @  1188.60s  [LOW ]  score=0.4000  signals=Visual
+    @  1220.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1291.17s  [LOW ]  score=0.4000  signals=Motion
+    @  1304.33s  [LOW ]  score=0.4000  signals=Motion
+    @  1352.63s  [LOW ]  score=0.4000  signals=Motion
+    @  1393.73s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1415.93s  [LOW ]  score=0.4000  signals=Visual
+    @  1439.38s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @  1594.31s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1623.32s  [LOW ]  score=0.4000  signals=Visual
+    @  1651.97s  [LOW ]  score=0.4000  signals=Visual
+    @  1674.23s  [LOW ]  score=0.4000  signals=Visual
+    @  1715.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1733.73s  [LOW ]  score=0.4000  signals=Motion
+    @  1832.67s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1843.80s  [LOW ]  score=0.4000  signals=Visual
+    @  1973.48s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  2029.73s  [WIDE]  score=0.7500  signals=Motion
+    @  2066.20s  [LOW ]  score=0.4000  signals=Visual
+    @  2087.77s  [WIDE]  score=0.7500  signals=Motion
+    @  2111.73s  [LOW ]  score=0.4000  signals=Motion
+    @  2148.20s  [LOW ]  score=0.4000  signals=Motion
+    @  2167.13s  [LOW ]  score=0.4000  signals=Visual
+    @  2190.57s  [LOW ]  score=0.4000  signals=Visual
+    @  2249.50s  [LOW ]  score=0.4000  signals=Motion
+    @  2348.87s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2415.80s  [LOW ]  score=0.4000  signals=Motion
+    @  2433.07s  [LOW ]  score=0.4000  signals=Motion
+    @  2465.87s  [LOW ]  score=0.4000  signals=Motion
+    @  2496.67s  [LOW ]  score=0.4000  signals=Visual
+    @  2544.15s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  2570.03s  [LOW ]  score=0.4000  signals=Motion
+    @  2607.60s  [LOW ]  score=0.4000  signals=Visual
+    @  2632.43s  [LOW ]  score=0.4000  signals=Visual
+    @  2653.77s  [LOW ]  score=0.4000  signals=Visual
+    @  2769.94s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2791.98s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2810.57s  [LOW ]  score=0.4000  signals=Visual
+    @  2955.66s  [WIDE]  score=0.7500  signals=Motion
+    @  2993.90s  [WIDE]  score=0.7500  signals=Motion
+    @  3017.54s  [LOW ]  score=0.4000  signals=Visual
+    @  3043.72s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @  3095.20s  [LOW ]  score=0.4000  signals=Motion
+    @  3169.73s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              3   23.1%    31   46.3%
+    Motion             13  100.0%    45   67.2%
+    AudioRMS            0    0.0%    10   14.9%
+    Silence             1    7.7%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_39.mp4  [60s+ group]  7/7 (100.0%)  FP=31
+  HITS (7):
+    @   202.87s  [LOW ]  score=0.4000  signals=Motion
+    @   425.60s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   611.70s  [LOW ]  score=0.4000  signals=Motion
+    @   797.63s  [LOW ]  score=0.4000  signals=Motion
+    @   987.92s  [WIDE]  score=0.7500  signals=Motion+Silence+SpectralFlux
+    @  1160.94s  [LOW ]  score=0.4000  signals=Motion
+    @  1343.43s  [WIDE]  score=0.7500  signals=Motion
+  FALSE POSITIVES (31):
+    @    46.33s  [LOW ]  score=0.4000  signals=Visual
+    @    70.57s  [LOW ]  score=0.4000  signals=Motion
+    @   143.90s  [LOW ]  score=0.4000  signals=Motion
+    @   172.50s  [WIDE]  score=0.7500  signals=Motion
+    @   218.63s  [LOW ]  score=0.4000  signals=Motion
+    @   254.47s  [WIDE]  score=0.7500  signals=Motion
+    @   278.23s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   366.57s  [LOW ]  score=0.4000  signals=Visual
+    @   466.92s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @   629.75s  [WIDE]  score=0.7500  signals=Motion
+    @   660.80s  [LOW ]  score=0.4000  signals=Motion
+    @   715.03s  [LOW ]  score=0.4000  signals=Motion
+    @   736.70s  [LOW ]  score=0.4000  signals=Visual
+    @   759.57s  [LOW ]  score=0.4000  signals=Motion
+    @   818.80s  [LOW ]  score=0.4000  signals=Visual
+    @   844.78s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   867.57s  [LOW ]  score=0.4000  signals=Visual
+    @   922.20s  [LOW ]  score=0.4000  signals=Visual
+    @   948.37s  [LOW ]  score=0.4000  signals=Motion
+    @  1020.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1051.93s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1065.07s  [LOW ]  score=0.4000  signals=Visual
+    @  1176.43s  [WIDE]  score=0.7500  signals=Motion
+    @  1198.37s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1215.17s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1305.07s  [LOW ]  score=0.4000  signals=Motion
+    @  1358.92s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1395.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1411.87s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1500.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1525.97s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%    15   48.4%
+    Motion              7  100.0%    23   74.2%
+    AudioRMS            1   14.3%     3    9.7%
+    Silence             1   14.3%     0    0.0%
+    SpectralFlux        1   14.3%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_40.mp4  [60s+ group]  10/10 (100.0%)  FP=46
+  HITS (10):
+    @   208.88s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   490.78s  [WIDE]  score=0.7500  signals=Motion
+    @   763.90s  [LOW ]  score=0.4000  signals=Motion
+    @  1045.02s  [WIDE]  score=0.7500  signals=Motion
+    @  1270.21s  [WIDE]  score=0.7500  signals=Motion
+    @  1526.88s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1753.43s  [LOW ]  score=0.4000  signals=Motion
+    @  1983.54s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2216.88s  [LOW ]  score=0.4000  signals=Motion
+    @  2447.71s  [HIGH]  score=0.5750  signals=Motion+Visual
+  FALSE POSITIVES (46):
+    @   176.80s  [LOW ]  score=0.4000  signals=Visual
+    @   224.10s  [LOW ]  score=0.4000  signals=Motion
+    @   251.12s  [WIDE]  score=0.7500  signals=Motion
+    @   273.23s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   297.53s  [LOW ]  score=0.4000  signals=Motion
+    @   335.68s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   515.37s  [LOW ]  score=0.4000  signals=Motion
+    @   591.54s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   614.18s  [WIDE]  score=0.7500  signals=Visual
+    @   649.58s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   787.82s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   860.00s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   908.73s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @   923.07s  [WIDE]  score=0.7500  signals=Motion
+    @   949.23s  [LOW ]  score=0.4000  signals=Motion
+    @  1061.57s  [WIDE]  score=0.7500  signals=Motion
+    @  1083.93s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  1111.23s  [LOW ]  score=0.4000  signals=Visual
+    @  1165.03s  [LOW ]  score=0.4000  signals=Motion
+    @  1215.00s  [LOW ]  score=0.4000  signals=Motion
+    @  1300.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1328.48s  [WIDE]  score=0.7500  signals=Motion
+    @  1351.09s  [WIDE]  score=0.7500  signals=Motion
+    @  1399.50s  [LOW ]  score=0.4000  signals=Visual
+    @  1581.40s  [LOW ]  score=0.4000  signals=Motion
+    @  1598.15s  [LOW ]  score=0.4000  signals=Motion
+    @  1636.77s  [LOW ]  score=0.4000  signals=Visual
+    @  1772.43s  [LOW ]  score=0.4000  signals=Motion
+    @  1789.25s  [WIDE]  score=0.7500  signals=Motion
+    @  1820.23s  [LOW ]  score=0.4000  signals=Visual
+    @  2005.59s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2028.97s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2056.63s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2087.80s  [LOW ]  score=0.4000  signals=Visual
+    @  2230.77s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  2243.95s  [WIDE]  score=0.7500  signals=Motion
+    @  2288.52s  [WIDE]  score=0.7500  signals=AudioRMS+Motion+Visual
+    @  2305.23s  [LOW ]  score=0.4000  signals=Visual
+    @  2391.53s  [LOW ]  score=0.4000  signals=Motion
+    @  2414.43s  [LOW ]  score=0.4000  signals=Motion
+    @  2460.61s  [WIDE]  score=0.7500  signals=Motion
+    @  2502.83s  [LOW ]  score=0.4000  signals=Motion
+    @  2533.83s  [WIDE]  score=0.7500  signals=Motion
+    @  2565.77s  [LOW ]  score=0.4000  signals=Visual
+    @  2592.80s  [LOW ]  score=0.4000  signals=Visual
+    @  2624.53s  [LOW ]  score=0.4000  signals=Motion
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              4   40.0%    19   41.3%
+    Motion             10  100.0%    36   78.3%
+    AudioRMS            0    0.0%     8   17.4%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     0    0.0%
+
+──────────────────────────────────────────────────────────────────────
+  attacked_41.mp4  [60s+ group]  8/8 (100.0%)  FP=36
+  HITS (8):
+    @   225.05s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   463.21s  [WIDE]  score=0.7500  signals=Motion
+    @   686.88s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @   932.73s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1226.78s  [WIDE]  score=0.7500  signals=Motion
+    @  1476.97s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  1734.50s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+    @  2022.45s  [WIDE]  score=0.7500  signals=AudioRMS+Motion
+  FALSE POSITIVES (36):
+    @    76.67s  [LOW ]  score=0.4000  signals=Motion
+    @   110.53s  [LOW ]  score=0.4000  signals=Motion
+    @   329.93s  [LOW ]  score=0.4000  signals=Visual
+    @   360.00s  [HIGH]  score=0.5750  signals=Motion+Visual
+    @   493.45s  [WIDE]  score=0.7500  signals=Motion
+    @   531.85s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @   743.70s  [LOW ]  score=0.4000  signals=Motion
+    @   762.04s  [LOW ]  score=0.4000  signals=Visual
+    @   792.83s  [LOW ]  score=0.4000  signals=Visual
+    @   819.40s  [LOW ]  score=0.4000  signals=Visual
+    @   965.01s  [WIDE]  score=0.7500  signals=Motion
+    @   981.40s  [WIDE]  score=0.7500  signals=Motion
+    @   999.57s  [LOW ]  score=0.4000  signals=Motion
+    @  1034.68s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1072.90s  [LOW ]  score=0.4000  signals=Visual
+    @  1095.53s  [LOW ]  score=0.4000  signals=Visual
+    @  1121.13s  [LOW ]  score=0.4000  signals=Motion
+    @  1271.34s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1319.73s  [HIGH]  score=0.5750  signals=AudioRMS+Visual
+    @  1352.98s  [HIGH]  score=0.5750  signals=AudioRMS+Motion
+    @  1411.90s  [LOW ]  score=0.4000  signals=Visual
+    @  1488.87s  [LOW ]  score=0.4000  signals=Motion
+    @  1523.27s  [LOW ]  score=0.4000  signals=Motion
+    @  1558.70s  [LOW ]  score=0.4000  signals=Motion
+    @  1609.30s  [LOW ]  score=0.4000  signals=Visual
+    @  1769.50s  [WIDE]  score=0.7500  signals=Motion
+    @  1782.87s  [LOW ]  score=0.4000  signals=Visual
+    @  1817.84s  [HIGH]  score=0.5750  signals=Motion+SpectralFlux
+    @  1846.97s  [LOW ]  score=0.4000  signals=Visual
+    @  1868.03s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  1903.97s  [LOW ]  score=0.4000  signals=Visual
+    @  2030.30s  [LOW ]  score=0.4000  signals=Motion
+    @  2071.02s  [WIDE]  score=0.7500  signals=Motion+Visual
+    @  2085.00s  [LOW ]  score=0.4000  signals=Motion
+    @  2203.30s  [LOW ]  score=0.4000  signals=Visual
+    @  2236.63s  [LOW ]  score=0.4000  signals=Visual
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual              0    0.0%    20   55.6%
+    Motion              8  100.0%    22   61.1%
+    AudioRMS            6   75.0%     2    5.6%
+    Silence             0    0.0%     0    0.0%
+    SpectralFlux        0    0.0%     1    2.8%
+
+================================================================================
+GLOBAL SIGNAL-LEVEL CONTRIBUTION
+================================================================================
+
+  SIGNAL              HIT     HIT%      FP      FP%
+  ───────────────  ──────  ───────  ──────  ───────
+  Visual               39    16.1%     280    26.2%
+  Motion              242   100.0%     905    84.7%
+  AudioRMS             51    21.1%      80     7.5%
+  Silence              11     4.5%       8     0.7%
+  SpectralFlux          8     3.3%       3     0.3%
+
+================================================================================
+CONFIDENCE TIER  (WIDE / HIGH / LOW)
+================================================================================
+
+  TIER      HITS     FPS    HIT_RATE    FP_RATE
+  ──────  ──────  ──────  ──────────  ─────────
+  WIDE       163     314       34.2%      65.8%
+  HIGH        20      63       24.1%      75.9%
+  LOW         59     691        7.9%      92.1%
+
+================================================================================
+DURATION-GROUP SUMMARY
+  Group definitions:
+    30s   → attacked_1  .. attacked_20   (1–20 second violent segments)
+    10s   → attacked_21 .. attacked_30   (21–30 second violent segments)
+    60s+  → attacked_31 .. attacked_41   (31–41 second violent segments)
+================================================================================
+
+  ── 30s  (videos  1-20) ──
+  Videos: 20   Segments: 87   Hits: 79   Rate: 90.8%   FP: 417
+  Confidence tiers (hits):  WIDE=56  HIGH=6  LOW=17
+    WIDE   hits= 56  fps= 68  hit_rate= 45.2%  fp_rate= 54.8%
+    HIGH   hits=  6  fps= 18  hit_rate= 25.0%  fp_rate= 75.0%
+    LOW    hits= 17  fps=331  hit_rate=  4.9%  fp_rate= 95.1%
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual             17   21.5%    73   17.5%
+    Motion             79  100.0%   371   89.0%
+    AudioRMS           17   21.5%    22    5.3%
+    Silence             1    1.3%     4    1.0%
+    SpectralFlux        1    1.3%     0    0.0%
+  Per-video in this group:
+    VIDEO                                SEGS  HITS    RATE    FP
+    attacked_1.mp4                          4     3   75.0%    33
+    attacked_2.mp4                          5     5  100.0%    20
+    attacked_3.mp4                          1     0    0.0%     7
+    attacked_4.mp4                          5     5  100.0%    23
+    attacked_5.mp4                          6     6  100.0%    28
+    attacked_6.mp4                          4     3   75.0%    30
+    attacked_7.mp4                          4     3   75.0%    23
+    attacked_8.mp4                          3     3  100.0%     9
+    attacked_9.mp4                          2     2  100.0%    14
+    attacked_10.mp4                         8     6   75.0%    36
+    attacked_11.mp4                         2     2  100.0%    10
+    attacked_12.mp4                         2     2  100.0%     9
+    attacked_13.mp4                         2     2  100.0%     9
+    attacked_14.mp4                         7     6   85.7%    29
+    attacked_15.mp4                         7     7  100.0%    34
+    attacked_16.mp4                         6     6  100.0%    26
+    attacked_17.mp4                         4     4  100.0%    13
+    attacked_18.mp4                         6     5   83.3%    28
+    attacked_19.mp4                         5     5  100.0%    18
+    attacked_20.mp4                         4     4  100.0%    18
+
+  ── 10s  (videos 21-30) ──
+  Videos: 10   Segments: 99   Hits: 73   Rate: 73.7%   FP: 217
+  Confidence tiers (hits):  WIDE=46  HIGH=6  LOW=21
+    WIDE   hits= 46  fps= 72  hit_rate= 39.0%  fp_rate= 61.0%
+    HIGH   hits=  6  fps= 10  hit_rate= 37.5%  fp_rate= 62.5%
+    LOW    hits= 21  fps=135  hit_rate= 13.5%  fp_rate= 86.5%
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual             10   13.7%    42   19.4%
+    Motion             73  100.0%   192   88.5%
+    AudioRMS           18   24.7%    15    6.9%
+    Silence             6    8.2%     0    0.0%
+    SpectralFlux        1    1.4%     0    0.0%
+  Per-video in this group:
+    VIDEO                                SEGS  HITS    RATE    FP
+    attacked_21.mp4                         7     4   57.1%    17
+    attacked_22.mp4                        12    10   83.3%    26
+    attacked_23.mp4                        10     7   70.0%    13
+    attacked_24.mp4                         4     3   75.0%     4
+    attacked_25.mp4                        15    12   80.0%     7
+    attacked_26.mp4                         5     5  100.0%     8
+    attacked_27.mp4                         6     3   50.0%     7
+    attacked_28.mp4                        11     6   54.5%    58
+    attacked_29.mp4                        10     9   90.0%    19
+    attacked_30.mp4                        19    14   73.7%    58
+
+  ── 60s+ (videos 31-41) ──
+  Videos: 10   Segments: 90   Hits: 90   Rate: 100.0%   FP: 434
+  Confidence tiers (hits):  WIDE=61  HIGH=8  LOW=21
+    WIDE   hits= 61  fps=174  hit_rate= 26.0%  fp_rate= 74.0%
+    HIGH   hits=  8  fps= 35  hit_rate= 18.6%  fp_rate= 81.4%
+    LOW    hits= 21  fps=225  hit_rate=  8.5%  fp_rate= 91.5%
+  Signal contribution:
+    SIGNAL            HIT    HIT%    FP     FP%
+    Visual             12   13.3%   165   38.0%
+    Motion             90  100.0%   342   78.8%
+    AudioRMS           16   17.8%    43    9.9%
+    Silence             4    4.4%     4    0.9%
+    SpectralFlux        6    6.7%     3    0.7%
+  Per-video in this group:
+    VIDEO                                SEGS  HITS    RATE    FP
+    attacked_32.mp4                        17    17  100.0%    85
+    attacked_33.mp4                         4     4  100.0%    18
+    attacked_34.mp4                         3     3  100.0%    15
+    attacked_35.mp4                         5     5  100.0%    20
+    attacked_36.mp4                        10    10  100.0%    78
+    attacked_37.mp4                        13    13  100.0%    38
+    attacked_38.mp4                        13    13  100.0%    67
+    attacked_39.mp4                         7     7  100.0%    31
+    attacked_40.mp4                        10    10  100.0%    46
+    attacked_41.mp4                         8     8  100.0%    36
+

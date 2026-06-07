@@ -1,78 +1,72 @@
 import subprocess
 import json
 import numpy as np
-from scipy.io import wavfile
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import find_peaks, savgol_filter
 import os
 import sys
 import time
 import datetime
-from collections import deque
+import hashlib
+import tempfile
+from collections import deque, defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
 
-ATTACKED_DIR            = "attacked"
-GROUND_TRUTH_JSON       = "attack.json"
-REPORT_FILE             = "report.txt"
+ATTACKED_DIR        = "dataset"
+GROUND_TRUTH_JSON   = "attack.json"
+REPORT_FILE         = "report.txt"
+WORKER_DATA_DIR     = "worker_data"
 
-FFMPEG_DIR  = "ffmpeg-master-latest-win64-gpl"
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
-FFMPEG_EXE  = os.path.join(SCRIPT_DIR, FFMPEG_DIR, "bin", "ffmpeg.exe")
-FFPROBE_EXE = os.path.join(SCRIPT_DIR, FFMPEG_DIR, "bin", "ffprobe.exe")
+FFMPEG_EXE  = "ffmpeg"
+FFPROBE_EXE = "ffprobe"
+
+# Distributed
+CHUNK_DURATION_SEC  = 5.0
+AUDIO_OVERLAP_SEC   = 0.05      # 50ms overlap for spectral flux continuity
+NUM_WORKERS         = 10
 
 # --- Fusion / Scoring ---
 BOUNDARY_TOLERANCE      = 2.5
+TOLERANCE_SEC           = 2.5
+MIN_SIGNALS_TO_CONFIRM  = 1
+REQUIRE_MULTIMODAL      = False
 LOCKOUT_PERIOD          = 5.0
-
-# --- Confidence Grid / KDE Fusion ---
-GRID_RESOLUTION         = 0.5
-FUSION_SIGMA_SEC        = 1.0
-SIGMOID_STEEPNESS       = 1.5
-PEAK_MIN_GAP_SEC        = 3.0
-PEAK_THRESHOLD_PCT      = 0.20
-
-# --- Signal weights ---
-SIGNAL_WEIGHTS = {
-    "visual"       : 1.0,
-    "gop"          : 0.8,
-    "audio_rms"    : 1.0,
-    "silence"      : 1.2,
-    "spectral_flux": 0.7,
-}
-PB_WEIGHT_BASE          = 0.1
-PB_WEIGHT_MAX           = 0.5
+MERGE_WINDOW            = 10.0
 
 # --- Visual ---
 VISUAL_MAX_FRAMES       = 30
 VISUAL_MIN_WARMUP       = 10
-K_VISUAL                = 3.0
+K_VISUAL_THRESHOLD      = 2.5
 VISUAL_COOLDOWN         = 3.0
 VISUAL_PERSIST_NEEDED   = 2
 VISUAL_PERSIST_WINDOW   = 4
+SCENE_CHANGE_RATIO      = 8.0
+SCENE_CHANGE_TOLERANCE  = 0.5
+IFRAME_SANDWICH_ENABLED = True
+IFRAME_CONTEXT_WINDOW   = 5
+IFRAME_STABILITY_RATIO  = 3.0
+IFRAME_MIN_CONTEXT      = 3
 
-# --- Motion: GOP ---
-K_GOP                   = 3.0
-GOP_MIN_WARMUP          = 10
-GOP_COOLDOWN            = 3.0
-GOP_SHORT_RATIO         = 0.25
-
-# --- Motion: P/B ---
+# --- Motion ---
 MV_WINDOW               = 60
 MV_MIN_WARMUP           = 30
-K_PB                    = 3.0
-PB_COOLDOWN             = 8.0
-PB_PERSIST_NEEDED       = 3
-PB_PERSIST_WINDOW       = 5
-SG_WINDOW               = 11
-SG_POLY                 = 2
+K_MV_THRESHOLD          = 4.5
+MV_COOLDOWN             = 5.0
+MV_PERSIST_NEEDED       = 3
+MV_PERSIST_WINDOW       = 5
+GOP_SHORT_RATIO         = 0.25
+MOTION_JERK_ENABLED     = True
+JERK_WINDOW             = 5
+JERK_ACCEL_THRESHOLD    = 2.5
 
-# --- Audio RMS ---
+# --- Audio ---
+AUDIO_SAMPLE_RATE       = 44100
 AUDIO_BUFFER_SEC        = 15.0
 AUDIO_MICRO_WINDOW_SEC  = 0.5
-K_AUDIO_RMS             = 3.0
+K_AUDIO_RMS_THRESHOLD   = 3.0
 AUDIO_NOISE_FLOOR       = 800.0
 AUDIO_COOLDOWN          = 3.0
 AUDIO_PERSIST_NEEDED    = 2
@@ -81,24 +75,55 @@ AUDIO_PERSIST_NEEDED    = 2
 SILENCE_THRESHOLD_RATIO = 0.05
 SILENCE_MIN_DURATION    = 2.0
 SILENCE_COOLDOWN        = 30.0
-K_SILENCE               = 3.0
 
 # --- Spectral Flux ---
+FLUX_SAMPLE_RATE        = 22050
 FLUX_WINDOW_SEC         = 0.05
 FLUX_BUFFER_SEC         = 10.0
-K_FLUX                  = 3.0
+K_FLUX_THRESHOLD        = 3.0
 FLUX_COOLDOWN           = 3.0
 FLUX_PERSIST_NEEDED     = 3
 
-# --- Pass 2: Bhattacharyya ---
-BHATT_ENABLE            = True
-BHATT_OFFSET_SEC        = 0.5
-BHATT_REJECT_BELOW      = 0.05
-BHATT_HIST_BINS         = 64
+# --- Trust hierarchy ---
+VISUAL_MOTION_SIGNALS   = {"Visual", "Motion"}
+AUDIO_SIGNALS           = {"AudioRMS", "Silence", "SpectralFlux"}
+AUDIO_UPGRADE_WINDOW    = 2.5
+MIN_EVENT_GAP           = 0.5
+
+# --- Selection layer ---
+SELECTION_WINDOW_SEC    = 30.0
+SELECTION_OVERLAP       = 0.1
+SELECTION_MIN_GAP       = 0.5
+
+W_CONFIDENCE    = 0.50
+W_MAGNITUDE     = 0.05
+W_ACCELERATION  = 0.15
+W_EDGE_CHANGE   = 0.10
+W_UNIFORMITY    = 0.05
+W_PERSISTENCE   = 0.15
+MAGNITUDE_EXTREME_Z     = 8.0
+MAGNITUDE_SWEET_Z_LO    = 2.5
+MAGNITUDE_SWEET_Z_HI    = 6.0
+
+DURATION_BUCKETS = [
+    (8,   12,  "10s    "),
+    (28,  32,  "30s    "),
+    (32,  999, "60s+   "),
+]
 
 # ==============================================================================
-# PROGRESS HELPERS
+# SHARED HELPERS
 # ==============================================================================
+
+def confidence_label(weight):
+    if weight >= 3:   return "WIDE"
+    elif weight == 2: return "HIGH"
+    else:             return "LOW"
+
+def confidence_score(weight):
+    if weight >= 3:   return 1.0
+    elif weight == 2: return 0.65
+    else:             return 0.30
 
 def hms(seconds):
     h = int(seconds // 3600)
@@ -106,1320 +131,1128 @@ def hms(seconds):
     s = seconds % 60
     return f"{h:02d}:{m:02d}:{s:05.2f}"
 
-def progress_bar(label, current, total, width=35, extra=""):
-    frac   = min(current / total, 1.0) if total > 0 else 0
+def progress_bar(current, total, width=40, extra=""):
+    if total <= 0:
+        return
+    frac = min(current / total, 1.0)
     filled = int(width * frac)
-    bar    = "█" * filled + "░" * (width - filled)
-    pct    = frac * 100
-    sys.stdout.write(f"\r    [{bar}] {pct:5.1f}%  {extra}  ")
+    bar = "█" * filled + "░" * (width - filled)
+    pct = frac * 100
+    sys.stdout.write(f"\r    [{bar}] {pct:5.1f}%  {extra}")
     sys.stdout.flush()
-
-def section(title):
-    print(f"\n{'─'*65}\n  {title}\n{'─'*65}")
+    if current >= total:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
 def banner(title):
-    w = 65
+    w = 70
     print("\n" + "═"*w)
-    pad = (w - len(title) - 2) // 2
-    print(" "*pad + f" {title} ")
+    pad = max(0, (w - len(title) - 2) // 2)
+    print(" " * pad + f" {title} ")
     print("═"*w)
 
-# ==============================================================================
-# PRE-FLIGHT: Video duration
-# ==============================================================================
+def section(title):
+    print(f"\n{'─'*70}\n  {title}\n{'─'*70}")
+
+def adaptive_zscore(value, buffer, k):
+    arr = np.array(buffer, dtype=np.float64)
+    if len(arr) < 2: return 0.0, False
+    mu, sigma = np.mean(arr), np.std(arr)
+    if sigma < 1e-9: return 0.0, False
+    z = (value - mu) / sigma
+    return z, abs(z) > k
+
+def compute_trigger_score(weight, features):
+    score = (
+        W_CONFIDENCE   * confidence_score(weight)           +
+        W_MAGNITUDE    * features.get("magnitude",    0.5)  +
+        W_ACCELERATION * features.get("acceleration", 0.5)  +
+        W_EDGE_CHANGE  * features.get("edge_change",  0.5)  +
+        W_UNIFORMITY   * features.get("uniformity",   0.5)  +
+        W_PERSISTENCE  * features.get("persistence",  0.5)
+    )
+    return round(float(np.clip(score, 0.0, 1.0)), 4)
 
 def get_video_duration(video_path):
-    cmd = [
-        FFPROBE_EXE, '-v', 'error',
-        '-show_entries', 'format=duration',
-        '-of', 'json', video_path
-    ]
+    cmd = [FFPROBE_EXE, "-v", "error", "-show_entries", "format=duration",
+           "-of", "default=noprint_wrappers=1:nokey=1", video_path]
+    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, text=True)
-        data = json.loads(result.stdout)
-        dur  = float(data["format"]["duration"])
-        if dur <= 0:
-            raise ValueError(f"Non-positive duration: {dur}")
-        print(f"  [PRE-FLIGHT] Duration: {hms(dur)}  ({dur:.3f}s)")
-        return dur
-    except Exception as e:
-        print(f"  [PRE-FLIGHT ERROR] Cannot determine video duration: {e}")
-        return None
-
-# ==============================================================================
-# ROBUST STATISTICS
-# ==============================================================================
-
-def mad_zscore(value, buffer):
-    arr    = np.array(buffer, dtype=np.float64)
-    if len(arr) < 4:
-        return 0.0
-    median = np.median(arr)
-    mad    = np.median(np.abs(arr - median))
-    if mad < 1e-9:
-        return 0.0
-    return float((value - median) / (0.6745 * mad))
-
-
-def predict_next_pb(value, buffer):
-    arr = np.array(buffer, dtype=np.float64)
-    if len(arr) < 4:
-        return 0.0
-    win = min(SG_WINDOW, len(arr))
-    if win % 2 == 0:
-        win -= 1
-    win = max(win, SG_POLY + 2)
-    try:
-        smoothed = savgol_filter(arr, window_length=win, polyorder=SG_POLY)
+        return float(r.stdout.strip())
     except Exception:
-        smoothed = arr
-    x         = np.arange(len(smoothed))
-    coeffs    = np.polyfit(x, smoothed, 1)
-    trend     = np.polyval(coeffs, x)
-    residuals = smoothed - trend
-    predicted = np.polyval(coeffs, len(smoothed))
-    residual  = value - predicted
-    mad       = np.median(np.abs(residuals - np.median(residuals)))
-    if mad < 1e-9:
         return 0.0
-    return float(residual / (0.6745 * mad))
-
-
-def sigmoid_confidence(z, k):
-    return float(1.0 / (1.0 + np.exp(-SIGMOID_STEEPNESS * (abs(z) - k))))
 
 # ==============================================================================
-# CONFIDENCE GRID
+# WORKER: Extract raw data with audio overlap for spectral flux continuity
 # ==============================================================================
 
-def to_confidence_grid(events, n_bins):
-    grid = np.zeros(n_bins, dtype=np.float64)
-    for t, z, k in events:
-        idx = int(t / GRID_RESOLUTION)
-        if 0 <= idx < n_bins:
-            conf      = sigmoid_confidence(z, k)
-            grid[idx] = max(grid[idx], conf)
-    return grid
-
-# ==============================================================================
-# SIGNAL 1: Visual — I-frame MAD Z-score
-# ==============================================================================
-
-def get_visual_events(video_path):
+def _cut_chunk(video_path: str, start_time: float) -> str:
+    """Cut 5-second segment to a temp mp4."""
+    tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+    tmp.close()
     cmd = [
-        FFPROBE_EXE, '-v', 'error', '-select_streams', 'v:0',
-        '-show_entries', 'frame=pkt_pts_time,pts_time,pkt_size,size,pict_type,key_frame',
-        '-of', 'json', video_path
+        FFMPEG_EXE, "-y",
+        "-ss", str(start_time),
+        "-i", video_path,
+        "-t", str(CHUNK_DURATION_SEC),
+        "-c", "copy",
+        tmp.name
     ]
-    result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True)
-    try:
-        frames = json.loads(result.stdout).get('frames', [])
-    except Exception:
-        return []
+    subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return tmp.name
 
-    i_frames = [f for f in frames
-                if f.get('pict_type') == 'I' or f.get('key_frame') == 1]
-    total    = len(i_frames)
-
-    events            = []
-    size_buffer       = deque(maxlen=VISUAL_MAX_FRAMES)
-    spike_flags       = deque(maxlen=VISUAL_PERSIST_WINDOW)
-    last_trigger_time = -999.0
-
-    for idx, frame in enumerate(i_frames):
-        size     = float(frame.get('pkt_size') or frame.get('size') or 0)
-        time_pts = float(frame.get('pkt_pts_time') or frame.get('pts_time') or -1)
-        if time_pts < 0:
-            continue
-
-        if idx % max(1, total // 20) == 0:
-            progress_bar("Visual", idx, total, extra=f"{hms(time_pts)}")
-
-        z        = 0.0
-        is_spike = False
-        if time_pts > LOCKOUT_PERIOD and len(size_buffer) >= VISUAL_MIN_WARMUP:
-            z        = mad_zscore(size, size_buffer)
-            is_spike = abs(z) > K_VISUAL
-
-        spike_flags.append(1 if is_spike else 0)
-
-        if (time_pts > LOCKOUT_PERIOD
-                and len(spike_flags) == VISUAL_PERSIST_WINDOW
-                and sum(spike_flags) >= VISUAL_PERSIST_NEEDED
-                and (time_pts - last_trigger_time) > VISUAL_COOLDOWN):
-            events.append((time_pts, z, K_VISUAL))
-            last_trigger_time = time_pts
-            spike_flags.clear()
-
-        size_buffer.append(size)
-
-    progress_bar("Visual", total, total, extra="done")
-    print()
-    return events
-
-# ==============================================================================
-# SIGNAL 2: Motion — GOP (MAD) + P/B (SG + regression + MAD)
-# ==============================================================================
-
-def get_motion_events(video_path):
+def _probe_fps(chunk_path: str) -> float:
     cmd = [
-        FFPROBE_EXE, '-v', 'error', '-select_streams', 'v:0',
-        '-show_entries', 'frame=pkt_pts_time,pts_time,pkt_size,size,pict_type',
-        '-of', 'json', video_path
+        FFPROBE_EXE, "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=avg_frame_rate",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        chunk_path
     ]
-    result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True)
+    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        frames = json.loads(result.stdout).get('frames', [])
+        num, den = r.stdout.strip().split("/")
+        fps = float(num) / float(den)
+        return fps if 1.0 < fps < 240.0 else 30.0
     except Exception:
-        return [], []
+        return 30.0
 
-    total         = len(frames)
-    gop_events    = []
-    pb_events     = []
-    pb_buffer     = deque(maxlen=MV_WINDOW)
-    spike_flags   = deque(maxlen=PB_PERSIST_WINDOW)
-    last_gop_time = -999.0
-    last_pb_time  = -999.0
-    last_i_time   = -999.0
-    gop_intervals = deque(maxlen=30)
+def worker_extract_chunk(video_path: str, start_time: float,
+                         seq_id: int, video_id: str) -> dict:
+    chunk_path = _cut_chunk(video_path, start_time)
 
-    for idx, frame in enumerate(frames):
-        ptype    = frame.get('pict_type', 'U')
-        size     = float(frame.get('pkt_size') or frame.get('size') or 0)
-        time_pts = float(frame.get('pkt_pts_time') or frame.get('pts_time') or -1)
-        if time_pts < 0 or size == 0:
-            continue
+    try:
+        fps = _probe_fps(chunk_path)
+        audio_start = start_time - AUDIO_OVERLAP_SEC
+        audio_duration = CHUNK_DURATION_SEC + AUDIO_OVERLAP_SEC
 
-        if idx % max(1, total // 20) == 0:
-            progress_bar("Motion", idx, total, extra=f"{hms(time_pts)}")
+        packet = {
+            "video_id":              video_id,
+            "sequence_id":           seq_id,
+            "chunk_start_time":      round(start_time, 6),
+            "chunk_end_time":        round(start_time + CHUNK_DURATION_SEC, 6),
+            "audio_overlap_sec":     AUDIO_OVERLAP_SEC,
+            "fps":                   fps,
+            "audio_window_sec":      AUDIO_MICRO_WINDOW_SEC,
+            "flux_window_sec":       FLUX_WINDOW_SEC,
+            "perceptual_chunk_hash": hashlib.md5(
+                f"{video_id}|{start_time:.3f}|{seq_id}".encode()
+            ).hexdigest(),
+            "frames":        [],
+            "audio_rms":     [],
+            "spectral_flux": [],
+        }
 
-        if ptype == 'I':
-            if last_i_time > 0:
-                interval = time_pts - last_i_time
-                if len(gop_intervals) >= GOP_MIN_WARMUP:
-                    z = mad_zscore(interval, gop_intervals)
-                    if (time_pts > LOCKOUT_PERIOD
-                            and z < -K_GOP
-                            and (time_pts - last_gop_time) > GOP_COOLDOWN):
-                        gop_events.append((time_pts, abs(z), K_GOP))
-                        last_gop_time = time_pts
-                gop_intervals.append(interval)
-            last_i_time = time_pts
+        frame_cmd = [
+            FFPROBE_EXE, "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "frame=pkt_size,pict_type,key_frame",
+            "-of", "compact=p=0",
+            chunk_path
+        ]
+        proc = subprocess.Popen(frame_cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL, text=True)
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            parts = {}
+            for kv in line.split("|"):
+                if "=" in kv:
+                    k, v = kv.split("=", 1)
+                    parts[k] = v
+            try:
+                size = float(parts.get("pkt_size", 0))
+                if size == 0:
+                    continue
+                ptype = parts.get("pict_type", "U")
+                if parts.get("key_frame", "0") == "1":
+                    ptype = "I"
+                packet["frames"].append({"type": ptype, "size": int(size)})
+            except Exception:
+                continue
+        proc.stdout.close()
+        proc.wait()
 
-        if ptype in ('P', 'B'):
-            z        = 0.0
-            is_spike = False
-            if time_pts > LOCKOUT_PERIOD and len(pb_buffer) >= MV_MIN_WARMUP:
-                z        = predict_next_pb(size, pb_buffer)
-                is_spike = abs(z) > K_PB
+        rms_cmd = [
+            FFMPEG_EXE, "-v", "error",
+            "-ss", str(audio_start), "-i", video_path,
+            "-t", str(audio_duration),
+            "-vn", "-acodec", "pcm_s16le",
+            "-ar", str(AUDIO_SAMPLE_RATE), "-ac", "1",
+            "-f", "s16le", "pipe:1"
+        ]
+        rms_proc = subprocess.Popen(rms_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        win_bytes = int(AUDIO_MICRO_WINDOW_SEC * AUDIO_SAMPLE_RATE) * 2
+        leftover = b""
+        audio_offset = audio_start
 
-            spike_flags.append(1 if is_spike else 0)
-
-            if (time_pts > LOCKOUT_PERIOD
-                    and len(spike_flags) == PB_PERSIST_WINDOW
-                    and sum(spike_flags) >= PB_PERSIST_NEEDED
-                    and (time_pts - last_pb_time) > PB_COOLDOWN):
-                pb_events.append((time_pts, z, K_PB))
-                last_pb_time = time_pts
-                spike_flags.clear()
-
-            pb_buffer.append(size)
-
-    # Deduplicate close GOP + P/B events
-    all_mv  = sorted(gop_events + pb_events, key=lambda x: x[0])
-    deduped_gop, deduped_pb = [], []
-    last = -999.0
-    for ev in all_mv:
-        if ev[0] - last > min(GOP_COOLDOWN, PB_COOLDOWN):
-            if ev in gop_events:
-                deduped_gop.append(ev)
-            else:
-                deduped_pb.append(ev)
-            last = ev[0]
-
-    progress_bar("Motion", total, total, extra="done")
-    print()
-    return deduped_gop, deduped_pb
-
-# ==============================================================================
-# AUDIO EXTRACTION
-# ==============================================================================
-
-def extract_audio(video_path, sample_rate=44100, tag="tmp"):
-    temp_wav = os.path.join(SCRIPT_DIR, f"_audio_{tag}.wav")
-    if os.path.exists(temp_wav):
-        os.remove(temp_wav)
-    for exe in [FFMPEG_EXE, "ffmpeg"]:
-        try:
-            subprocess.run(
-                [exe, '-y', '-i', video_path, '-vn',
-                 '-acodec', 'pcm_s16le', '-ar', str(sample_rate), '-ac', '1', temp_wav],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            if os.path.exists(temp_wav) and os.path.getsize(temp_wav) > 0:
+        while True:
+            raw = rms_proc.stdout.read(win_bytes)
+            if not raw:
                 break
-        except FileNotFoundError:
+            leftover += raw
+            while len(leftover) >= win_bytes:
+                window_raw = leftover[:win_bytes]
+                leftover = leftover[win_bytes:]
+                samples = np.frombuffer(window_raw, dtype=np.int16).astype(np.float64)
+                rms = float(np.sqrt(np.mean(samples ** 2))) if np.any(samples) else 0.0
+                packet["audio_rms"].append({
+                    "time": round(audio_offset + AUDIO_MICRO_WINDOW_SEC / 2, 6),
+                    "rms": round(rms, 4)
+                })
+                audio_offset += AUDIO_MICRO_WINDOW_SEC
+
+        rms_proc.stdout.close()
+        rms_proc.wait()
+
+        flux_cmd = [
+            FFMPEG_EXE, "-v", "error",
+            "-ss", str(audio_start), "-i", video_path,
+            "-t", str(audio_duration),
+            "-vn", "-acodec", "pcm_s16le",
+            "-ar", str(FLUX_SAMPLE_RATE), "-ac", "1",
+            "-f", "s16le", "pipe:1"
+        ]
+        flux_proc = subprocess.Popen(flux_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        hop_samples = max(1, int(FLUX_WINDOW_SEC * FLUX_SAMPLE_RATE))
+        n_fft = hop_samples * 2
+        hann_win = np.hanning(n_fft)
+        hop_bytes = n_fft * 2
+        leftover2 = b""
+        prev_spec = None
+        flux_offset = audio_start
+
+        while True:
+            raw = flux_proc.stdout.read(hop_bytes)
+            if not raw:
+                break
+            leftover2 += raw
+            while len(leftover2) >= hop_bytes:
+                window_raw = leftover2[:hop_bytes]
+                leftover2 = leftover2[hop_bytes:]
+                samples = np.frombuffer(window_raw, dtype=np.int16).astype(np.float64)
+                spectrum = np.abs(np.fft.rfft(samples * hann_win))
+                norm = np.linalg.norm(spectrum)
+                if norm > 1e-9:
+                    spectrum /= norm
+                if prev_spec is not None:
+                    fv = float(np.sum(np.maximum(spectrum - prev_spec, 0.0)))
+                    packet["spectral_flux"].append({
+                        "time": round(flux_offset + FLUX_WINDOW_SEC / 2, 6),
+                        "flux": round(fv, 6)
+                    })
+                prev_spec = spectrum
+                flux_offset += FLUX_WINDOW_SEC
+
+        flux_proc.stdout.close()
+        flux_proc.wait()
+
+        return packet
+
+    finally:
+        try:
+            os.unlink(chunk_path)
+        except Exception:
+            pass
+
+# ==============================================================================
+# LEADER: Reconstruct timeline and run detection
+# ==============================================================================
+
+class LeaderDetector:
+    @staticmethod
+    def _iframe_sandwich(size_list, cur_idx, cur_size):
+        if not IFRAME_SANDWICH_ENABLED:
+            return True
+        if cur_idx < IFRAME_MIN_CONTEXT or cur_idx >= len(size_list) - 1:
+            return True
+        before = [s for _, s in size_list[max(0, cur_idx - IFRAME_CONTEXT_WINDOW):cur_idx]]
+        after = [s for _, s in size_list[cur_idx + 1: min(len(size_list), cur_idx + IFRAME_CONTEXT_WINDOW + 1)]]
+        if len(before) < 2 or len(after) < 2:
+            return True
+        ctx_mean = np.mean(before + after)
+        if ctx_mean < 1e-6:
+            return True
+        ctx_std = max(np.std(before), np.std(after))
+        if ctx_std < ctx_mean * 0.1:
+            if cur_size / (ctx_mean + 1e-9) > IFRAME_STABILITY_RATIO * 10:
+                return False
+        return True
+
+    @staticmethod
+    def _detect_jerk(motion_history):
+        if not MOTION_JERK_ENABLED or len(motion_history) < JERK_WINDOW:
+            return True
+        ml = list(motion_history)[-JERK_WINDOW:]
+        velocities = [ml[i+1] - ml[i] for i in range(len(ml)-1)]
+        accelerations = [abs(velocities[i+1] - velocities[i]) for i in range(len(velocities)-1)]
+        if not accelerations:
+            return True
+        mean_a = np.mean(accelerations)
+        std_a = np.std(accelerations)
+        if std_a < 1e-9:
+            return True
+        jerk = (max(accelerations) - mean_a) / (std_a + 1e-9)
+        return jerk > JERK_ACCEL_THRESHOLD
+
+    def _build_timeline(self, packets: list) -> tuple:
+        frames = []
+        audio = []
+        flux = []
+        
+        for pkt in packets:
+            start = pkt["chunk_start_time"]
+            overlap = pkt["audio_overlap_sec"]
+            fps = pkt["fps"]
+            
+            for idx, frm in enumerate(pkt["frames"]):
+                t = start + idx / fps
+                frames.append((t, frm["type"], int(frm["size"])))
+            
+            for rms_item in pkt["audio_rms"]:
+                if rms_item["time"] >= start - 0.001:
+                    audio.append((rms_item["time"], rms_item["rms"]))
+            
+            for flux_item in pkt["spectral_flux"]:
+                if flux_item["time"] >= start - 0.001:
+                    flux.append((flux_item["time"], flux_item["flux"]))
+        
+        frames.sort(key=lambda x: x[0])
+        audio.sort(key=lambda x: x[0])
+        flux.sort(key=lambda x: x[0])
+        return frames, audio, flux
+
+    def run_detection(self, packets: list) -> dict:
+        frames, audio_samples, flux_samples = self._build_timeline(packets)
+
+        v_size_buf = deque(maxlen=VISUAL_MAX_FRAMES)
+        v_spike_flags = deque(maxlen=VISUAL_PERSIST_WINDOW)
+        v_last_trig = -999.0
+        v_triggers = []
+        v_sizes_sandwich = []
+        scene_trans_end = 0.0
+
+        mv_pb_buf = deque(maxlen=MV_WINDOW)
+        mv_spike_flags = deque(maxlen=MV_PERSIST_WINDOW)
+        mv_last_trig = -999.0
+        mv_last_i_t = -999.0
+        mv_gop = deque(maxlen=30)
+        mv_triggers = []
+        jerk_history = deque(maxlen=JERK_WINDOW)
+
+        for (t, ptype, size) in frames:
+            is_i = (ptype == "I")
+
+            if is_i:
+                v_sizes_sandwich.append((t, size))
+                cur_idx = len(v_sizes_sandwich) - 1
+
+                if len(v_size_buf) >= 2:
+                    prev = list(v_size_buf)[-1]
+                    if prev > 0 and size / prev > SCENE_CHANGE_RATIO:
+                        scene_trans_end = t + SCENE_CHANGE_TOLERANCE
+
+                if t < scene_trans_end:
+                    spike = False
+                elif t > LOCKOUT_PERIOD and len(v_size_buf) >= VISUAL_MIN_WARMUP:
+                    _, spike = adaptive_zscore(size, v_size_buf, K_VISUAL_THRESHOLD)
+                else:
+                    spike = False
+
+                v_spike_flags.append(1 if spike else 0)
+
+                if (t > LOCKOUT_PERIOD and len(v_spike_flags) == VISUAL_PERSIST_WINDOW
+                        and sum(v_spike_flags) >= VISUAL_PERSIST_NEEDED
+                        and (t - v_last_trig) > VISUAL_COOLDOWN
+                        and (t - v_last_trig) > MIN_EVENT_GAP):
+                    if self._iframe_sandwich(v_sizes_sandwich, cur_idx, size):
+                        v_triggers.append(t)
+                        v_last_trig = t
+                    v_spike_flags.clear()
+
+                v_size_buf.append(size)
+
+                if mv_last_i_t > 0:
+                    interval = t - mv_last_i_t
+                    if len(mv_gop) >= 10:
+                        mean_gop = np.mean(mv_gop)
+                        if (t > LOCKOUT_PERIOD and mean_gop > 0
+                                and interval < mean_gop * GOP_SHORT_RATIO
+                                and (t - mv_last_trig) > MV_COOLDOWN):
+                            mv_triggers.append(t)
+                            mv_last_trig = t
+                    mv_gop.append(interval)
+                mv_last_i_t = t
+
+            if ptype in ("P", "B"):
+                jerk_history.append(size)
+                mv_pb_buf.append(size)
+
+                if t > LOCKOUT_PERIOD and len(mv_pb_buf) >= MV_MIN_WARMUP:
+                    _, spike = adaptive_zscore(size, mv_pb_buf, K_MV_THRESHOLD)
+                else:
+                    spike = False
+
+                mv_spike_flags.append(1 if spike else 0)
+
+                if (t > LOCKOUT_PERIOD and len(mv_spike_flags) == MV_PERSIST_WINDOW
+                        and sum(mv_spike_flags) >= MV_PERSIST_NEEDED
+                        and (t - mv_last_trig) > MV_COOLDOWN
+                        and (t - mv_last_trig) > MIN_EVENT_GAP):
+                    if self._detect_jerk(jerk_history):
+                        mv_triggers.append(t)
+                        mv_last_trig = t
+                    mv_spike_flags.clear()
+
+        mv_triggers.sort()
+        deduped_mv, last_t = [], -999.0
+        for t in mv_triggers:
+            if t - last_t > MV_COOLDOWN:
+                deduped_mv.append(t)
+                last_t = t
+
+        rms_buf = deque(maxlen=int(AUDIO_BUFFER_SEC / AUDIO_MICRO_WINDOW_SEC))
+        rms_consec = 0
+        rms_last_trig = -999.0
+        rms_triggers = []
+        sil_in = False
+        sil_start = -999.0
+        sil_last_trig = -999.0
+        sil_triggers = []
+
+        for (micro_t, micro_rms) in audio_samples:
+            if micro_t > LOCKOUT_PERIOD and len(rms_buf) == rms_buf.maxlen:
+                mu = float(np.mean(rms_buf))
+                sigma = float(np.std(rms_buf))
+                is_spike = (micro_rms > AUDIO_NOISE_FLOOR and sigma > 0
+                            and micro_rms > mu + K_AUDIO_RMS_THRESHOLD * sigma)
+                rms_consec = rms_consec + 1 if is_spike else 0
+
+                if (rms_consec >= AUDIO_PERSIST_NEEDED
+                        and (micro_t - rms_last_trig) > AUDIO_COOLDOWN
+                        and (micro_t - rms_last_trig) > MIN_EVENT_GAP):
+                    rms_triggers.append(micro_t)
+                    rms_last_trig = micro_t
+                    rms_consec = 0
+
+                if mu > AUDIO_NOISE_FLOOR:
+                    is_silent = micro_rms < mu * SILENCE_THRESHOLD_RATIO
+                    if is_silent and not sil_in:
+                        sil_in, sil_start = True, micro_t
+                    elif not is_silent and sil_in:
+                        sil_in = False
+                        dur = micro_t - sil_start
+                        if (dur >= SILENCE_MIN_DURATION
+                                and (sil_start - sil_last_trig) > SILENCE_COOLDOWN):
+                            sil_triggers.append(sil_start)
+                            sil_last_trig = sil_start
+
+            rms_buf.append(micro_rms)
+
+        flux_buf = deque(maxlen=max(10, int(FLUX_BUFFER_SEC / FLUX_WINDOW_SEC)))
+        flux_consec = 0
+        flux_last_trig = -999.0
+        flux_triggers = []
+
+        for (flux_t, fv) in flux_samples:
+            if flux_t > LOCKOUT_PERIOD and len(flux_buf) >= int(flux_buf.maxlen * 0.3):
+                _, spike = adaptive_zscore(fv, flux_buf, K_FLUX_THRESHOLD)
+                flux_consec = flux_consec + 1 if spike else 0
+
+                if (flux_consec >= FLUX_PERSIST_NEEDED
+                        and (flux_t - flux_last_trig) > FLUX_COOLDOWN
+                        and (flux_t - flux_last_trig) > MIN_EVENT_GAP):
+                    flux_triggers.append(flux_t)
+                    flux_last_trig = flux_t
+                    flux_consec = 0
+
+            flux_buf.append(fv)
+
+        return {
+            "Visual": v_triggers,
+            "Motion": deduped_mv,
+            "AudioRMS": rms_triggers,
+            "Silence": sil_triggers,
+            "SpectralFlux": flux_triggers,
+        }
+
+# ==============================================================================
+# FUSION AND SELECTION (unchanged)
+# ==============================================================================
+
+def fuse_all_signals(signal_dict: dict) -> list:
+    all_events = sorted(
+        [{"time": t, "signal": lbl} for lbl, ts in signal_dict.items() for t in ts],
+        key=lambda x: x["time"]
+    )
+    used, clusters = [False] * len(all_events), []
+    for i, ev in enumerate(all_events):
+        if used[i]: continue
+        cluster = [ev]; used[i] = True
+        for j in range(i + 1, len(all_events)):
+            if used[j]: continue
+            if all_events[j]["time"] - cluster[0]["time"] > TOLERANCE_SEC: break
+            cluster.append(all_events[j]); used[j] = True
+        clusters.append(cluster)
+
+    merged = []
+    for cluster in clusters:
+        sigs = list({e["signal"] for e in cluster})
+        vm_sigs = [s for s in sigs if s in VISUAL_MOTION_SIGNALS]
+        if not vm_sigs:
             continue
-    if not os.path.exists(temp_wav) or os.path.getsize(temp_wav) == 0:
-        return None, None
-    try:
-        sr, data = wavfile.read(temp_wav)
-        os.remove(temp_wav)
-        if len(data.shape) > 1:
-            data = np.mean(data, axis=1)
-        return sr, data.astype(np.float64)
-    except Exception:
-        return None, None
+        avg_t = round(float(np.mean([e["time"] for e in cluster])), 2)
+        base_weight = len(set(vm_sigs))
+        audio_present = {e["signal"] for e in cluster
+                         if e["signal"] in AUDIO_SIGNALS
+                         and abs(e["time"] - avg_t) <= AUDIO_UPGRADE_WINDOW}
+        weight = base_weight + len(audio_present)
+        all_sigs = sorted(set(vm_sigs) | audio_present)
+        default_feats = {k: 0.5 for k in ["magnitude", "acceleration", "edge_change", "uniformity", "persistence"]}
+        score = compute_trigger_score(weight, default_feats)
+        merged.append((avg_t, "+".join(all_sigs), len(all_sigs), min(weight, 5), default_feats, score))
 
-# ==============================================================================
-# SIGNAL 3 + 4: Audio RMS (MAD) + Silence
-# ==============================================================================
+    merged.sort(key=lambda x: x[0])
+    return merged
 
-def get_audio_rms_events(video_path):
-    sample_rate, data = extract_audio(video_path, sample_rate=44100, tag="rms")
-    if data is None:
-        print("    [!] Audio extraction failed")
+def apply_window_merge(fused_events, window=MERGE_WINDOW):
+    if not fused_events: return []
+    result, i = [], 0
+    while i < len(fused_events):
+        group, j = [], i
+        while j < len(fused_events) and fused_events[j][0] <= fused_events[i][0] + window:
+            group.append(fused_events[j]); j += 1
+        if len(group) >= 2:
+            all_lbl = set(s for e in group for s in e[1].split("+"))
+            avg_feats = {k: 0.5 for k in ["magnitude", "acceleration", "edge_change", "uniformity", "persistence"]}
+            score = compute_trigger_score(3, avg_feats)
+            result.append((round(float(np.mean([e[0] for e in group])), 2),
+                           "+".join(sorted(all_lbl)), len(all_lbl), 3, avg_feats, score))
+        else:
+            result.append(group[0])
+        i = j
+    return result
+
+def events_to_dicts(fused_events):
+    return [{"time": e[0], "label": e[1], "n_sig": e[2], "weight": e[3],
+             "features": e[4] if len(e) > 4 else {},
+             "score": e[5] if len(e) > 5 else compute_trigger_score(e[3], {})}
+            for e in fused_events]
+
+def dicts_to_tuples(event_dicts):
+    return [(e["time"], e["label"], e["n_sig"], e["weight"], e["features"], e["score"])
+            for e in event_dicts]
+
+def select_strongest_per_window(event_dicts, window_sec=SELECTION_WINDOW_SEC,
+                                 overlap=SELECTION_OVERLAP, min_gap=SELECTION_MIN_GAP):
+    if not event_dicts:
         return [], []
+    hop_sec = window_sec * (1.0 - overlap)
+    total_time = max(e["time"] for e in event_dicts) + 1.0
+    n_windows = max(1, int(np.ceil((total_time - window_sec) / hop_sec)) + 1)
+    kept_set = set()
 
-    micro_samples    = int(AUDIO_MICRO_WINDOW_SEC * sample_rate)
-    bg_chunks_needed = int(AUDIO_BUFFER_SEC / AUDIO_MICRO_WINDOW_SEC)
-    total_chunks     = len(data) // micro_samples
+    for w in range(n_windows):
+        win_start = w * hop_sec
+        win_end = win_start + window_sec
+        in_window = [i for i, e in enumerate(event_dicts) if win_start <= e["time"] < win_end]
+        if not in_window: continue
+        kept_set.add(max(in_window, key=lambda i: event_dicts[i]["score"]))
 
-    spike_events   = []
-    silence_events = []
-    rms_buffer     = deque(maxlen=bg_chunks_needed)
-    consec_spikes  = 0
-    in_silence     = False
-    silence_start  = -999.0
-    last_spike_t   = -999.0
-    last_sil_t     = -999.0
+    sorted_kept = sorted(kept_set, key=lambda i: event_dicts[i]["time"])
+    final_kept, last_t = [], -999.0
+    for i in sorted_kept:
+        t = event_dicts[i]["time"]
+        if t - last_t >= min_gap:
+            final_kept.append(i)
+            last_t = t
 
-    for i in range(total_chunks):
-        chunk     = data[i * micro_samples : (i + 1) * micro_samples]
-        micro_rms = float(np.sqrt(np.mean(chunk ** 2))) if np.any(chunk) else 0.0
-        time_pts  = (i * micro_samples) / sample_rate
-
-        if i % max(1, total_chunks // 20) == 0:
-            progress_bar("AudioRMS", i, total_chunks, extra=f"{hms(time_pts)}")
-
-        if time_pts > LOCKOUT_PERIOD and len(rms_buffer) == bg_chunks_needed:
-            mu        = float(np.mean(rms_buffer))
-            z         = mad_zscore(micro_rms, rms_buffer)
-            is_spike  = (micro_rms > AUDIO_NOISE_FLOOR and z > K_AUDIO_RMS)
-            consec_spikes = consec_spikes + 1 if is_spike else 0
-            if (consec_spikes >= AUDIO_PERSIST_NEEDED
-                    and (time_pts - last_spike_t) > AUDIO_COOLDOWN):
-                spike_events.append((time_pts, z, K_AUDIO_RMS))
-                last_spike_t  = time_pts
-                consec_spikes = 0
-
-            if mu > AUDIO_NOISE_FLOOR:
-                silence_z = mad_zscore(micro_rms, rms_buffer)
-                is_silent = micro_rms < mu * SILENCE_THRESHOLD_RATIO
-                if is_silent and not in_silence:
-                    in_silence    = True
-                    silence_start = time_pts
-                elif not is_silent and in_silence:
-                    in_silence = False
-                    duration   = time_pts - silence_start
-                    if (duration >= SILENCE_MIN_DURATION
-                            and (silence_start - last_sil_t) > SILENCE_COOLDOWN):
-                        silence_events.append((silence_start, abs(silence_z), K_SILENCE))
-                        last_sil_t = silence_start
-
-        rms_buffer.append(micro_rms)
-
-    progress_bar("AudioRMS", total_chunks, total_chunks, extra="done")
-    print()
-    return spike_events, silence_events
+    fk = set(final_kept)
+    return ([event_dicts[i] for i in range(len(event_dicts)) if i in fk],
+            [event_dicts[i] for i in range(len(event_dicts)) if i not in fk])
 
 # ==============================================================================
-# SIGNAL 5: Spectral Flux (MAD)
-# ==============================================================================
-
-def get_spectral_flux_events(video_path):
-    sample_rate, data = extract_audio(video_path, sample_rate=22050, tag="flux")
-    if data is None:
-        print("    [!] Audio extraction failed")
-        return []
-
-    hop_samples      = max(1, int(FLUX_WINDOW_SEC * sample_rate))
-    n_fft            = hop_samples * 2
-    bg_chunks_needed = max(10, int(FLUX_BUFFER_SEC / FLUX_WINDOW_SEC))
-    hann_win         = np.hanning(n_fft)
-    total_chunks     = len(data) // hop_samples
-
-    events            = []
-    flux_buffer       = deque(maxlen=bg_chunks_needed)
-    consec_flux       = 0
-    last_trigger_time = -999.0
-    prev_spectrum     = None
-
-    for i in range(total_chunks):
-        start    = i * hop_samples
-        chunk    = data[start : start + n_fft]
-        if len(chunk) < n_fft:
-            chunk = np.pad(chunk, (0, n_fft - len(chunk)))
-        time_pts = start / sample_rate
-
-        if i % max(1, total_chunks // 20) == 0:
-            progress_bar("SpectFlux", i, total_chunks, extra=f"{hms(time_pts)}")
-
-        spectrum = np.abs(np.fft.rfft(chunk * hann_win))
-        norm     = np.linalg.norm(spectrum)
-        if norm > 1e-9:
-            spectrum = spectrum / norm
-
-        if prev_spectrum is not None:
-            flux = float(np.sum(np.maximum(spectrum - prev_spectrum, 0.0)))
-            if (time_pts > LOCKOUT_PERIOD
-                    and len(flux_buffer) >= int(bg_chunks_needed * 0.3)):
-                z           = mad_zscore(flux, flux_buffer)
-                is_spike    = z > K_FLUX
-                consec_flux = consec_flux + 1 if is_spike else 0
-                if (consec_flux >= FLUX_PERSIST_NEEDED
-                        and (time_pts - last_trigger_time) > FLUX_COOLDOWN):
-                    events.append((time_pts, z, K_FLUX))
-                    last_trigger_time = time_pts
-                    consec_flux       = 0
-            flux_buffer.append(flux)
-
-        prev_spectrum = spectrum
-
-    progress_bar("SpectFlux", total_chunks, total_chunks, extra="done")
-    print()
-    return events
-
-# ==============================================================================
-# PASS 2: Bhattacharyya Histogram Verification
-# ==============================================================================
-
-def decode_frame_hue_histogram(video_path, timestamp, bins=BHATT_HIST_BINS):
-    cmd = [
-        FFMPEG_EXE, '-ss', str(timestamp), '-i', video_path,
-        '-vframes', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'
-    ]
-    try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, timeout=10)
-        raw = result.stdout
-        if not raw:
-            return None
-        total_pixels = len(raw) // 3
-        if total_pixels == 0:
-            return None
-        side   = int(np.sqrt(total_pixels))
-        pixels = np.frombuffer(raw[:side * side * 3],
-                               dtype=np.uint8).reshape(-1, 3)
-        r = pixels[:, 0].astype(np.float32)
-        g = pixels[:, 1].astype(np.float32)
-        b = pixels[:, 2].astype(np.float32)
-
-        maxc = np.maximum(np.maximum(r, g), b)
-        minc = np.minimum(np.minimum(r, g), b)
-        diff = maxc - minc + 1e-9
-
-        hue      = np.zeros(len(r), dtype=np.float32)
-        mask_r   = (maxc == r)
-        mask_g   = (maxc == g)
-        mask_b   = (maxc == b)
-        hue[mask_r] = (60 * ((g[mask_r] - b[mask_r]) / diff[mask_r])) % 360
-        hue[mask_g] = (60 * ((b[mask_g] - r[mask_g]) / diff[mask_g]) + 120) % 360
-        hue[mask_b] = (60 * ((r[mask_b] - g[mask_b]) / diff[mask_b]) + 240) % 360
-
-        hist, _ = np.histogram(hue, bins=bins, range=(0, 360))
-        hist    = hist.astype(np.float64)
-        total   = hist.sum()
-        if total > 0:
-            hist /= total
-        return hist
-    except Exception:
-        return None
-
-
-def bhattacharyya_distance(h1, h2):
-    bc = np.sum(np.sqrt(h1 * h2 + 1e-12))
-    return float(-np.log(bc + 1e-12))
-
-
-def verify_candidates_bhattacharyya(video_path, candidates):
-    if not BHATT_ENABLE:
-        return [(t, l, n, c, -1.0) for t, l, n, c in candidates], []
-
-    verified = []
-    rejected = []
-    print(f"\n  [Pass 2] Bhattacharyya verification on {len(candidates)} candidates...")
-
-    for ts, label, n_sig, confidence in candidates:
-        t_before = max(0.0, ts - BHATT_OFFSET_SEC)
-        t_after  = ts + BHATT_OFFSET_SEC
-        h1 = decode_frame_hue_histogram(video_path, t_before)
-        h2 = decode_frame_hue_histogram(video_path, t_after)
-
-        if h1 is None or h2 is None:
-            verified.append((ts, label, n_sig, confidence, -1.0))
-            continue
-
-        dist = bhattacharyya_distance(h1, h2)
-        if dist < BHATT_REJECT_BELOW:
-            rejected.append((ts, label, n_sig, confidence, dist))
-        else:
-            verified.append((ts, label, n_sig, confidence, dist))
-
-    print(f"  [Pass 2] Kept: {len(verified)}  Rejected: {len(rejected)}")
-    return verified, rejected
-
-# ==============================================================================
-# GATED GAUSSIAN FUSION (KDE)
-# ==============================================================================
-
-def fuse_all_signals_kde(event_dict, video_duration):
-    n_bins     = int(video_duration / GRID_RESOLUTION) + 1
-    sigma_bins = FUSION_SIGMA_SEC / GRID_RESOLUTION
-
-    grids    = {name: to_confidence_grid(events, n_bins)
-                for name, events in event_dict.items()}
-    smoothed = {name: gaussian_filter1d(g, sigma=sigma_bins)
-                for name, g in grids.items()}
-
-    # T-conorm audio gate
-    rms_s      = smoothed.get("audio_rms",     np.zeros(n_bins))
-    flux_s     = smoothed.get("spectral_flux", np.zeros(n_bins))
-    audio_gate = rms_s + flux_s - (rms_s * flux_s)
-    audio_gate = np.clip(audio_gate, 0.0, 1.0)
-
-    fused           = np.zeros(n_bins, dtype=np.float64)
-    active_capacity = 0.0
-
-    for name, s_grid in smoothed.items():
-        if name == "motion_pb":
-            dynamic_weight   = PB_WEIGHT_BASE + (PB_WEIGHT_MAX - PB_WEIGHT_BASE) * audio_gate
-            fused           += s_grid * dynamic_weight
-            active_capacity += PB_WEIGHT_MAX if np.any(s_grid > 0) else 0.0
-        else:
-            w                = SIGNAL_WEIGHTS.get(name, 1.0)
-            fused           += s_grid * w
-            active_capacity += w if np.any(s_grid > 0) else 0.0
-
-    tau = max(0.05, PEAK_THRESHOLD_PCT * active_capacity)
-
-    min_gap_bins = int(PEAK_MIN_GAP_SEC / GRID_RESOLUTION)
-    peak_indices, _ = find_peaks(fused, height=tau, distance=min_gap_bins)
-
-    candidates = []
-    for idx in peak_indices:
-        ts           = round(idx * GRID_RESOLUTION, 2)
-        confidence   = float(fused[idx])
-        contributing = [name for name, s_grid in smoothed.items()
-                        if s_grid[idx] > 0.01]
-        label        = "+".join(sorted(contributing)) if contributing else "unknown"
-        n_signals    = len(contributing)
-        candidates.append((ts, label, n_signals, confidence))
-
-    return candidates, fused
-
-# ==============================================================================
-# VALIDATE ONE VIDEO
+# VALIDATION
 # ==============================================================================
 
 def classify_hit_position(ts, seg):
-    near_start = abs(ts - seg["start"]) <= BOUNDARY_TOLERANCE
-    near_end   = abs(ts - seg["end"])   <= BOUNDARY_TOLERANCE
-    inside     = seg["start"] < ts < seg["end"]
-
-    if near_start and not near_end:
-        return "START"
-    elif near_end and not near_start:
-        return "END"
-    elif near_start and near_end:
-        return "START+END"
-    elif inside:
-        return "IN-BETWEEN"
+    ns = abs(ts - seg["start"]) <= BOUNDARY_TOLERANCE
+    ne = abs(ts - seg["end"]) <= BOUNDARY_TOLERANCE
+    inside = seg["start"] < ts < seg["end"]
+    if ns and not ne: return "START"
+    if ne and not ns: return "END"
+    if ns and ne: return "START+END"
+    if inside: return "IN-BETWEEN"
     return None
 
-
-def validate_video(video_name, segments, verified_candidates, rejected_candidates):
-    seg_results = []
-    fp_events   = []
-    segs        = [dict(s, hit=None) for s in segments]
-
-    for ts, label, n_sig, confidence, bhatt_dist in verified_candidates:
+def validate_video(video_name, segments, final_events):
+    segs = [dict(s, hit=None) for s in segments]
+    fp_events = []
+    for ev in final_events:
+        ts, label, n_sig, weight = ev[0], ev[1], ev[2], ev[3]
+        feats = ev[4] if len(ev) > 4 else {}
+        score = ev[5] if len(ev) > 5 else 0.0
         claimed = False
         for seg in segs:
             pos = classify_hit_position(ts, seg)
             if pos is not None and seg["hit"] is None:
-                seg["hit"] = {
-                    "ts": ts, "label": label, "n_sig": n_sig,
-                    "position": pos, "confidence": confidence,
-                    "bhatt_dist": bhatt_dist
-                }
+                seg["hit"] = {"ts": ts, "label": label, "n_sig": n_sig,
+                              "weight": weight, "position": pos,
+                              "features": feats, "score": score}
                 claimed = True
                 break
         if not claimed:
-            fp_events.append({
-                "ts": ts, "label": label, "n_sig": n_sig,
-                "confidence": confidence, "bhatt_dist": bhatt_dist
-            })
+            fp_events.append({"ts": ts, "label": label, "n_sig": n_sig,
+                              "weight": weight, "features": feats, "score": score})
 
+    seg_results = []
     for seg in segs:
+        src = seg.get("source", seg.get("sources", ["unknown"])[0] if seg.get("sources") else "unknown")
+        if isinstance(src, list):
+            src = ", ".join(src[:2])
         seg_results.append({
-            "index"                : seg["index"],
-            "source"               : seg["source"],
-            "start"                : seg["start"],
-            "end"                  : seg["end"],
-            "duration"             : seg["duration"],
-            "original_insert_point": seg.get("original_insert_point", seg["start"]),
-            "start_frame"          : seg.get("start_frame", None),
-            "end_frame"            : seg.get("end_frame",   None),
-            "hit"                  : seg["hit"],
+            "index": seg["index"], "source": src,
+            "start": seg["start"], "end": seg["end"],
+            "duration": seg["duration"], "hit": seg["hit"]
         })
-
-    return seg_results, fp_events, rejected_candidates
+    return seg_results, fp_events
 
 # ==============================================================================
-# PRINT VIDEO REPORT
+# EXTENDED REPORTING HELPERS
 # ==============================================================================
 
-def confidence_str(n, conf=None):
-    if conf is not None:
-        return f"{conf:.3f}"
-    if n >= 3: return "HIGH"
-    if n == 2: return "MED "
-    return "LOW "
+ALL_SIGNALS = ["Visual", "Motion", "AudioRMS", "Silence", "SpectralFlux"]
 
+def _parse_signals_from_label(label: str) -> set:
+    """Extract individual signal names from a fused label string."""
+    return set(label.split("+"))
 
-def print_video_report(video_name, seg_results, fp_events,
-                       signal_dict, verified, rejected):
-    hits  = sum(1 for s in seg_results if s["hit"] is not None)
+def _signal_contribution_table(events: list, label: str) -> dict:
+    """
+    For a list of event dicts (hits or FPs), count how many times each signal
+    appeared in the fused label.  Returns {signal: count}.
+    """
+    counts = {s: 0 for s in ALL_SIGNALS}
+    for ev in events:
+        sigs = _parse_signals_from_label(ev.get("label", ""))
+        for s in sigs:
+            if s in counts:
+                counts[s] += 1
+    return counts
+
+def _confidence_breakdown(events: list) -> dict:
+    """Return {WIDE: n, HIGH: n, LOW: n} for a list of event dicts."""
+    breakdown = {"WIDE": 0, "HIGH": 0, "LOW": 0}
+    for ev in events:
+        lbl = confidence_label(ev.get("weight", 1))
+        breakdown[lbl] += 1
+    return breakdown
+
+def _video_index_from_name(video_name: str) -> int:
+    """Extract numeric index from 'attacked_N.mp4'."""
+    try:
+        stem = os.path.splitext(video_name)[0]       # attacked_N
+        return int(stem.split("_")[-1])
+    except Exception:
+        return -1
+
+def _duration_group(video_index: int) -> str:
+    """Map video index to duration group label."""
+    if 1 <= video_index <= 20:
+        return "30s"
+    elif 21 <= video_index <= 30:
+        return "10s"
+    elif 31 <= video_index <= 41:
+        return "60s+"
+    return "unknown"
+
+# ==============================================================================
+# REPORTING (EXTENDED)
+# ==============================================================================
+
+def print_video_report(video_name, seg_results, fp_events, signal_dict,
+                       fused_events, final_events, dropped_events):
     total = len(seg_results)
-
-    section(f"VIDEO: {video_name}   [{hits}/{total} segments detected]")
-
-    print(f"  Raw events per signal:")
-    for sig, evs in signal_dict.items():
-        bar = "▪" * min(len(evs), 40)
-        print(f"    {sig:<15} {len(evs):>4} events  {bar}")
-
-    print(f"  Fused candidates : {len(verified) + len(rejected)}")
-    print(f"  Pass 2 verified  : {len(verified)}  rejected: {len(rejected)}")
-
-    print(f"\n  {'#':>3}  {'SOURCE':<16}  {'ORIG_PT':>8}  {'START':>8}  "
-          f"{'END':>8}  {'DUR':>5}  {'HIT @':>8}  {'POS':<12}  "
-          f"{'CONF':>6}  {'BHATT':>6}  SIGNALS")
-    print(f"  {'─'*3}  {'─'*16}  {'─'*8}  {'─'*8}  "
-          f"{'─'*8}  {'─'*5}  {'─'*8}  {'─'*12}  "
-          f"{'─'*6}  {'─'*6}  {'─'*30}")
-
-    for s in seg_results:
-        src  = s["source"][:15]
-        orig = s.get("original_insert_point", s["start"])
-        if s["hit"]:
-            h  = s["hit"]
-            bd = f"{h['bhatt_dist']:.3f}" if h['bhatt_dist'] >= 0 else "N/A"
-            print(f"  {s['index']:>3}  {src:<16}  {orig:>8.3f}  {s['start']:>8.3f}  "
-                  f"{s['end']:>8.3f}  {s['duration']:>5.2f}  {h['ts']:>8.2f}  "
-                  f"✓ {h['position']:<10}  {h['confidence']:>6.3f}  "
-                  f"{bd:>6}  {h['label'][:30]}")
-        else:
-            print(f"  {s['index']:>3}  {src:<16}  {orig:>8.3f}  {s['start']:>8.3f}  "
-                  f"{s['end']:>8.3f}  {s['duration']:>5.2f}  {'—':>8}  "
-                  f"✗ {'MISSED':<10}  {'':>6}  {'':>6}")
-
-    if rejected:
-        print(f"\n  Pass 2 Rejected ({len(rejected)}):")
-        for ts, label, n, conf, bd in rejected:
-            print(f"    @ {ts:>9.2f}s  dist={bd:.4f}  [{label}]  conf={conf:.3f}")
-
-    if fp_events:
-        print(f"\n  Remaining False Positives ({len(fp_events)}):")
-        for fp in fp_events:
-            bd = f"{fp['bhatt_dist']:.3f}" if fp['bhatt_dist'] >= 0 else "N/A"
-            print(f"    @ {fp['ts']:>9.2f}s  [{fp['label']}]  "
-                  f"conf={fp['confidence']:.3f}  bhatt={bd}")
-    else:
-        print(f"\n  False Positives: 0  ✓")
-
+    hits = sum(1 for s in seg_results if s["hit"])
     rate = hits / total * 100 if total else 0
-    print(f"\n  Detection rate: {hits}/{total}  ({rate:.1f}%)   |   "
-          f"FP: {len(fp_events)}  |  Pass2 rejected: {len(rejected)}")
 
-# ==============================================================================
-# OVERALL SUMMARY
-# ==============================================================================
+    section(f"VIDEO: {video_name}   [{hits}/{total}  {rate:.1f}%]")
+    print("  Raw triggers per signal:")
+    for sig, ts in signal_dict.items():
+        print(f"    {sig:<15} {len(ts):>4}  {'▪'*min(len(ts),40)}")
+    print(f"  Fused: {len(fused_events)}  Final: {len(final_events)}  Dropped: {len(dropped_events)}")
+
+    if hits > 0:
+        print(f"\n  HITS:")
+        for s in seg_results:
+            if s["hit"]:
+                h = s["hit"]
+                print(f"    Segment {s['index']}: HIT at {h['ts']:.2f}s ({h['position']}) [{h['label']}]")
+    
+    if len(seg_results) - hits > 0:
+        print(f"\n  MISSED:")
+        for s in seg_results:
+            if not s["hit"]:
+                print(f"    Segment {s['index']}: MISSED")
+    
+    if fp_events:
+        print(f"\n  False Positives ({len(fp_events)}):")
+        for fp in fp_events[:10]:
+            print(f"    @ {fp['ts']:.2f}s [{confidence_label(fp['weight'])}] {fp['label']}")
+        if len(fp_events) > 10:
+            print(f"    ... and {len(fp_events) - 10} more")
+
 
 def print_overall_summary(all_video_stats):
-    banner("COMPLETE EVALUATION SUMMARY")
-
-    total_segs = sum(v["total"]    for v in all_video_stats)
-    total_hits = sum(v["hits"]     for v in all_video_stats)
-    total_fp   = sum(v["fp"]       for v in all_video_stats)
-    total_rej  = sum(v["rejected"] for v in all_video_stats)
-    total_vids = len(all_video_stats)
-    overall    = total_hits / total_segs * 100 if total_segs else 0
-
-    print(f"\n  {'VIDEO':<35}  {'N':>2}  {'SEGS':>4}  {'HITS':>4}  "
-          f"{'RATE':>6}  {'FP':>4}  {'REJ':>4}  STATUS")
-    print(f"  {'─'*35}  {'─'*2}  {'─'*4}  {'─'*4}  "
-          f"{'─'*6}  {'─'*4}  {'─'*4}  {'─'*8}")
+    banner("FINAL SUMMARY - ALL VIDEOS")
+    
+    total_segs = sum(v["total"] for v in all_video_stats)
+    total_hits = sum(v["hits"] for v in all_video_stats)
+    total_fp = sum(v["fp"] for v in all_video_stats)
+    total_worker = sum(v["worker_time"] for v in all_video_stats)
+    total_leader = sum(v["leader_time"] for v in all_video_stats)
+    overall = total_hits / total_segs * 100 if total_segs else 0
+    
+    print(f"\n  {'VIDEO':<35}  {'SEGS':>4}  {'HITS':>5}  {'RATE':>6}  {'FP':>4}  {'WORKER':>8}  {'LEADER':>8}")
+    print(f"  {'─'*35}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*8}  {'─'*8}")
+    
     for v in all_video_stats:
-        rate   = v["hits"] / v["total"] * 100 if v["total"] else 0
-        status = "✓ PASS" if rate >= 50 else "✗ FAIL"
-        print(f"  {v['name']:<35}  {v['n_inserts']:>2}  {v['total']:>4}  "
-              f"{v['hits']:>4}  {rate:>5.1f}%  {v['fp']:>4}  "
-              f"{v['rejected']:>4}  {status}")
-    print(f"  {'─'*35}  {'─'*2}  {'─'*4}  {'─'*4}  "
-          f"{'─'*6}  {'─'*4}  {'─'*4}  {'─'*8}")
-    print(f"  {'TOTAL':<35}  {'':>2}  {total_segs:>4}  {total_hits:>4}  "
-          f"{overall:>5.1f}%  {total_fp:>4}  {total_rej:>4}")
+        rate = v["hits"] / v["total"] * 100 if v["total"] else 0
+        print(f"  {v['name']:<35}  {v['total']:>4}  {v['hits']:>5}  {rate:>5.1f}%  {v['fp']:>4}  {v['worker_time']:>7.1f}s  {v['leader_time']:>7.3f}s")
+    
+    print(f"  {'─'*35}  {'─'*4}  {'─'*5}  {'─'*6}  {'─'*4}  {'─'*8}  {'─'*8}")
+    print(f"  {'TOTAL':<35}  {total_segs:>4}  {total_hits:>5}  {overall:>5.1f}%  {total_fp:>4}  {total_worker:>7.1f}s  {total_leader:>7.3f}s")
+    
+    print(f"\n  {'='*70}")
+    print(f"  DETECTION RATE: {total_hits}/{total_segs} ({overall:.2f}%)")
+    print(f"  TOTAL WORKER TIME: {total_worker:.1f}s ({total_worker/60:.1f} minutes)")
+    print(f"  TOTAL LEADER TIME: {total_leader:.3f}s")
+    print(f"  SPEEDUP (worker vs leader): {total_worker / max(total_leader, 0.001):.0f}x")
+    print(f"  {'='*70}")
 
-    print(f"\n  Pass 2 rejected {total_rej} candidates across all videos")
+    # ------------------------------------------------------------------ #
+    #  EXTENDED SECTION 1: Global signal-level contribution to HITs / FPs #
+    # ------------------------------------------------------------------ #
+    section("SIGNAL-LEVEL CONTRIBUTION  (across all videos)")
 
-    print(f"\n  Hit Position Breakdown:")
-    pos_counts = {}
+    # Collect all hit-events and FP-events across videos
+    all_hit_evs = []
+    all_fp_evs  = []
     for v in all_video_stats:
-        for p in v["positions"]:
-            pos_counts[p] = pos_counts.get(p, 0) + 1
-    for pos, cnt in sorted(pos_counts.items(), key=lambda x: -x[1]):
-        print(f"    {pos:<14}: {cnt:>4}  {'█' * cnt}")
+        all_hit_evs.extend(v.get("hit_events", []))
+        all_fp_evs.extend(v.get("fp_events",  []))
 
-    print(f"\n  Per-Signal Contribution:")
-    sig_hits, sig_fp = {}, {}
+    hit_sig = _signal_contribution_table(all_hit_evs, "hits")
+    fp_sig  = _signal_contribution_table(all_fp_evs,  "fps")
+
+    total_hit_ev = max(len(all_hit_evs), 1)
+    total_fp_ev  = max(len(all_fp_evs),  1)
+
+    print(f"  {'SIGNAL':<15}  {'HIT contrib':>11}  {'HIT %':>7}  {'FP contrib':>10}  {'FP %':>7}")
+    print(f"  {'─'*15}  {'─'*11}  {'─'*7}  {'─'*10}  {'─'*7}")
+    for sig in ALL_SIGNALS:
+        hc = hit_sig[sig]
+        fc = fp_sig[sig]
+        print(f"  {sig:<15}  {hc:>11}  {hc/total_hit_ev*100:>6.1f}%  {fc:>10}  {fc/total_fp_ev*100:>6.1f}%")
+
+    # ------------------------------------------------------------------ #
+    #  EXTENDED SECTION 2: WIDE / HIGH / LOW  breakdown for HITs and FPs  #
+    # ------------------------------------------------------------------ #
+    section("CONFIDENCE TIER  (WIDE / HIGH / LOW)  HIT & FP rates")
+
+    hit_conf = _confidence_breakdown(all_hit_evs)
+    fp_conf  = _confidence_breakdown(all_fp_evs)
+    total_ev = len(all_hit_evs) + len(all_fp_evs)
+
+    for tier in ["WIDE", "HIGH", "LOW"]:
+        h = hit_conf[tier]
+        f = fp_conf[tier]
+        t = h + f
+        hr = h / t * 100 if t else 0.0
+        fr = f / t * 100 if t else 0.0
+        print(f"  {tier:<6}  hits={h:>4}  fps={f:>4}  hit_rate={hr:>5.1f}%  fp_rate={fr:>5.1f}%")
+
+    # ------------------------------------------------------------------ #
+    #  EXTENDED SECTION 3: Duration-group summary                          #
+    # ------------------------------------------------------------------ #
+    _print_duration_group_summary(all_video_stats)
+
+
+def _print_duration_group_summary(all_video_stats):
+    """
+    Groups:
+      videos  1–20  → 30s violent segments
+      videos 21–30  → 10s violent segments
+      videos 31–41  → 60s+ violent segments
+    """
+    groups = {
+        "30s  (videos  1–20)": [],
+        "10s  (videos 21–30)": [],
+        "60s+ (videos 31–41)": [],
+    }
+    group_key = {
+        "30s  (videos  1–20)":  lambda i: 1  <= i <= 20,
+        "10s  (videos 21–30)":  lambda i: 21 <= i <= 30,
+        "60s+ (videos 31–41)":  lambda i: 31 <= i <= 41,
+    }
+
     for v in all_video_stats:
-        for sig, cnt in v["sig_hits"].items():
-            sig_hits[sig] = sig_hits.get(sig, 0) + cnt
-        for sig, cnt in v["sig_fp"].items():
-            sig_fp[sig] = sig_fp.get(sig, 0) + cnt
+        idx = _video_index_from_name(v["name"])
+        for gname, pred in group_key.items():
+            if pred(idx):
+                groups[gname].append(v)
+                break
 
-    all_sigs = sorted(set(list(sig_hits.keys()) + list(sig_fp.keys())))
-    print(f"  {'Signal':<15}  {'Hits':>5}  {'FP':>6}  Precision")
-    print(f"  {'─'*15}  {'─'*5}  {'─'*6}  {'─'*9}")
-    for sig in all_sigs:
-        h    = sig_hits.get(sig, 0)
-        fp   = sig_fp.get(sig, 0)
-        tot  = h + fp
-        prec = h / tot * 100 if tot > 0 else 0.0
-        print(f"  {sig:<15}  {h:>5}  {fp:>6}  {prec:>8.1f}%")
+    section("DURATION-GROUP SUMMARY")
+    hdr = f"  {'GROUP':<26}  {'VIDEOS':>6}  {'SEGS':>5}  {'HITS':>5}  {'RATE':>7}  {'FP':>5}  {'WIDE hits':>10}  {'HIGH hits':>10}  {'LOW hits':>9}"
+    print(hdr)
+    print(f"  {'─'*26}  {'─'*6}  {'─'*5}  {'─'*5}  {'─'*7}  {'─'*5}  {'─'*10}  {'─'*10}  {'─'*9}")
 
-    print(f"\n{'═'*65}")
-    print(f"  OVERALL DETECTION RATE   : {total_hits:>4} / {total_segs}  ({overall:.2f}%)")
-    print(f"  TOTAL FALSE POSITIVES    : {total_fp}")
-    print(f"  PASS 2 REJECTIONS        : {total_rej}")
-    fpr = total_fp / (total_fp + total_hits) * 100 if (total_fp + total_hits) > 0 else 0
-    print(f"  FALSE POSITIVE RATE      : {fpr:.2f}%")
-    print(f"  VIDEOS PROCESSED         : {total_vids}")
-    print(f"{'═'*65}\n")
+    for gname, vlist in groups.items():
+        if not vlist:
+            print(f"  {gname:<26}  {'—':>6}  {'—':>5}  {'—':>5}  {'—':>7}  {'—':>5}  {'—':>10}  {'—':>10}  {'—':>9}")
+            continue
+
+        g_segs   = sum(v["total"]      for v in vlist)
+        g_hits   = sum(v["hits"]       for v in vlist)
+        g_fp     = sum(v["fp"]         for v in vlist)
+        g_rate   = g_hits / g_segs * 100 if g_segs else 0.0
+        g_nvids  = len(vlist)
+
+        # Confidence breakdown of hits in this group
+        g_hit_evs = []
+        for v in vlist:
+            g_hit_evs.extend(v.get("hit_events", []))
+        g_conf = _confidence_breakdown(g_hit_evs)
+
+        print(f"  {gname:<26}  {g_nvids:>6}  {g_segs:>5}  {g_hits:>5}  {g_rate:>6.1f}%  {g_fp:>5}"
+              f"  {g_conf['WIDE']:>10}  {g_conf['HIGH']:>10}  {g_conf['LOW']:>9}")
+
+    # Per-group signal contribution table
+    print()
+    for gname, vlist in groups.items():
+        if not vlist:
+            continue
+        g_hit_evs = []
+        g_fp_evs  = []
+        for v in vlist:
+            g_hit_evs.extend(v.get("hit_events", []))
+            g_fp_evs.extend(v.get("fp_events",  []))
+
+        hit_sig = _signal_contribution_table(g_hit_evs, "hits")
+        fp_sig  = _signal_contribution_table(g_fp_evs,  "fps")
+        th = max(len(g_hit_evs), 1)
+        tf = max(len(g_fp_evs),  1)
+
+        print(f"  ── {gname}  signal breakdown ──")
+        print(f"    {'SIGNAL':<15}  {'HIT':>5}  {'HIT%':>6}  {'FP':>5}  {'FP%':>6}")
+        for sig in ALL_SIGNALS:
+            h = hit_sig[sig]; f = fp_sig[sig]
+            print(f"    {sig:<15}  {h:>5}  {h/th*100:>5.1f}%  {f:>5}  {f/tf*100:>5.1f}%")
+        print()
+
 
 # ==============================================================================
-# REPORT WRITER
+# EXTENDED write_report
 # ==============================================================================
 
-W = 80
+def write_report(report_path, all_video_stats, run_ts):
+    total_segs   = sum(v["total"]       for v in all_video_stats)
+    total_hits   = sum(v["hits"]        for v in all_video_stats)
+    total_fp     = sum(v["fp"]          for v in all_video_stats)
+    total_worker = sum(v["worker_time"] for v in all_video_stats)
+    total_leader = sum(v["leader_time"] for v in all_video_stats)
+    overall      = total_hits / total_segs * 100 if total_segs else 0
 
-def rl(f, text=""):
-    f.write(text + "\n")
+    all_hit_evs = []
+    all_fp_evs  = []
+    for v in all_video_stats:
+        all_hit_evs.extend(v.get("hit_events", []))
+        all_fp_evs.extend(v.get("fp_events",  []))
 
-def rheader(f, title, char="="):
-    f.write("\n" + char * W + "\n")
-    pad = max(0, (W - len(title)) // 2)
-    f.write(" " * pad + title + "\n")
-    f.write(char * W + "\n")
+    with open(report_path, "w", encoding="utf-8") as f:
 
-def rsection(f, title, char="-"):
-    f.write("\n" + char * W + "\n")
-    f.write("  " + title + "\n")
-    f.write(char * W + "\n")
+        # ── Header ────────────────────────────────────────────────────────
+        f.write("="*80 + "\n")
+        f.write("DISTRIBUTED VIOLENCE DETECTION - FINAL REPORT\n")
+        f.write("="*80 + "\n\n")
+        f.write(f"Run: {run_ts}\n")
+        f.write(f"Architecture: {NUM_WORKERS} workers (extract JSON) + 1 leader (detect)\n")
+        f.write(f"Chunk size: {CHUNK_DURATION_SEC}s\n")
+        f.write(f"Audio overlap: {AUDIO_OVERLAP_SEC*1000:.0f}ms (for spectral flux continuity)\n")
+        f.write(f"Total videos: {len(all_video_stats)}\n\n")
 
-def rbar(f, label, value, max_val, width=40, unit=""):
-    filled = int(width * min(value / max_val, 1.0)) if max_val > 0 else 0
-    bar    = "#" * filled + "." * (width - filled)
-    f.write(f"  {label:<22} [{bar}] {value}{unit}\n")
+        # ── Per-video table ────────────────────────────────────────────────
+        f.write(f"{'VIDEO':<35}  {'SEGS':>4}  {'HITS':>5}  {'RATE':>6}  {'FP':>4}  {'WORKER':>8}  {'LEADER':>8}\n")
+        f.write("-"*80 + "\n")
+        for v in all_video_stats:
+            rate = v["hits"] / v["total"] * 100 if v["total"] else 0
+            f.write(f"{v['name']:<35}  {v['total']:>4}  {v['hits']:>5}  {rate:>5.1f}%  {v['fp']:>4}"
+                    f"  {v['worker_time']:>7.1f}s  {v['leader_time']:>7.3f}s\n")
+        f.write("-"*80 + "\n")
+        f.write(f"{'TOTAL':<35}  {total_segs:>4}  {total_hits:>5}  {overall:>5.1f}%  {total_fp:>4}"
+                f"  {total_worker:>7.1f}s  {total_leader:>7.3f}s\n\n")
+        f.write(f"DETECTION RATE: {total_hits}/{total_segs} ({overall:.2f}%)\n")
+        f.write(f"WORKER TIME:    {total_worker:.1f}s ({total_worker/60:.1f} minutes)\n")
+        f.write(f"LEADER TIME:    {total_leader:.3f}s\n")
+        f.write(f"SPEEDUP:        {total_worker / max(total_leader, 0.001):.0f}x\n\n")
 
+        # ── Per-video hit / FP detail ──────────────────────────────────────
+        f.write("="*80 + "\n")
+        f.write("PER-VIDEO  HIT & FALSE-POSITIVE DETAIL\n")
+        f.write("="*80 + "\n\n")
 
-def write_full_report(report_path, all_video_data, run_ts):
-    with open(report_path, "a", encoding="utf-8") as f:
+        for v in all_video_stats:
+            vidx = _video_index_from_name(v["name"])
+            dgrp = _duration_group(vidx)
+            rate = v["hits"] / v["total"] * 100 if v["total"] else 0
+            f.write(f"{'─'*70}\n")
+            f.write(f"  {v['name']}  [{dgrp} group]  {v['hits']}/{v['total']} ({rate:.1f}%)"
+                    f"  FP={v['fp']}\n")
 
-        rheader(f, "MULTI-MODAL BOUNDARY DETECTOR  v3.0  -  EVALUATION REPORT")
-        rl(f)
-        rl(f, f"  Run timestamp      : {run_ts}")
-        rl(f, f"  Ground truth file  : {GROUND_TRUTH_JSON}")
-        rl(f, f"  Attacked folder    : {ATTACKED_DIR}/")
-        rl(f, f"  Videos processed   : {len(all_video_data)}")
-        rl(f, f"  Report file        : {report_path}")
-        rl(f)
-        rl(f, f"  Signals : Visual(MAD) | Motion(GOP+PB) | "
-               f"AudioRMS(MAD) | Silence | SpectralFlux(MAD)")
-        rl(f, f"  Fusion  : KDE (Gaussian) + T-conorm audio gate + Hadamard P/B gate")
-        rl(f, f"  Pass 2  : Bhattacharyya HSV histogram verification")
-        rl(f)
-        rl(f, f"  Scoring : HIT = any fused+verified event within "
-               f"[start-{BOUNDARY_TOLERANCE}s .. end+{BOUNDARY_TOLERANCE}s]")
-        rl(f, f"  Positions: START | END | IN-BETWEEN | START+END")
-
-        rheader(f, "CONFIGURATION", char="-")
-        params = [
-            ("BOUNDARY_TOLERANCE",      BOUNDARY_TOLERANCE),
-            ("LOCKOUT_PERIOD",          LOCKOUT_PERIOD),
-            ("GRID_RESOLUTION",         GRID_RESOLUTION),
-            ("FUSION_SIGMA_SEC",        FUSION_SIGMA_SEC),
-            ("SIGMOID_STEEPNESS",       SIGMOID_STEEPNESS),
-            ("PEAK_MIN_GAP_SEC",        PEAK_MIN_GAP_SEC),
-            ("PEAK_THRESHOLD_PCT",      PEAK_THRESHOLD_PCT),
-            ("PB_WEIGHT_BASE",          PB_WEIGHT_BASE),
-            ("PB_WEIGHT_MAX",           PB_WEIGHT_MAX),
-            ("--- Visual ---",          ""),
-            ("K_VISUAL",                K_VISUAL),
-            ("VISUAL_COOLDOWN",         VISUAL_COOLDOWN),
-            ("VISUAL_PERSIST_NEEDED",   VISUAL_PERSIST_NEEDED),
-            ("--- Motion ---",          ""),
-            ("K_GOP",                   K_GOP),
-            ("GOP_SHORT_RATIO",         GOP_SHORT_RATIO),
-            ("K_PB",                    K_PB),
-            ("PB_COOLDOWN",             PB_COOLDOWN),
-            ("SG_WINDOW",               SG_WINDOW),
-            ("SG_POLY",                 SG_POLY),
-            ("--- Audio RMS ---",       ""),
-            ("K_AUDIO_RMS",             K_AUDIO_RMS),
-            ("AUDIO_NOISE_FLOOR",       AUDIO_NOISE_FLOOR),
-            ("AUDIO_COOLDOWN",          AUDIO_COOLDOWN),
-            ("--- Silence ---",         ""),
-            ("SILENCE_THRESHOLD_RATIO", SILENCE_THRESHOLD_RATIO),
-            ("SILENCE_MIN_DURATION",    SILENCE_MIN_DURATION),
-            ("SILENCE_COOLDOWN",        SILENCE_COOLDOWN),
-            ("--- Spectral Flux ---",   ""),
-            ("K_FLUX",                  K_FLUX),
-            ("FLUX_COOLDOWN",           FLUX_COOLDOWN),
-            ("FLUX_PERSIST_NEEDED",     FLUX_PERSIST_NEEDED),
-            ("--- Pass 2 ---",          ""),
-            ("BHATT_ENABLE",            BHATT_ENABLE),
-            ("BHATT_OFFSET_SEC",        BHATT_OFFSET_SEC),
-            ("BHATT_REJECT_BELOW",      BHATT_REJECT_BELOW),
-            ("BHATT_HIST_BINS",         BHATT_HIST_BINS),
-        ]
-        rl(f, f"  {'Parameter':<35}  Value")
-        rl(f, f"  {'─'*35}  {'─'*20}")
-        for k, v in params:
-            if v == "":
-                rl(f, f"  {k}")
+            # Hit events
+            h_evs = v.get("hit_events", [])
+            if h_evs:
+                f.write(f"  HITS ({len(h_evs)}):\n")
+                for ev in h_evs:
+                    tier  = confidence_label(ev.get("weight", 1))
+                    score = ev.get("score", 0.0)
+                    f.write(f"    @ {ev['ts']:>8.2f}s  [{tier:<4}]  score={score:.4f}  signals={ev['label']}\n")
             else:
-                rl(f, f"  {k:<35}  {v}")
+                f.write(f"  HITS: none\n")
 
-        rheader(f, "PER-VIDEO DETAILED RESULTS")
-
-        for vd in all_video_data:
-            vname     = vd["name"]
-            seg_res   = vd["seg_results"]
-            fp_events = vd["fp_events"]
-            sig_dict  = vd["signal_dict"]
-            merged    = vd["merged_events"]
-            elapsed   = vd["elapsed"]
-
-            hits  = sum(1 for s in seg_res if s["hit"])
-            total = len(seg_res)
-            rate  = hits / total * 100 if total else 0
-            fp_n  = len(fp_events)
-            fpr_v = fp_n / (fp_n + hits) * 100 if (fp_n + hits) > 0 else 0.0
-
-            rsection(f, f"VIDEO: {vname}")
-            rl(f)
-            rl(f, f"  Carrier source     : {vd.get('carrier_source', 'unknown')}")
-            rl(f, f"  Carrier duration   : {vd.get('carrier_duration', '?')}s")
-            rl(f, f"  Attacked duration  : {vd.get('attacked_duration', '?')}s")
-            rl(f, f"  Resolution         : {vd.get('resolution', 'unknown')}")
-            rl(f, f"  FPS                : {vd.get('fps', '?')}")
-            rl(f, f"  N inserts          : {vd.get('n_inserts', '?')}")
-            rl(f)
-            rl(f, f"  Result             : {hits}/{total} detected  ({rate:.1f}%)")
-            rl(f, f"  False positives    : {fp_n}  (video FPR: {fpr_v:.1f}%)")
-            rl(f, f"  Processing time    : {elapsed:.1f}s")
-            rl(f)
-
-            # Insert drift table
-            rl(f, "  INSERT DRIFT ANALYSIS:")
-            rl(f, f"  {'#':>3}  {'SOURCE':<16}  {'ORIG_PT':>10}  "
-                   f"{'ACT_START':>10}  {'DRIFT':>8}  {'DUR':>6}  "
-                   f"{'SF':>8}  {'EF':>8}")
-            rl(f, f"  {'─'*3}  {'─'*16}  {'─'*10}  "
-                   f"{'─'*10}  {'─'*8}  {'─'*6}  "
-                   f"{'─'*8}  {'─'*8}")
-            for s in seg_res:
-                orig  = s.get("original_insert_point", s["start"])
-                drift = s["start"] - orig
-                sf    = s.get("start_frame", "?")
-                ef    = s.get("end_frame",   "?")
-                rl(f, f"  {s['index']:>3}  {s['source']:<16}  {orig:>10.3f}  "
-                       f"{s['start']:>10.3f}  {drift:>+8.3f}  "
-                       f"{s['duration']:>6.3f}  {str(sf):>8}  {str(ef):>8}")
-            rl(f)
-
-            # Raw trigger counts
-            rl(f, "  RAW TRIGGER COUNTS PER SIGNAL:")
-            max_raw = max((len(v) for v in sig_dict.values()), default=1)
-            for sig, ts_list in sig_dict.items():
-                rbar(f, sig, len(ts_list), max(max_raw, 1),
-                     width=35, unit=" triggers")
-            rl(f, f"  {'':22}   Fused events: {len(merged)}")
-            rl(f)
-
-            # All raw timestamps per signal
-            rl(f, "  ALL RAW TRIGGER TIMESTAMPS PER SIGNAL:")
-            for sig, ts_list in sig_dict.items():
-                times_str = ("  ".join(f"{t:.3f}s" for t in sorted(ts_list))
-                             if ts_list else "(none)")
-                rl(f, f"  {sig:<15} ({len(ts_list):>4}): {times_str}")
-            rl(f)
-
-            # All fused events
-            rl(f, "  ALL FUSED EVENTS (chronological):")
-            rl(f, f"  {'TIME':>10}  {'SIGNALS':<35}  {'N':>2}  OUTCOME")
-            rl(f, f"  {'─'*10}  {'─'*35}  {'─'*2}  {'─'*25}")
-            hit_lookup = {}
-            for s in seg_res:
-                if s["hit"]:
-                    hit_lookup[round(s["hit"]["ts"], 2)] = (
-                        s["index"], s["hit"]["position"]
-                    )
-            for ts, label, n_sig in merged:
-                key = round(ts, 2)
-                if key in hit_lookup:
-                    idx, pos = hit_lookup[key]
-                    outcome  = f"HIT  seg {idx:>2}  pos={pos}"
-                else:
-                    outcome = "FALSE POSITIVE"
-                rl(f, f"  {ts:>10.3f}s  {label:<35}  {n_sig:>2}  {outcome}")
-            rl(f)
-
-            # Segment detection table
-            rl(f, "  SEGMENT DETECTION TABLE:")
-            rl(f, f"  {'#':>3}  {'SOURCE':<16}  {'ORIG_PT':>9}  "
-                   f"{'START':>9}  {'END':>9}  {'DUR':>7}  "
-                   f"{'HIT @':>9}  {'OFFSET':>9}  {'POS':<12}  "
-                   f"{'CONF':>6}  {'BHATT':>6}  SIGNALS")
-            rl(f, f"  {'─'*3}  {'─'*16}  {'─'*9}  "
-                   f"{'─'*9}  {'─'*9}  {'─'*7}  "
-                   f"{'─'*9}  {'─'*9}  {'─'*12}  "
-                   f"{'─'*6}  {'─'*6}  {'─'*25}")
-            for s in seg_res:
-                src  = s["source"][:15]
-                orig = s.get("original_insert_point", s["start"])
-                if s["hit"]:
-                    h      = s["hit"]
-                    offset = h["ts"] - s["start"]
-                    bd     = f"{h['bhatt_dist']:.3f}" if h['bhatt_dist'] >= 0 else "N/A"
-                    conf   = f"{h['confidence']:.3f}"
-                    rl(f, f"  {s['index']:>3}  {src:<16}  {orig:>9.3f}  "
-                           f"{s['start']:>9.3f}  {s['end']:>9.3f}  "
-                           f"{s['duration']:>7.3f}  {h['ts']:>9.3f}  "
-                           f"{offset:>+9.3f}  {h['position']:<12}  "
-                           f"{conf:>6}  {bd:>6}  {h['label'][:25]}")
-                else:
-                    rl(f, f"  {s['index']:>3}  {src:<16}  {orig:>9.3f}  "
-                           f"{s['start']:>9.3f}  {s['end']:>9.3f}  "
-                           f"{s['duration']:>7.3f}  {'---':>9}  "
-                           f"{'---':>9}  {'MISSED':<12}  "
-                           f"{'':>6}  {'':>6}")
-            rl(f)
-
-            # Missed segment analysis
-            missed = [s for s in seg_res if not s["hit"]]
-            if missed:
-                rl(f, f"  MISSED SEGMENTS ({len(missed)}):")
-                for s in missed:
-                    mid = (s["start"] + s["end"]) / 2.0
-                    if merged:
-                        closest    = min(merged, key=lambda e: abs(e[0] - mid))
-                        dist_start = abs(closest[0] - s["start"])
-                        dist_mid   = abs(closest[0] - mid)
-                        dist_end   = abs(closest[0] - s["end"])
-                        rl(f, f"  Seg {s['index']:>2}  src={s['source']}  "
-                               f"{s['start']:.3f}s-{s['end']:.3f}s  "
-                               f"dur={s['duration']:.3f}s")
-                        rl(f, f"    Closest fused : {closest[0]:.3f}s  "
-                               f"signals={closest[1]}")
-                        rl(f, f"    Dist start    : {dist_start:.3f}s  "
-                               f"mid: {dist_mid:.3f}s  end: {dist_end:.3f}s")
-                        rl(f, f"    Tolerance     : {BOUNDARY_TOLERANCE}s  -> "
-                               f"{'JUST MISSED' if dist_start < BOUNDARY_TOLERANCE*2 else 'FAR MISS'}")
-                    else:
-                        rl(f, f"  Seg {s['index']:>2}  (no fused events in video)")
-                rl(f)
+            # FP events
+            fp_evs = v.get("fp_events", [])
+            if fp_evs:
+                f.write(f"  FALSE POSITIVES ({len(fp_evs)}):\n")
+                for ev in fp_evs:
+                    tier  = confidence_label(ev.get("weight", 1))
+                    score = ev.get("score", 0.0)
+                    f.write(f"    @ {ev['ts']:>8.2f}s  [{tier:<4}]  score={score:.4f}  signals={ev['label']}\n")
             else:
-                rl(f, "  MISSED SEGMENTS: none")
-                rl(f)
+                f.write(f"  FALSE POSITIVES: none\n")
 
-            # False positive detail
-            if fp_events:
-                rl(f, f"  FALSE POSITIVE EVENTS ({fp_n}):")
-                rl(f, f"  {'#':>4}  {'TIME':>10}  {'CONF':>6}  "
-                       f"{'BHATT':>6}  SIGNALS")
-                rl(f, f"  {'─'*4}  {'─'*10}  {'─'*6}  {'─'*6}  {'─'*30}")
-                for i, fp in enumerate(fp_events, 1):
-                    bd = f"{fp['bhatt_dist']:.3f}" if fp['bhatt_dist'] >= 0 else "N/A"
-                    rl(f, f"  {i:>4}  {fp['ts']:>10.3f}s  "
-                           f"{fp['confidence']:>6.3f}  {bd:>6}  {fp['label']}")
-                if len(fp_events) > 1:
-                    gaps = [fp_events[i+1]["ts"] - fp_events[i]["ts"]
-                            for i in range(len(fp_events) - 1)]
-                    rl(f)
-                    rl(f, f"  FP spacing: min={min(gaps):.3f}s  "
-                           f"max={max(gaps):.3f}s  "
-                           f"mean={np.mean(gaps):.3f}s  "
-                           f"median={np.median(gaps):.3f}s")
-                    close = sum(1 for g in gaps if g < 10.0)
-                    rl(f, f"  Gaps < 10s: {close}  (burst FP region indicator)")
-            else:
-                rl(f, "  FALSE POSITIVE EVENTS: none")
-            rl(f)
+            # Signal contribution for this video
+            v_hit_sig = _signal_contribution_table(h_evs,  "hits")
+            v_fp_sig  = _signal_contribution_table(fp_evs, "fps")
+            th = max(len(h_evs),  1)
+            tf = max(len(fp_evs), 1)
+            f.write(f"  Signal contribution:\n")
+            f.write(f"    {'SIGNAL':<15}  {'HIT':>4}  {'HIT%':>6}  {'FP':>4}  {'FP%':>6}\n")
+            for sig in ALL_SIGNALS:
+                h_ = v_hit_sig[sig]; fp_ = v_fp_sig[sig]
+                f.write(f"    {sig:<15}  {h_:>4}  {h_/th*100:>5.1f}%  {fp_:>4}  {fp_/tf*100:>5.1f}%\n")
+            f.write("\n")
 
-            # Per-signal contribution
-            rl(f, "  PER-SIGNAL CONTRIBUTION:")
-            rl(f, f"  {'Signal':<15}  {'Raw':>5}  {'Hits':>5}  "
-                   f"{'FP':>6}  {'Precision':>10}")
-            rl(f, f"  {'─'*15}  {'─'*5}  {'─'*5}  {'─'*6}  {'─'*10}")
-            for sig, ts_list in sig_dict.items():
-                raw  = len(ts_list)
-                h    = sum(1 for s in seg_res
-                           if s["hit"] and sig in s["hit"]["label"].split("+"))
-                fp   = sum(1 for e in fp_events
-                           if sig in e["label"].split("+"))
-                prec = h / (h + fp) * 100 if (h + fp) > 0 else 0.0
-                rl(f, f"  {sig:<15}  {raw:>5}  {h:>5}  {fp:>6}  {prec:>9.1f}%")
-            rl(f)
+        # ── Global signal-level contribution ──────────────────────────────
+        f.write("="*80 + "\n")
+        f.write("GLOBAL SIGNAL-LEVEL CONTRIBUTION\n")
+        f.write("="*80 + "\n\n")
 
-        # Overall summary
-        rheader(f, "OVERALL SUMMARY")
+        hit_sig = _signal_contribution_table(all_hit_evs, "hits")
+        fp_sig  = _signal_contribution_table(all_fp_evs,  "fps")
+        th = max(len(all_hit_evs), 1)
+        tf = max(len(all_fp_evs),  1)
 
-        total_segs = sum(len(vd["seg_results"]) for vd in all_video_data)
-        total_hits = sum(sum(1 for s in vd["seg_results"] if s["hit"])
-                         for vd in all_video_data)
-        total_fp   = sum(len(vd["fp_events"]) for vd in all_video_data)
-        overall    = total_hits / total_segs * 100 if total_segs else 0
-        fpr        = total_fp / (total_fp + total_hits) * 100 \
-                     if (total_fp + total_hits) > 0 else 0
-        total_time = sum(vd["elapsed"] for vd in all_video_data)
+        f.write(f"  {'SIGNAL':<15}  {'HIT':>6}  {'HIT%':>7}  {'FP':>6}  {'FP%':>7}\n")
+        f.write(f"  {'─'*15}  {'─'*6}  {'─'*7}  {'─'*6}  {'─'*7}\n")
+        for sig in ALL_SIGNALS:
+            h_ = hit_sig[sig]; fp_ = fp_sig[sig]
+            f.write(f"  {sig:<15}  {h_:>6}  {h_/th*100:>6.1f}%  {fp_:>6}  {fp_/tf*100:>6.1f}%\n")
+        f.write("\n")
 
-        rl(f)
-        rl(f, f"  {'VIDEO':<38}  {'N':>2}  {'SEGS':>4}  {'HITS':>4}  "
-               f"{'RATE':>6}  {'FP':>5}  {'TIME':>7}  STATUS")
-        rl(f, f"  {'─'*38}  {'─'*2}  {'─'*4}  {'─'*4}  "
-               f"{'─'*6}  {'─'*5}  {'─'*7}  {'─'*6}")
-        for vd in all_video_data:
-            sr  = vd["seg_results"]
-            fpe = vd["fp_events"]
-            h   = sum(1 for s in sr if s["hit"])
-            t   = len(sr)
-            r   = h / t * 100 if t else 0
-            st  = "PASS" if r >= 50 else "FAIL"
-            rl(f, f"  {vd['name']:<38}  {vd.get('n_inserts',0):>2}  "
-                   f"{t:>4}  {h:>4}  {r:>5.1f}%  "
-                   f"{len(fpe):>5}  {vd['elapsed']:>6.1f}s  {st}")
-        rl(f, f"  {'─'*38}  {'─'*2}  {'─'*4}  {'─'*4}  "
-               f"{'─'*6}  {'─'*5}  {'─'*7}  {'─'*6}")
-        rl(f, f"  {'TOTAL':<38}  {'':>2}  {total_segs:>4}  "
-               f"{total_hits:>4}  {overall:>5.1f}%  "
-               f"{total_fp:>5}  {total_time:>6.1f}s")
-        rl(f)
+        # ── Confidence tier breakdown ──────────────────────────────────────
+        f.write("="*80 + "\n")
+        f.write("CONFIDENCE TIER  (WIDE / HIGH / LOW)\n")
+        f.write("="*80 + "\n\n")
 
-        # Hit position breakdown
-        rl(f, "  HIT POSITION BREAKDOWN:")
-        pos_counts = {}
-        for vd in all_video_data:
-            for s in vd["seg_results"]:
-                if s["hit"]:
-                    p = s["hit"]["position"]
-                    pos_counts[p] = pos_counts.get(p, 0) + 1
-        max_pos = max(pos_counts.values(), default=1)
-        for pos, cnt in sorted(pos_counts.items(), key=lambda x: -x[1]):
-            pct = cnt / total_hits * 100 if total_hits else 0
-            rbar(f, pos, cnt, max_pos, width=30,
-                 unit=f"  ({pct:.1f}% of hits)")
-        rl(f)
+        hit_conf = _confidence_breakdown(all_hit_evs)
+        fp_conf  = _confidence_breakdown(all_fp_evs)
+        f.write(f"  {'TIER':<6}  {'HITS':>6}  {'FPS':>6}  {'HIT_RATE':>10}  {'FP_RATE':>9}\n")
+        f.write(f"  {'─'*6}  {'─'*6}  {'─'*6}  {'─'*10}  {'─'*9}\n")
+        for tier in ["WIDE", "HIGH", "LOW"]:
+            h = hit_conf[tier]; fp = fp_conf[tier]
+            t = h + fp
+            hr = h / t * 100 if t else 0.0
+            fr = fp / t * 100 if t else 0.0
+            f.write(f"  {tier:<6}  {h:>6}  {fp:>6}  {hr:>9.1f}%  {fr:>8.1f}%\n")
+        f.write("\n")
 
-        # Trigger offset stats
-        offsets = [s["hit"]["ts"] - s["start"]
-                   for vd in all_video_data
-                   for s in vd["seg_results"] if s["hit"]]
-        if offsets:
-            rl(f, "  TRIGGER OFFSET FROM SEGMENT START:")
-            rl(f, f"  Count  : {len(offsets)}")
-            rl(f, f"  Min    : {min(offsets):+.3f}s")
-            rl(f, f"  Max    : {max(offsets):+.3f}s")
-            rl(f, f"  Mean   : {np.mean(offsets):+.3f}s")
-            rl(f, f"  Median : {np.median(offsets):+.3f}s")
-            rl(f, f"  Std    : {np.std(offsets):.3f}s")
-            neg = sum(1 for o in offsets if o < 0)
-            pos = sum(1 for o in offsets if o > 0)
-            rl(f, f"  Early (before start): {neg}  ({neg/len(offsets)*100:.1f}%)")
-            rl(f, f"  Late  (after  start): {pos}  ({pos/len(offsets)*100:.1f}%)")
-            rl(f)
+        # ── Duration-group summary ─────────────────────────────────────────
+        f.write("="*80 + "\n")
+        f.write("DURATION-GROUP SUMMARY\n")
+        f.write("  Group definitions:\n")
+        f.write("    30s   → attacked_1  .. attacked_20   (1–20 second violent segments)\n")
+        f.write("    10s   → attacked_21 .. attacked_30   (21–30 second violent segments)\n")
+        f.write("    60s+  → attacked_31 .. attacked_41   (31–41 second violent segments)\n")
+        f.write("="*80 + "\n\n")
 
-        # Duration bucket analysis
-        rl(f, "  DETECTION RATE BY SEGMENT DURATION BUCKET:")
-        buckets = [("<5s",   0,  5), ("5-10s",  5, 10),
-                   ("10-20s",10, 20), ("20-30s", 20, 30), (">30s", 30, 9999)]
-        rl(f, f"  {'Bucket':<8}  {'Hits':>5}  {'Total':>6}  {'Rate':>7}")
-        rl(f, f"  {'─'*8}  {'─'*5}  {'─'*6}  {'─'*7}")
-        for bname, blo, bhi in buckets:
-            bh = sum(1 for vd in all_video_data
-                     for s in vd["seg_results"]
-                     if blo <= s["duration"] < bhi and s["hit"])
-            bt = sum(1 for vd in all_video_data
-                     for s in vd["seg_results"]
-                     if blo <= s["duration"] < bhi)
-            br = bh / bt * 100 if bt > 0 else 0.0
-            rl(f, f"  {bname:<8}  {bh:>5}  {bt:>6}  {br:>6.1f}%")
-        rl(f)
+        groups = {
+            "30s  (videos  1-20)": (lambda i: 1  <= i <= 20),
+            "10s  (videos 21-30)": (lambda i: 21 <= i <= 30),
+            "60s+ (videos 31-41)": (lambda i: 31 <= i <= 41),
+        }
 
-        # Per-signal accuracy
-        rl(f, "  PER-SIGNAL ACCURACY (all videos):")
-        sig_hits_all, sig_fp_all, sig_raw_all = {}, {}, {}
-        for vd in all_video_data:
-            for sig, ts_list in vd["signal_dict"].items():
-                sig_raw_all[sig] = sig_raw_all.get(sig, 0) + len(ts_list)
-            for s in vd["seg_results"]:
-                if s["hit"]:
-                    for sig in s["hit"]["label"].split("+"):
-                        sig_hits_all[sig] = sig_hits_all.get(sig, 0) + 1
-            for e in vd["fp_events"]:
-                for sig in e["label"].split("+"):
-                    sig_fp_all[sig] = sig_fp_all.get(sig, 0) + 1
+        for gname, pred in groups.items():
+            gvids = [v for v in all_video_stats if pred(_video_index_from_name(v["name"]))]
+            if not gvids:
+                f.write(f"  {gname}: no videos\n\n")
+                continue
 
-        all_sigs = sorted(set(
-            list(sig_hits_all.keys()) +
-            list(sig_fp_all.keys()) +
-            list(sig_raw_all.keys())
-        ))
-        rl(f, f"  {'Signal':<15}  {'Raw':>6}  {'Hits':>5}  "
-               f"{'FP':>6}  {'Precision':>10}  {'Recall':>8}  {'F1':>6}")
-        rl(f, f"  {'─'*15}  {'─'*6}  {'─'*5}  "
-               f"{'─'*6}  {'─'*10}  {'─'*8}  {'─'*6}")
-        for sig in all_sigs:
-            raw  = sig_raw_all.get(sig, 0)
-            h    = sig_hits_all.get(sig, 0)
-            fp   = sig_fp_all.get(sig, 0)
-            prec = h / (h + fp) * 100 if (h + fp) > 0 else 0.0
-            rec  = h / total_segs * 100 if total_segs > 0 else 0.0
-            f1   = (2 * prec * rec / (prec + rec)
-                    if (prec + rec) > 0 else 0.0)
-            rl(f, f"  {sig:<15}  {raw:>6}  {h:>5}  "
-                   f"{fp:>6}  {prec:>9.1f}%  {rec:>7.1f}%  {f1:>5.1f}%")
-        rl(f)
+            g_segs  = sum(v["total"] for v in gvids)
+            g_hits  = sum(v["hits"]  for v in gvids)
+            g_fp    = sum(v["fp"]    for v in gvids)
+            g_rate  = g_hits / g_segs * 100 if g_segs else 0.0
 
-        # Signal co-occurrence on true hits
-        rl(f, "  SIGNAL CO-OCCURRENCE ON TRUE HITS:")
-        cooc = {a: {b: 0 for b in all_sigs} for a in all_sigs}
-        for vd in all_video_data:
-            for s in vd["seg_results"]:
-                if s["hit"]:
-                    sigs = s["hit"]["label"].split("+")
-                    for a in sigs:
-                        for b in sigs:
-                            if a in cooc and b in cooc[a]:
-                                cooc[a][b] += 1
-        hdr = " " * 17 + "  ".join(f"{s[:10]:>10}" for s in all_sigs)
-        rl(f, f"  {hdr}")
-        for a in all_sigs:
-            row = "  ".join(f"{cooc[a].get(b,0):>10}" for b in all_sigs)
-            rl(f, f"  {a:<15}  {row}")
-        rl(f)
+            g_hit_evs = []
+            g_fp_evs  = []
+            for v in gvids:
+                g_hit_evs.extend(v.get("hit_events", []))
+                g_fp_evs.extend(v.get("fp_events",  []))
 
-        # Signal co-occurrence on FPs
-        rl(f, "  SIGNAL CO-OCCURRENCE ON FALSE POSITIVES:")
-        fp_cooc = {a: {b: 0 for b in all_sigs} for a in all_sigs}
-        for vd in all_video_data:
-            for e in vd["fp_events"]:
-                sigs = e["label"].split("+")
-                for a in sigs:
-                    for b in sigs:
-                        if a in fp_cooc and b in fp_cooc[a]:
-                            fp_cooc[a][b] += 1
-        rl(f, f"  {hdr}")
-        for a in all_sigs:
-            row = "  ".join(f"{fp_cooc[a].get(b,0):>10}" for b in all_sigs)
-            rl(f, f"  {a:<15}  {row}")
-        rl(f)
+            g_conf     = _confidence_breakdown(g_hit_evs)
+            g_hit_sig  = _signal_contribution_table(g_hit_evs, "hits")
+            g_fp_sig   = _signal_contribution_table(g_fp_evs,  "fps")
+            th = max(len(g_hit_evs), 1)
+            tf = max(len(g_fp_evs),  1)
 
-        rl(f, "=" * W)
-        rl(f, f"  OVERALL DETECTION RATE  : "
-               f"{total_hits:>4} / {total_segs}  ({overall:.2f}%)")
-        rl(f, f"  TOTAL FALSE POSITIVES   : {total_fp}")
-        rl(f, f"  FALSE POSITIVE RATE     : {fpr:.2f}%")
-        rl(f, f"  VIDEOS PROCESSED        : {len(all_video_data)}")
-        rl(f, f"  TOTAL PROCESSING TIME   : {total_time:.1f}s")
-        passing = sum(
-            1 for vd in all_video_data
-            if sum(1 for s in vd["seg_results"] if s["hit"]) /
-               len(vd["seg_results"]) * 100 >= 50
-        )
-        rl(f, f"  VIDEOS PASSING (>=50%)  : {passing}/{len(all_video_data)}")
-        rl(f, "=" * W)
-        rl(f)
+            f.write(f"  ── {gname} ──\n")
+            f.write(f"  Videos: {len(gvids)}   Segments: {g_segs}   Hits: {g_hits}"
+                    f"   Rate: {g_rate:.1f}%   FP: {g_fp}\n")
+            f.write(f"  Confidence tiers (hits):  "
+                    f"WIDE={g_conf['WIDE']}  HIGH={g_conf['HIGH']}  LOW={g_conf['LOW']}\n")
+
+            # WIDE/HIGH/LOW hit-rate within this group
+            for tier in ["WIDE", "HIGH", "LOW"]:
+                g_fp_conf = _confidence_breakdown(g_fp_evs)
+                h = g_conf[tier]
+                fp_t = g_fp_conf[tier]
+                tot  = h + fp_t
+                hr   = h   / tot * 100 if tot else 0.0
+                fr   = fp_t / tot * 100 if tot else 0.0
+                f.write(f"    {tier:<6} hits={h:>3}  fps={fp_t:>3}  hit_rate={hr:>5.1f}%  fp_rate={fr:>5.1f}%\n")
+
+            f.write(f"  Signal contribution:\n")
+            f.write(f"    {'SIGNAL':<15}  {'HIT':>4}  {'HIT%':>6}  {'FP':>4}  {'FP%':>6}\n")
+            for sig in ALL_SIGNALS:
+                h_ = g_hit_sig[sig]; fp_ = g_fp_sig[sig]
+                f.write(f"    {sig:<15}  {h_:>4}  {h_/th*100:>5.1f}%  {fp_:>4}  {fp_/tf*100:>5.1f}%\n")
+
+            f.write(f"  Per-video in this group:\n")
+            f.write(f"    {'VIDEO':<35}  {'SEGS':>4}  {'HITS':>4}  {'RATE':>6}  {'FP':>4}\n")
+            for v in gvids:
+                vr = v["hits"] / v["total"] * 100 if v["total"] else 0
+                f.write(f"    {v['name']:<35}  {v['total']:>4}  {v['hits']:>4}  {vr:>5.1f}%  {v['fp']:>4}\n")
+            f.write("\n")
+
+    print(f"\n[+] Extended report saved: {report_path}")
 
 # ==============================================================================
-# PROCESS ONE VIDEO
+# MAIN PROCESSING  (only change: collect hit_events / fp_events in result dict)
 # ==============================================================================
 
-def process_video(video_path, ground_truth_entry):
+def process_video(video_path: str, ground_truth_entry: dict) -> dict:
     video_name = os.path.basename(video_path)
-    segments   = ground_truth_entry["segments"]
-
-    # Extract new metadata fields
-    carrier_source    = ground_truth_entry.get("carrier_source",    "unknown")
-    carrier_duration  = ground_truth_entry.get("carrier_duration",  None)
-    attacked_duration = ground_truth_entry.get("attacked_duration", None)
-    resolution        = ground_truth_entry.get("resolution",        "unknown")
-    fps               = ground_truth_entry.get("fps",               30)
-    n_inserts         = ground_truth_entry.get("n_inserts",         len(segments))
-
-    if n_inserts != len(segments):
-        print(f"  [WARN] n_inserts={n_inserts} but "
-              f"found {len(segments)} segments in JSON")
-
-    # Fix corrupted entries
+    video_id = os.path.splitext(video_name)[0]
+    segments = ground_truth_entry["segments"]
+    
     for seg in segments:
         if seg["end"] < seg["start"]:
             seg["end"] = seg["start"] + seg["duration"]
 
-    # Print metadata
-    print(f"\n  Carrier   : {carrier_source}  "
-          f"({carrier_duration:.3f}s)" if carrier_duration else
-          f"\n  Carrier   : {carrier_source}")
-    print(f"  Attacked  : {video_name}  "
-          f"({attacked_duration:.3f}s)" if attacked_duration else
-          f"  Attacked  : {video_name}")
-    print(f"  Resolution: {resolution}  FPS: {fps}  Inserts: {n_inserts}")
+    duration = get_video_duration(video_path)
+    total_chunks = int(np.ceil(duration / CHUNK_DURATION_SEC))
 
-    # Insert drift table
-    print(f"\n  Insert drift analysis:")
-    print(f"  {'#':>3}  {'SOURCE':<16}  {'ORIG_PT':>10}  "
-          f"{'ACT_START':>10}  {'DRIFT':>8}  {'DUR':>8}  FRAMES")
-    print(f"  {'─'*3}  {'─'*16}  {'─'*10}  "
-          f"{'─'*10}  {'─'*8}  {'─'*8}  {'─'*15}")
-    for seg in segments:
-        orig  = seg.get("original_insert_point", seg["start"])
-        drift = seg["start"] - orig
-        sf    = seg.get("start_frame", "?")
-        ef    = seg.get("end_frame",   "?")
-        print(f"  {seg['index']:>3}  {seg['source']:<16}  {orig:>10.3f}  "
-              f"{seg['start']:>10.3f}  {drift:>+8.3f}  "
-              f"{seg['duration']:>8.3f}  {sf}-{ef}")
+    print(f"\n  Video: {video_name}")
+    print(f"  Duration: {duration:.1f}s → {total_chunks} chunks of {CHUNK_DURATION_SEC}s")
+    print(f"  Audio overlap: {AUDIO_OVERLAP_SEC*1000:.0f}ms (for flux continuity)")
+    print(f"  Segments to detect: {len(segments)}")
 
-    # PRE-FLIGHT
-    video_duration = get_video_duration(video_path)
-    if video_duration is None:
-        if attacked_duration is not None:
-            print(f"  [PRE-FLIGHT] ffprobe failed — using JSON "
-                  f"attacked_duration: {attacked_duration:.3f}s")
-            video_duration = attacked_duration
-        else:
-            print(f"  [FATAL] Cannot determine duration for {video_name}")
-            return None
+    print(f"\n  [WORKERS] Extracting {total_chunks} chunks with {NUM_WORKERS} workers...")
+    t_w0 = time.time()
 
-    if attacked_duration is not None:
-        delta = abs(video_duration - attacked_duration)
-        if delta > 1.0:
-            print(f"  [WARN] Duration mismatch: ffprobe={video_duration:.3f}s  "
-                  f"JSON={attacked_duration:.3f}s  delta={delta:.3f}s")
-        else:
-            print(f"  [PRE-FLIGHT] Duration OK  "
-                  f"(ffprobe={video_duration:.3f}s  "
-                  f"JSON={attacked_duration:.3f}s  delta={delta:.3f}s)")
+    packets = [None] * total_chunks
 
-    print(f"\n  Running {n_inserts} insert(s) to detect, "
-          f"duration {hms(video_duration)}...")
+    with ThreadPoolExecutor(max_workers=NUM_WORKERS) as pool:
+        future_map = {
+            pool.submit(worker_extract_chunk, video_path, seq_id * CHUNK_DURATION_SEC, seq_id, video_id): seq_id
+            for seq_id in range(total_chunks)
+        }
+        done = 0
+        for future in as_completed(future_map):
+            seq_id = future_map[future]
+            try:
+                packets[seq_id] = future.result()
+            except Exception as exc:
+                sys.stdout.write("\r" + " " * 80 + "\r")
+                sys.stdout.flush()
+                print(f"    Worker {seq_id} failed: {exc}")
+            done += 1
+            progress_bar(done, total_chunks, extra=f"chunk {done}/{total_chunks}")
 
-    t0 = time.time()
+    print()
+    t_worker = time.time() - t_w0
 
-    print(f"  [1/5] Visual I-frame spikes (MAD)...")
-    v_events = get_visual_events(video_path)
-    print(f"        -> {len(v_events)} events")
+    packets = [p for p in packets if p is not None]
+    packets.sort(key=lambda p: p["sequence_id"])
+    print(f"  Workers done: {t_worker:.1f}s ({len(packets)}/{total_chunks} chunks OK)")
 
-    print(f"  [2/5] Motion (GOP MAD + P/B regression)...")
-    gop_events, pb_events = get_motion_events(video_path)
-    print(f"        -> {len(gop_events)} GOP,  {len(pb_events)} P/B events")
+    os.makedirs(os.path.join(SCRIPT_DIR, WORKER_DATA_DIR), exist_ok=True)
+    worker_json_path = os.path.join(SCRIPT_DIR, WORKER_DATA_DIR, f"{video_id}_worker_data.json")
+    with open(worker_json_path, "w") as f:
+        json.dump({"video": video_name, "audio_overlap_sec": AUDIO_OVERLAP_SEC, "chunks": packets}, f, indent=2)
 
-    print(f"  [3/5] Audio RMS (MAD) + Silence...")
-    rms_events, sil_events = get_audio_rms_events(video_path)
-    print(f"        -> {len(rms_events)} RMS,  {len(sil_events)} silence events")
+    print(f"\n  [LEADER] Running detection on JSON data...")
+    t_l0 = time.time()
 
-    print(f"  [4/5] Spectral Flux (MAD)...")
-    flux_events = get_spectral_flux_events(video_path)
-    print(f"        -> {len(flux_events)} events")
+    detector = LeaderDetector()
+    signal_dict = detector.run_detection(packets)
 
-    elapsed_extract = time.time() - t0
-    print(f"\n  Extraction complete in {elapsed_extract:.1f}s")
+    fused_events = fuse_all_signals(signal_dict)
+    merged_events = apply_window_merge(fused_events)
+    event_dicts = events_to_dicts(merged_events)
+    selected, dropped = select_strongest_per_window(event_dicts)
+    final_events = dicts_to_tuples(selected)
 
-    event_dict = {
-        "visual"       : v_events,
-        "gop"          : gop_events,
-        "motion_pb"    : pb_events,
-        "audio_rms"    : rms_events,
-        "silence"      : sil_events,
-        "spectral_flux": flux_events,
-    }
+    t_leader = time.time() - t_l0
+    print(f"  Leader done: {t_leader:.3f}s")
 
-    print(f"\n  [Pass 1] KDE fusion...")
-    candidates, fused_curve = fuse_all_signals_kde(event_dict, video_duration)
-    print(f"  [Pass 1] {len(candidates)} candidate peaks")
+    seg_results, fp_events = validate_video(video_name, segments, final_events)
+    hits = sum(1 for s in seg_results if s["hit"])
+    
+    print(f"\n  RESULTS: {hits}/{len(segments)} segments detected ({hits/len(segments)*100:.1f}%)")
+    print(f"  False Positives: {len(fp_events)}")
 
-    verified, rejected = verify_candidates_bhattacharyya(video_path, candidates)
-
-    elapsed = time.time() - t0
-    print(f"  Total: {elapsed:.1f}s")
-
-    seg_results, fp_events, rejected_out = validate_video(
-        video_name, segments, verified, rejected
-    )
-
-    legacy_signal_dict = {
-        "Visual"      : [e[0] for e in v_events],
-        "Motion(GOP)" : [e[0] for e in gop_events],
-        "Motion(PB)"  : [e[0] for e in pb_events],
-        "AudioRMS"    : [e[0] for e in rms_events],
-        "Silence"     : [e[0] for e in sil_events],
-        "SpectralFlux": [e[0] for e in flux_events],
-    }
-
-    print_video_report(video_name, seg_results, fp_events,
-                       legacy_signal_dict, verified, rejected_out)
-
-    sig_hits, sig_fp = {}, {}
-    for seg in seg_results:
-        if seg["hit"]:
-            for sig in seg["hit"]["label"].split("+"):
-                sig_hits[sig] = sig_hits.get(sig, 0) + 1
-    for fp in fp_events:
-        for sig in fp["label"].split("+"):
-            sig_fp[sig] = sig_fp.get(sig, 0) + 1
+    # ── Build event dicts for extended reporting ──
+    hit_events = []
+    for s in seg_results:
+        if s["hit"]:
+            h = s["hit"]
+            hit_events.append({
+                "ts":     h["ts"],
+                "label":  h["label"],
+                "n_sig":  h["n_sig"],
+                "weight": h["weight"],
+                "score":  h["score"],
+            })
 
     return {
-        "name"            : video_name,
-        "total"           : len(seg_results),
-        "hits"            : sum(1 for s in seg_results if s["hit"] is not None),
-        "fp"              : len(fp_events),
-        "rejected"        : len(rejected_out),
-        "positions"       : [s["hit"]["position"] for s in seg_results if s["hit"]],
-        "sig_hits"        : sig_hits,
-        "sig_fp"          : sig_fp,
-        "raw_triggers"    : {sig: len(ts) for sig, ts in legacy_signal_dict.items()},
-        "seg_results"     : seg_results,
-        "fp_events"       : fp_events,
-        "signal_dict"     : legacy_signal_dict,
-        "merged_events"   : [(t, l, n) for t, l, n, c, b in verified],
-        "elapsed"         : elapsed,
-        "fused_curve"     : fused_curve,
-        "carrier_source"  : carrier_source,
-        "carrier_duration": carrier_duration,
-        "attacked_duration": attacked_duration,
-        "resolution"      : resolution,
-        "fps"             : fps,
-        "n_inserts"       : n_inserts,
+        "name":        video_name,
+        "total":       len(segments),
+        "hits":        hits,
+        "fp":          len(fp_events),
+        "worker_time": t_worker,
+        "leader_time": t_leader,
+        # Extended fields (zero logic impact)
+        "hit_events":  hit_events,
+        "fp_events":   [{"ts": e["ts"], "label": e["label"],
+                          "n_sig": e["n_sig"], "weight": e["weight"],
+                          "score": e["score"]} for e in fp_events],
     }
 
 # ==============================================================================
-# MAIN
+# MAIN ENTRY POINT
 # ==============================================================================
 
 if __name__ == "__main__":
@@ -1428,47 +1261,42 @@ if __name__ == "__main__":
         print(f"[ERROR] Ground truth not found: {gt_path}")
         sys.exit(1)
 
-    with open(gt_path, "r") as f:
+    with open(gt_path) as f:
         ground_truth = json.load(f)
 
-    gt_map = {entry["target_video"]: entry for entry in ground_truth}
+    VIDEOS_TO_MONITOR = [f"attacked_{i}.mp4" for i in range(1, 42)]
+    gt_map = {e["target_video"]: e for e in ground_truth}
     run_ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    banner("MULTI-MODAL BOUNDARY DETECTOR  v3.0  —  FULL EVALUATION")
-    print(f"  Ground truth : {GROUND_TRUTH_JSON}  ({len(ground_truth)} videos)")
-    print(f"  Attacked dir : {ATTACKED_DIR}/")
-    total_inserts = sum(e.get("n_inserts", 0) for e in ground_truth)
-    print(f"  Total inserts across all videos: {total_inserts}")
-    print(f"  Signals : Visual(MAD) | Motion(GOP+PB) | "
-          f"AudioRMS(MAD) | Silence | SpectralFlux(MAD)")
-    print(f"  Fusion  : KDE + T-conorm audio gate + Hadamard P/B gate")
-    print(f"  Pass 2  : Bhattacharyya HSV histogram verification")
-    print(f"  Report  : {REPORT_FILE}")
+    banner("DISTRIBUTED VIOLENCE DETECTION (WITH AUDIO OVERLAP)")
+    print(f"  Architecture: {NUM_WORKERS} workers → 1 leader")
+    print(f"  Chunk size: {CHUNK_DURATION_SEC}s")
+    print(f"  Audio overlap: {AUDIO_OVERLAP_SEC*1000:.0f}ms (enables stateless flux detection)")
+    print(f"  Workers extract raw data to JSON (with audio overlap)")
+    print(f"  Leader filters overlap and runs detection on JSON only")
+    print(f"  Videos: {len(VIDEOS_TO_MONITOR)}")
 
-    attacked_videos = sorted([
-        os.path.join(SCRIPT_DIR, ATTACKED_DIR, e["target_video"])
-        for e in ground_truth
-    ])
-
-    all_video_stats = []
-
-    for vid_idx, video_path in enumerate(attacked_videos):
-        video_name = os.path.basename(video_path)
-        banner(f"VIDEO {vid_idx+1}/{len(attacked_videos)}: {video_name}")
-
+    all_results = []
+    for vid_idx, video_name in enumerate(VIDEOS_TO_MONITOR):
+        video_path = os.path.join(SCRIPT_DIR, ATTACKED_DIR, video_name)
+        
         if not os.path.exists(video_path):
-            print(f"  [!] File not found: {video_path}")
+            print(f"\n[!] Not found: {video_path}")
             continue
         if video_name not in gt_map:
-            print(f"  [!] No ground truth for {video_name}")
+            print(f"\n[!] No ground truth: {video_name}")
             continue
 
-        stats = process_video(video_path, gt_map[video_name])
-        if stats:
-            all_video_stats.append(stats)
+        print(f"\n{'='*70}")
+        print(f"  VIDEO {vid_idx+1}/{len(VIDEOS_TO_MONITOR)}")
+        print(f"{'='*70}")
 
-    if all_video_stats:
-        print_overall_summary(all_video_stats)
+        result = process_video(video_path, gt_map[video_name])
+        all_results.append(result)
+
+    if all_results:
+        print_overall_summary(all_results)
         report_path = os.path.join(SCRIPT_DIR, REPORT_FILE)
-        write_full_report(report_path, all_video_stats, run_ts)
-        print(f"[+] Report written to: {report_path}")
+        write_report(report_path, all_results, run_ts)
+    else:
+        print("\n[!] No videos processed.")

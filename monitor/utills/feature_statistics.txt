@@ -1,0 +1,395 @@
+================================================================================
+  TRIGGER FEATURE STATISTICS - HIT vs FP
+  Generated: 2026-05-02 10:16:42
+================================================================================
+
+1. FEATURE SEPARATION ANALYSIS (Most important first)
+------------------------------------------------------------
+  magnitude                : score=3221.7366 | mean_diff=17693.2525 | overlap=0.79
+  acceleration             : score=101.2834 | mean_diff=1174.7706 | overlap=0.83
+  timestamp                : score=13.5496 | mean_diff=81.0116 | overlap=0.87
+  texture_mean             : score=7.5073 | mean_diff=33.5700 | overlap=0.80
+  texture_std              : score=0.8747 | mean_diff=7.8274 | overlap=0.91
+  texture_entropy          : score=0.0824 | mean_diff=0.5108 | overlap=0.85
+  magnitude_ratio          : score=0.0327 | mean_diff=0.3755 | overlap=0.83
+  edge_change_prev         : score=0.0056 | mean_diff=0.0124 | overlap=0.37
+  uniformity               : score=0.0022 | mean_diff=0.0027 | overlap=0.42
+  frame_diff_prev          : score=0.0006 | mean_diff=0.0170 | overlap=0.97
+  hist_diff_prev           : score=0.0001 | mean_diff=0.0327 | overlap=0.99
+  persistence_count        : score=0.0000 | mean_diff=1.1365 | overlap=1.00
+  frame_diff_next          : score=0.0000 | mean_diff=0.0000 | overlap=1.00
+  hist_diff_next           : score=0.0000 | mean_diff=0.0000 | overlap=1.00
+  edge_change_next         : score=0.0000 | mean_diff=0.0000 | overlap=1.00
+
+2. DETAILED STATISTICS FOR EACH FEATURE
+------------------------------------------------------------
+
+TIMESTAMP:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 1016.9672            935.9556            
+  Median               959.8665             836.3500            
+  Std Dev              584.6368             627.8484            
+  Min                  247.8000             14.5000             
+  Max                  2583.0330            2706.4000           
+  Range                2335.2330            2691.9000           
+  25th % (Q1)          602.7413             437.4248            
+  75th % (Q3)          1339.8747            1346.7912           
+  IQR (Q3-Q1)          737.1335             909.3665            
+  ──────────────────────────────────────────────────
+  Mean Difference: +81.0116
+  Median Difference: +123.5165
+  Overlap Coefficient: 0.87
+  → NO separation - discard this gate
+
+MAGNITUDE:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 20458.6507           38151.9032          
+  Median               14461.0000           27312.0000          
+  Std Dev              21938.0325           41608.4424          
+  Min                  1.8818               1.8341              
+  Max                  200589.0000          254217.0000         
+  Range                200587.1182          254215.1659         
+  25th % (Q1)          8610.2500            7504.4355           
+  75th % (Q3)          23946.0000           52140.2500          
+  IQR (Q3-Q1)          15335.7500           44635.8145          
+  ──────────────────────────────────────────────────
+  Mean Difference: -17693.2525
+  Median Difference: -12851.0000
+  Overlap Coefficient: 0.79
+  → POOR separation - limited value
+
+MAGNITUDE_RATIO:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0586               0.4342              
+  Median               0.0000               0.0000              
+  Std Dev              0.6124               1.2147              
+  Min                  0.0000               0.0000              
+  Max                  8.1432               6.7259              
+  Range                8.1432               6.7259              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: -0.3755
+  Median Difference: +0.0000
+  Overlap Coefficient: 0.83
+  → NO separation - discard this gate
+
+PERSISTENCE_COUNT:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.1095               1.2460              
+  Median               0.0000               0.0000              
+  Std Dev              1.0406               3.3026              
+  Min                  0.0000               0.0000              
+  Max                  10.0000              10.0000             
+  Range                10.0000              10.0000             
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: -1.1365
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+ACCELERATION:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 129.6679             1304.4385           
+  Median               0.0000               0.0000              
+  Std Dev              1718.6497            4245.7297           
+  Min                  0.0000               0.0000              
+  Max                  27996.2500           33829.5000          
+  Range                27996.2500           33829.5000          
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: -1174.7706
+  Median Difference: +0.0000
+  Overlap Coefficient: 0.83
+  → NO separation - discard this gate
+
+FRAME_DIFF_PREV:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0805               0.0636              
+  Median               0.0292               0.0108              
+  Std Dev              0.1251               0.1238              
+  Min                  0.0000               0.0000              
+  Max                  0.8984               0.8690              
+  Range                0.8984               0.8690              
+  25th % (Q1)          0.0008               0.0006              
+  75th % (Q3)          0.1066               0.0658              
+  IQR (Q3-Q1)          0.1058               0.0651              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0170
+  Median Difference: +0.0184
+  Overlap Coefficient: 0.97
+  → NO separation - discard this gate
+
+FRAME_DIFF_NEXT:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+HIST_DIFF_PREV:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0805               0.0477              
+  Median               0.0260               0.0132              
+  Std Dev              0.1807               0.1483              
+  Min                  0.0001               0.0000              
+  Max                  1.7024               1.7131              
+  Range                1.7023               1.7131              
+  25th % (Q1)          0.0057               0.0055              
+  75th % (Q3)          0.0673               0.0314              
+  IQR (Q3-Q1)          0.0616               0.0259              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0327
+  Median Difference: +0.0127
+  Overlap Coefficient: 0.99
+  → NO separation - discard this gate
+
+HIST_DIFF_NEXT:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+UNIFORMITY:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.1863               0.1890              
+  Median               0.1791               0.1743              
+  Std Dev              0.0355               0.0662              
+  Min                  0.1372               0.1343              
+  Max                  0.4264               0.8238              
+  Range                0.2892               0.6895              
+  25th % (Q1)          0.1623               0.1587              
+  75th % (Q3)          0.1991               0.1927              
+  IQR (Q3-Q1)          0.0368               0.0340              
+  ──────────────────────────────────────────────────
+  Mean Difference: -0.0027
+  Median Difference: +0.0048
+  Overlap Coefficient: 0.42
+  → GOOD separation - useful gate
+
+EDGE_CHANGE_PREV:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0157               0.0281              
+  Median               0.0071               0.0124              
+  Std Dev              0.0210               0.0416              
+  Min                  0.0000               0.0000              
+  Max                  0.1260               0.3387              
+  Range                0.1260               0.3387              
+  25th % (Q1)          0.0025               0.0044              
+  75th % (Q3)          0.0204               0.0352              
+  IQR (Q3-Q1)          0.0179               0.0308              
+  ──────────────────────────────────────────────────
+  Mean Difference: -0.0124
+  Median Difference: -0.0053
+  Overlap Coefficient: 0.37
+  → GOOD separation - useful gate
+
+EDGE_CHANGE_NEXT:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+TEXTURE_MEAN:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 57.8332              91.4032             
+  Median               45.5300              87.6400             
+  Std Dev              41.1150              43.1807             
+  Min                  2.3200               0.0000              
+  Max                  190.2400             234.4300            
+  Range                187.9200             234.4300            
+  25th % (Q1)          25.3675              60.8400             
+  75th % (Q3)          78.1050              124.7850            
+  IQR (Q3-Q1)          52.7375              63.9450             
+  ──────────────────────────────────────────────────
+  Mean Difference: -33.5700
+  Median Difference: -42.1100
+  Overlap Coefficient: 0.80
+  → NO separation - discard this gate
+
+TEXTURE_STD:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 44.8124              52.6398             
+  Median               43.2400              54.9250             
+  Std Dev              18.9285              17.3947             
+  Min                  5.6600               0.0000              
+  Max                  103.8500             107.8600            
+  Range                98.1900              107.8600            
+  25th % (Q1)          32.0625              41.8650             
+  75th % (Q3)          59.9675              63.6400             
+  IQR (Q3-Q1)          27.9050              21.7750             
+  ──────────────────────────────────────────────────
+  Mean Difference: -7.8274
+  Median Difference: -11.6850
+  Overlap Coefficient: 0.91
+  → NO separation - discard this gate
+
+TEXTURE_ENTROPY:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 3.4136               3.9244              
+  Median               3.5373               4.1334              
+  Std Dev              0.8382               0.9486              
+  Min                  0.5972               -0.0000             
+  Max                  4.8011               4.9393              
+  Range                4.2039               4.9393              
+  25th % (Q1)          2.8466               3.7451              
+  75th % (Q3)          4.0031               4.5454              
+  IQR (Q3-Q1)          1.1565               0.8003              
+  ──────────────────────────────────────────────────
+  Mean Difference: -0.5108
+  Median Difference: -0.5960
+  Overlap Coefficient: 0.85
+  → NO separation - discard this gate
+
+AUDIO_RMS:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+AUDIO_PEAK:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+AUDIO_SPECTRAL_CENTROID:
+  ──────────────────────────────────────────────────
+  Metric               HIT (True)           FP (False)          
+  ──────────────────────────────────────────────────
+  Count                274                  618                 
+  Mean                 0.0000               0.0000              
+  Median               0.0000               0.0000              
+  Std Dev              0.0000               0.0000              
+  Min                  0.0000               0.0000              
+  Max                  0.0000               0.0000              
+  Range                0.0000               0.0000              
+  25th % (Q1)          0.0000               0.0000              
+  75th % (Q3)          0.0000               0.0000              
+  IQR (Q3-Q1)          0.0000               0.0000              
+  ──────────────────────────────────────────────────
+  Mean Difference: +0.0000
+  Median Difference: +0.0000
+  Overlap Coefficient: 1.00
+  → NO separation - discard this gate
+
+3. RECOMMENDED THRESHOLDS
+------------------------------------------------------------
+
+  Based on median values and overlap analysis:
+
+  uniformity: < 0.1767
+  edge_change_prev: > 0.0071
+
+================================================================================
