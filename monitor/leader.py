@@ -1,4 +1,3 @@
-import subprocess
 import json
 import numpy as np
 import os
@@ -8,21 +7,14 @@ import datetime
 from collections import deque
 
 # ==============================================================================
-# OPTIMIZATION GRID HYPERPARAMETERS (Directly Synced with try.py Schema)
+# OPTIMIZATION GRID HYPERPARAMETERS (Strictly identical to leader.py)
 # ==============================================================================
 
 WORKER_DATA_DIR     = "worker_data"
 GROUND_TRUTH_JSON   = "attack.json"
-REPORT_FILE         = "report.txt"
+REPORT_FILE         = "report_temp.txt"
 
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
-FFMPEG_EXE  = "ffmpeg"
-FFPROBE_EXE = "ffprobe"
-
-# Distributed Ingest Constants
-CHUNK_DURATION_SEC  = 5.0
-AUDIO_OVERLAP_SEC   = 0.05
-NUM_WORKERS         = 10
 
 # --- Fusion / Scoring Scoring Matrix ---
 BOUNDARY_TOLERANCE      = 2.5
@@ -35,7 +27,7 @@ MERGE_WINDOW            = 10.0
 # --- Visual Signal Parameters ---
 VISUAL_MAX_FRAMES       = 30
 VISUAL_MIN_WARMUP       = 10
-K_VISUAL_THRESHOLD      = 2.5  # <--- Modify this constant to optimize recall bounds!
+K_VISUAL_THRESHOLD      = 2.5 
 VISUAL_COOLDOWN         = 3.0
 VISUAL_PERSIST_NEEDED   = 2
 VISUAL_PERSIST_WINDOW   = 4    
@@ -49,7 +41,7 @@ IFRAME_MIN_CONTEXT      = 3
 # --- Motion Signal Parameters ---
 MV_WINDOW               = 60
 MV_MIN_WARMUP           = 30
-K_MV_THRESHOLD          = 4.5  # <--- Modify this constant to optimize recall bounds!
+K_MV_THRESHOLD          = 4.5 
 MV_COOLDOWN             = 5.0
 MV_PERSIST_NEEDED       = 3
 MV_PERSIST_WINDOW       = 5
@@ -62,7 +54,7 @@ JERK_ACCEL_THRESHOLD    = 2.5
 AUDIO_SAMPLE_RATE       = 44100
 AUDIO_BUFFER_SEC        = 15.0
 AUDIO_MICRO_WINDOW_SEC  = 0.5
-K_AUDIO_RMS_THRESHOLD   = 3.0  # <--- Modify this constant to optimize recall bounds!
+K_AUDIO_RMS_THRESHOLD   = 3.0 
 AUDIO_NOISE_FLOOR       = 800.0
 AUDIO_COOLDOWN          = 3.0
 AUDIO_PERSIST_NEEDED    = 2
@@ -76,7 +68,7 @@ SILENCE_COOLDOWN        = 30.0
 FLUX_SAMPLE_RATE        = 22050
 FLUX_WINDOW_SEC         = 0.05
 FLUX_BUFFER_SEC         = 10.0
-K_FLUX_THRESHOLD        = 3.0  # <--- Modify this constant to optimize recall bounds!
+K_FLUX_THRESHOLD        = 3.0 
 FLUX_COOLDOWN           = 3.0
 FLUX_PERSIST_NEEDED     = 3
 
@@ -144,42 +136,34 @@ def compute_trigger_score(weight, features):
     return round(float(np.clip(score, 0.0, 1.0)), 4)
 
 # ==============================================================================
-# STATEFUL LEADER CORE PROCESSING DETECTOR (Direct Port from try.py)
+# STATEFUL LEADER CORE PROCESSING DETECTOR
 # ==============================================================================
 
 class LeaderDetector:
     @staticmethod
     def _iframe_sandwich(size_list, cur_idx, cur_size):
-        if not IFRAME_SANDWICH_ENABLED:
-            return True
-        if cur_idx < IFRAME_MIN_CONTEXT or cur_idx >= len(size_list) - 1:
-            return True
+        if not IFRAME_SANDWICH_ENABLED: return True
+        if cur_idx < IFRAME_MIN_CONTEXT or cur_idx >= len(size_list) - 1: return True
         before = [s for _, s in size_list[max(0, cur_idx - IFRAME_CONTEXT_WINDOW):cur_idx]]
         after = [s for _, s in size_list[cur_idx + 1: min(len(size_list), cur_idx + IFRAME_CONTEXT_WINDOW + 1)]]
-        if len(before) < 2 or len(after) < 2:
-            return True
+        if len(before) < 2 or len(after) < 2: return True
         ctx_mean = np.mean(before + after)
-        if ctx_mean < 1e-6:
-            return True
+        if ctx_mean < 1e-6: return True
         ctx_std = max(np.std(before), np.std(after))
         if ctx_std < ctx_mean * 0.1:
-            if cur_size / (ctx_mean + 1e-9) > IFRAME_STABILITY_RATIO * 10:
-                return False
+            if cur_size / (ctx_mean + 1e-9) > IFRAME_STABILITY_RATIO * 10: return False
         return True
 
     @staticmethod
     def _detect_jerk(motion_history):
-        if not MOTION_JERK_ENABLED or len(motion_history) < JERK_WINDOW:
-            return True
+        if not MOTION_JERK_ENABLED or len(motion_history) < JERK_WINDOW: return True
         ml = list(motion_history)[-JERK_WINDOW:]
         velocities = [ml[i+1] - ml[i] for i in range(len(ml)-1)]
         accelerations = [abs(velocities[i+1] - velocities[i]) for i in range(len(velocities)-1)]
-        if not accelerations:
-            return True
+        if not accelerations: return True
         mean_a = np.mean(accelerations)
         std_a = np.std(accelerations)
-        if std_a < 1e-9:
-            return True
+        if std_a < 1e-9: return True
         jerk = (max(accelerations) - mean_a) / (std_a + 1e-9)
         return jerk > JERK_ACCEL_THRESHOLD
 
@@ -189,20 +173,16 @@ class LeaderDetector:
         flux = []
         
         for pkt in packets:
-            start = pkt["chunk_start_time"]
-            fps = pkt["fps"]
-            
-            for idx, frm in enumerate(pkt["frames"]):
-                t = start + idx / fps
-                frames.append((t, frm["type"], int(frm["size"])))
+            # COMPLETELY REMOVED math guessing (start + idx / fps)
+            # The JSON now has the exact absolute timestamps mapped!
+            for frm in pkt["frames"]:
+                frames.append((frm["time"], frm["type"], int(frm["size"])))
             
             for rms_item in pkt["audio_rms"]:
-                if rms_item["time"] >= start - 0.001:
-                    audio.append((rms_item["time"], rms_item["rms"]))
+                audio.append((rms_item["time"], rms_item["rms"]))
             
             for flux_item in pkt["spectral_flux"]:
-                if flux_item["time"] >= start - 0.001:
-                    flux.append((flux_item["time"], flux_item["flux"]))
+                flux.append((flux_item["time"], flux_item["flux"]))
         
         frames.sort(key=lambda x: x[0])
         audio.sort(key=lambda x: x[0])
@@ -229,25 +209,19 @@ class LeaderDetector:
 
         for (t, ptype, size) in frames:
             is_i = (ptype == "I")
-
             if is_i:
                 v_sizes_sandwich.append((t, size))
                 cur_idx = len(v_sizes_sandwich) - 1
-
                 if len(v_size_buf) >= 2:
                     prev = list(v_size_buf)[-1]
                     if prev > 0 and size / prev > SCENE_CHANGE_RATIO:
                         scene_trans_end = t + SCENE_CHANGE_TOLERANCE
-
-                if t < scene_trans_end:
-                    spike = False
+                if t < scene_trans_end: spike = False
                 elif t > LOCKOUT_PERIOD and len(v_size_buf) >= VISUAL_MIN_WARMUP:
                     _, spike = adaptive_zscore(size, v_size_buf, K_VISUAL_THRESHOLD)
-                else:
-                    spike = False
+                else: spike = False
 
                 v_spike_flags.append(1 if spike else 0)
-
                 if (t > LOCKOUT_PERIOD and len(v_spike_flags) == VISUAL_PERSIST_WINDOW
                         and sum(v_spike_flags) >= VISUAL_PERSIST_NEEDED
                         and (t - v_last_trig) > VISUAL_COOLDOWN
@@ -256,7 +230,6 @@ class LeaderDetector:
                         v_triggers.append(t)
                         v_last_trig = t
                     v_spike_flags.clear()
-
                 v_size_buf.append(size)
 
                 if mv_last_i_t > 0:
@@ -274,14 +247,11 @@ class LeaderDetector:
             if ptype in ("P", "B"):
                 jerk_history.append(size)
                 mv_pb_buf.append(size)
-
                 if t > LOCKOUT_PERIOD and len(mv_pb_buf) >= MV_MIN_WARMUP:
                     _, spike = adaptive_zscore(size, mv_pb_buf, K_MV_THRESHOLD)
-                else:
-                    spike = False
+                else: spike = False
 
                 mv_spike_flags.append(1 if spike else 0)
-
                 if (t > LOCKOUT_PERIOD and len(mv_spike_flags) == VISUAL_PERSIST_WINDOW
                         and sum(mv_spike_flags) >= VISUAL_PERSIST_NEEDED
                         and (t - v_last_trig) > VISUAL_COOLDOWN
@@ -314,7 +284,6 @@ class LeaderDetector:
                 is_spike = (micro_rms > AUDIO_NOISE_FLOOR and sigma > 0
                             and micro_rms > mu + K_AUDIO_RMS_THRESHOLD * sigma)
                 rms_consec = rms_consec + 1 if is_spike else 0
-
                 if (rms_consec >= AUDIO_PERSIST_NEEDED
                         and (micro_t - rms_last_trig) > AUDIO_COOLDOWN
                         and (micro_t - rms_last_trig) > MIN_EVENT_GAP):
@@ -333,7 +302,6 @@ class LeaderDetector:
                                 and (sil_start - sil_last_trig) > SILENCE_COOLDOWN):
                             sil_triggers.append(sil_start)
                             sil_last_trig = sil_start
-
             rms_buf.append(micro_rms)
 
         flux_buf = deque(maxlen=max(10, int(FLUX_BUFFER_SEC / FLUX_WINDOW_SEC)))
@@ -345,14 +313,12 @@ class LeaderDetector:
             if flux_t > LOCKOUT_PERIOD and len(flux_buf) >= int(flux_buf.maxlen * 0.3):
                 _, spike = adaptive_zscore(fv, flux_buf, K_FLUX_THRESHOLD)
                 flux_consec = flux_consec + 1 if spike else 0
-
                 if (flux_consec >= FLUX_PERSIST_NEEDED
                         and (flux_t - flux_last_trig) > FLUX_COOLDOWN
                         and (flux_t - flux_last_trig) > MIN_EVENT_GAP):
                     flux_triggers.append(flux_t)
                     flux_last_trig = flux_t
                     flux_consec = 0
-
             flux_buf.append(fv)
 
         return {
@@ -452,7 +418,6 @@ def validate_video(video_name, segments, final_events):
                 claimed = True
                 break
         if not claimed: 
-            # Appends structured dictionary matching try.py format
             fp_events.append({"ts": ts, "label": label, "n_sig": n_sig, "weight": weight, "features": feats, "score": score})
     return segs, fp_events
 
@@ -469,7 +434,7 @@ def _signal_contribution_table(events: list) -> dict:
 # ==============================================================================
 
 def print_overall_summary(all_video_stats):
-    banner("LEADER ENGINE PRE-FILTER GRID OPTIMIZATION SUMMARY")
+    banner("GOP-BASED LEADER TIMELINE RECONSTRUCTION SUMMARY")
     total_segs = sum(v["total"] for v in all_video_stats)
     total_hits = sum(v["hits"] for v in all_video_stats)
     total_fp = sum(v["fp"] for v in all_video_stats)
@@ -526,8 +491,6 @@ def execute_leader_tuning(video_id: str, ground_truth: dict) -> dict:
     hits = sum(1 for s in seg_results if s["hit"])
 
     hit_events = [{"ts": s["hit"]["ts"], "label": s["hit"]["label"], "weight": s["hit"]["weight"]} for s in seg_results if s["hit"]]
-    
-    # Fixes KeyError by accessing dictionary keys instead of positional tuple indexes
     formatted_fps = [{"ts": e["ts"], "label": e["label"], "weight": e["weight"]} for e in fp_events]
 
     return {
@@ -544,7 +507,9 @@ if __name__ == "__main__":
     VIDEOS_TO_MONITOR = [f"attacked_{i}" for i in range(1, 42)]
     all_results = []
 
-    banner("STATEFUL LEADER OFFLINE TUNING ENGINE INITIALIZED")
+    print("\n======================================================================")
+    print("  STAGE 2: GOP-BASED LEADER OFFLINE TUNING ENGINE")
+    print("======================================================================")
     print(f"  Ingesting JSON tracking matrices from: {WORKER_DATA_DIR}/")
     print(f"  Simulating non-parametric threshold metrics across {len(VIDEOS_TO_MONITOR)} streams...")
 

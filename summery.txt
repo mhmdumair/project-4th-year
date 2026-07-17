@@ -1,0 +1,138 @@
+MODEL
+
+
+Verify whether a video is safe (non-violent) or unsafe (violent) by analyzing it at the level of GOP (Group of Pictures) chunks — the natural compression units of a video stream — rather than the whole video. The system supports three inference priority levels (low / mid / high) that control how much of the video is analyzed, so a resource-constrained system can trade accuracy against compute per video. (This model is one layer of a larger system; a separate leader–worker monitor layer in monitor/ distributes the workload.)
+
+Dataset
+
+~2,650 videos in two classes (Violence / NonViolence): 2,447 used for training (1,227 + 1,220) and an independent held-out test set of 200 clips (100 per class).
+
+Pipeline
+
+Stage 1 — Feature extraction (feature_extraction.ipynb)
+Each video is decoded with PyAV and split into true codec GOPs (cut at real keyframes, not fixed-size windows). Every GOP is motion-scored by summing absolute grayscale differences between 4 uniformly sampled frames. The peak-motion GOP and its two neighbors are selected (3 GOPs × 4 frames = 12 frames), passed through a frozen ImageNet-pretrained EfficientNet-B4, and cached as a (12, 1792) feature tensor per video. Short videos (< 3 GOPs) fall back to uniform sampling across the timeline. This offline pass means training never touches raw video.
+
+Stage 2 — Model selection and training (train.ipynb)
+Three sequence classifiers were compared on the cached 12-token feature sequences using 5-fold cross-validation with out-of-fold evaluation (BCE loss, AdamW, 25 epochs/fold, resumable checkpointing):
+
+┌────────────────────────────────────────────────┬──────────────┬────────┐
+│                  Architecture                  │ OOF Accuracy │   F1   │
+├────────────────────────────────────────────────┼──────────────┼────────┤
+│ BiLSTM                                         │ 0.9649       │ 0.9652 │
+├────────────────────────────────────────────────┼──────────────┼────────┤
+│ BiGRU                                          │ 0.9620       │ 0.9623 │
+├────────────────────────────────────────────────┼──────────────┼────────┤
+│ Transformer encoder (2 layers, 4 heads, d=256) │ 0.9669       │ 0.9672 │
+└────────────────────────────────────────────────┴──────────────┴────────┘
+
+The Transformer won and was retrained on 100% of the training tensors to produce the production model (best_transformer_model.pth, ~1.4M trainable parameters on top of the frozen backbone).
+
+Stage 3 — Priority-aware inference and evaluation (test.ipynb)
+At inference the same GOP decomposition and motion scoring run on the incoming video, and the priority level decides how many GOP chunks around the motion peak are analyzed:
+- LOW — peak GOP only (4 frames)
+- MID — peak GOP + its higher-motion neighbor (8 frames)
+- HIGH — peak GOP ± both neighbors (12 frames — identical to training extraction)
+
+Sampled frames are cloned up to the fixed 12-token sequence, then EfficientNet-B4 → Transformer → violence probability.
+
+Results (independent 200-clip test set, train-consistent sampling)
+
+┌──────────┬──────────┬────────────┬─────────────────┬──────────────┐
+│ Priority │ Accuracy │ F1 (macro) │ Violence caught │ False alarms │
+├──────────┼──────────┼────────────┼─────────────────┼──────────────┤
+│ LOW      │ 0.9150   │ 0.9150     │ 93/100          │ 10/100       │
+├──────────┼──────────┼────────────┼─────────────────┼──────────────┤
+│ MID      │ 0.9450   │ 0.9450     │ 93/100          │ 4/100        │
+├──────────┼──────────┼────────────┼─────────────────┼──────────────┤
+│ HIGH     │ 0.9400   │ 0.9400     │ 94/100          │ 6/100        │
+└──────────┴──────────┴────────────┴─────────────────┴──────────────┘
+
+Key findings
+
+1. The GOP/priority mechanism works as designed: more GOP context yields measurably better accuracy (91.5% → ~94.5%), giving the system a genuine accuracy-vs-budget knob.
+2. Violence recall is stable across priorities (~93%), while false positives on non-violent videos drop sharply with added context — i.e., a single peak-motion GOP is sufficient to detect violence, but neighboring GOPs are needed to avoid misflagging high-motion innocent content (sports, camera shake).
+3. An earlier evaluation that sampled frames uniformly showed no priority gradient (LOW ≥ HIGH), demonstrating that train/test sampling consistency is essential to measuring the mechanism honestly.
+
+Current state and known caveats
+
+- All notebooks now run locally (Jupyter + .venv, CPU); originally developed on Colab (T4 GPU).
+- Reported latency figures span different hardware (GPU vs CPU) and shouldn't be compared; a single-hardware latency benchmark is still pending.
+- Compute per video is currently identical across priorities (full decode + always 12 backbone frames); feature-level cloning would let LOW/MID actually run cheaper.
+- Some dataset videos are encoded as a single GOP and always take the uniform fallback path regardless of priority — worth quantifying with a GOP-count histogram.
+- MID vs HIGH differ by one video (0.5%), so they should be treated as statistically tied.
+
+If you want, I can turn this into a more formal abstract/methodology section for your report, or generate the GOP-count histogram to close that last caveat.
+
+MONITOR
+
+=====================================================================
+  STAGE 2: GOP-BASED LEADER OFFLINE TUNING ENGINE
+======================================================================
+  Ingesting JSON tracking matrices from: worker_data/
+  Simulating non-parametric threshold metrics across 41 streams...
+
+══════════════════════════════════════════════════════════════════════
+           GOP-BASED LEADER TIMELINE RECONSTRUCTION SUMMARY 
+══════════════════════════════════════════════════════════════════════
+
+  VIDEO                                SEGS   HITS    RATE    FP   LEADER TIME
+  ───────────────────────────────────  ────  ─────  ──────  ────  ────────────
+  attacked_1.mp4                          4      3   75.0%    33       1.0243s
+  attacked_2.mp4                          5      5  100.0%    10       1.3243s
+  attacked_3.mp4                          1      0    0.0%     2       0.4006s
+  attacked_4.mp4                          5      4   80.0%    19       1.1918s
+  attacked_5.mp4                          6      6  100.0%    26       1.6367s
+  attacked_6.mp4                          4      3   75.0%    24       1.0487s
+  attacked_7.mp4                          4      3   75.0%    21       0.9195s
+  attacked_8.mp4                          3      3  100.0%     7       0.9055s
+  attacked_9.mp4                          2      2  100.0%    13       0.6457s
+  attacked_10.mp4                         8      6   75.0%    33       1.8657s
+  attacked_11.mp4                         2      2  100.0%     9       0.7109s
+  attacked_12.mp4                         2      2  100.0%     7       0.6775s
+  attacked_13.mp4                         2      2  100.0%     9       0.6427s
+  attacked_14.mp4                         7      6   85.7%    26       1.7530s
+  attacked_15.mp4                         7      7  100.0%    34       1.5948s
+  attacked_16.mp4                         6      6  100.0%    25       1.3222s
+  attacked_17.mp4                         4      4  100.0%    10       0.9058s
+  attacked_18.mp4                         6      5   83.3%    18       1.5070s
+  attacked_19.mp4                         5      5  100.0%    18       1.1031s
+  attacked_20.mp4                         4      4  100.0%    16       0.9295s
+  attacked_21.mp4                         7      4   57.1%    12       0.7230s
+  attacked_22.mp4                        12      9   75.0%    23       1.4752s
+  attacked_23.mp4                        10      7   70.0%    12       1.2327s
+  attacked_24.mp4                         4      2   50.0%     1       0.4769s
+  attacked_25.mp4                        15     12   80.0%     7       1.7514s
+  attacked_26.mp4                         5      5  100.0%     5       0.6493s
+  attacked_27.mp4                         6      3   50.0%     4       0.6546s
+  attacked_28.mp4                        11      7   63.6%    58       1.2978s
+  attacked_29.mp4                        10      9   90.0%    14       1.3502s
+  attacked_30.mp4                        19     16   84.2%    45       2.5246s
+  attacked_32.mp4                        17     17  100.0%    75       3.3213s
+  attacked_33.mp4                         4      4  100.0%    15       0.8793s
+  attacked_34.mp4                         3      3  100.0%    13       0.6439s
+  attacked_35.mp4                         5      5  100.0%    18       0.9231s
+  attacked_36.mp4                        10     10  100.0%    78       1.8807s
+  attacked_37.mp4                        13     13  100.0%    38       2.4546s
+  attacked_38.mp4                        13     13  100.0%    64       2.2380s
+  attacked_39.mp4                         7      7  100.0%    28       1.1271s
+  attacked_40.mp4                        10     10  100.0%    44       1.9449s
+  attacked_41.mp4                         8      8  100.0%    35       1.6135s
+  ───────────────────────────────────  ────  ─────  ──────  ────  ────────────
+  TOTAL SYSTEM EVAL                     276    242   87.7%   949      51.2714s
+
+  ======================================================================
+  OPTIMIZATION GRID RECALL TARGET: 242/276 (87.68%)
+  TOTAL EVALUATION RUN CLOCK: 51.2714 seconds
+  ======================================================================
+
+──────────────────────────────────────────────────────────────────────
+  GLOBAL MULTI-MODAL SIGNAL ANALYSIS MATRIX
+──────────────────────────────────────────────────────────────────────
+  SIGNAL DIMENSION     HIT CONTRIB    HIT RATIO %   FP CONTRIB    FP RATIO %
+  ──────────────────  ────────────  ─────────────  ───────────  ────────────
+  Visual                        38          15.7%          271         28.6%
+  Motion                       241          99.6%          773         81.5%
+  AudioRMS                      48          19.8%           76          8.0%
+  Silence                        8           3.3%            6          0.6%
+  SpectralFlux                   5           2.1%            3          0.3%
+(.venv) umair@umair-HP-ProBook-440-G8-Notebook-PC:~/Umair/University materials/4000/Research Project/system-codes/monitor$ 

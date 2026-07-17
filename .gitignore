@@ -55,3 +55,8 @@ model/training_log.json
 #  WORKER DATA
 # =================================================================
 **/worker_data/
+# =================================================================
+#  FEATURE TENSORS & TRAINED MODELS (large binaries)
+# =================================================================
+model/features/
+model/model/
